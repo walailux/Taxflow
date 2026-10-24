@@ -1,0 +1,33 @@
+node_modules/
+dist/
+dist-status/
+.env
+.env.local
+
+# ข้อมูลและกุญแจในเครื่อง ห้ามขึ้นที่เก็บโค้ดเด็ดขาด
+apps/api/data/*.db
+apps/api/data/*.db-journal
+apps/api/data/session.key
+apps/api/data/file.key
+apps/api/data/mail.config.json
+apps/api/data/uploads/*
+!apps/api/data/uploads/.gitkeep
+
+# ใบรับรองและกุญแจสำหรับลงลายมือชื่อ (WP6)
+apps/api/data/sign/
+*.p12
+*.pfx
+*.key.pem
+
+# ไฟล์สำรองข้อมูล มีข้อมูลส่วนบุคคล ห้ามขึ้นที่เก็บโค้ด
+apps/api/backups/
+
+# ไฟล์ตัวอย่างที่สร้างจาก npm run pdf:sample
+apps/api/out/*
+!apps/api/out/.gitkeep
+
+# ไฟล์ฟอนต์ดาวน์โหลดเอง ไม่เก็บลงที่เก็บโค้ด (ขนาดใหญ่และมีสัญญาอนุญาตของตัวเอง)
+apps/api/assets/fonts/*.ttf
+
+# คำสั่งส่วนตัวที่มี token ของ SonarQube ห้ามขึ้นที่เก็บโค้ด
+hook.text

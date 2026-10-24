@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/img/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700;800&family=Itim&display=swap" rel="stylesheet" />
+    <meta name="theme-color" content="#FF6A00" />
+    <title>TaxFlow</title>
+    <!-- ตั้งโหมดกลางวัน/กลางคืนก่อนวาดหน้า กันจอขาวแวบ (ค่าที่เลือกไว้ หรือตามเครื่อง) ดู src/lib/theme.js -->
+    <script>
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('tf.theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+      // ฟอนต์/ขนาดตัวอักษรที่เลือกไว้ (ตรงกับ src/lib/appearance.js)
+      (function () {
+        var a = {};
+        try { a = JSON.parse(localStorage.getItem('tf.appearance') || '{}') || {}; } catch (e) {}
+        var F = { googlesans: '"Google Sans", "IBM Plex Sans Thai", sans-serif', ibm: '"IBM Plex Sans Thai", "Noto Sans Thai", sans-serif', sarabun: '"Sarabun", "IBM Plex Sans Thai", sans-serif', itim: '"Itim", "IBM Plex Sans Thai", sans-serif' };
+        var s = document.documentElement.style;
+        s.setProperty('--app-font', F[a.font] || F.googlesans);
+        s.setProperty('--app-scale', [0.9, 1, 1.1, 1.2].indexOf(a.scale) >= 0 ? String(a.scale) : '1');
+        var w = { light: 300, normal: 400, bold: 500 }[a.weight] || Number(a.weight) || 400;
+        w = Math.min(600, Math.max(300, Math.round(w / 100) * 100));
+        s.setProperty('--font-weight-normal', w); s.setProperty('--font-weight-medium', w + 100);
+        s.setProperty('--font-weight-semibold', w + 200); s.setProperty('--font-weight-bold', w + 300);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

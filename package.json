@@ -1,0 +1,37 @@
+{
+  "name": "taxflow",
+  "version": "0.18.0",
+  "private": true,
+  "description": "TaxFlow ver18 — ระบบจัดการข้อมูลภาษีและเอกสารอิเล็กทรอนิกส์ (monorepo: apps/web, apps/api, packages/shared)",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @taxflow/api",
+    "dev:all": "concurrently -n api,web,status -c blue,green,magenta \"npm run dev\" \"npm run dev:web\" \"npm run watch:status --workspace @taxflow/web\"",
+    "start": "npm run start --workspace @taxflow/api",
+    "test": "npm run test --workspace @taxflow/api",
+    "dev:web": "npm run dev --workspace @taxflow/web",
+    "build:web": "npm run build --workspace @taxflow/web",
+    "test:web": "npm run test --workspace @taxflow/web",
+    "db:setup": "npm run db:setup --workspace @taxflow/api --",
+    "db:migrate": "npm run db:migrate --workspace @taxflow/api --",
+    "db:backup": "npm run db:backup --workspace @taxflow/api --",
+    "files:migrate": "npm run files:migrate --workspace @taxflow/api --",
+    "env:check": "npm run env:check --workspace @taxflow/api --",
+    "pdf:sample": "npm run pdf:sample --workspace @taxflow/api --",
+    "db:check": "npm run db:check --workspace @taxflow/api --",
+    "pdf:all": "npm run pdf:all --workspace @taxflow/api --",
+    "sign:setup": "npm run sign:setup --workspace @taxflow/api --",
+    "sign:verify": "npm run sign:verify --workspace @taxflow/api --",
+    "test:api": "npm run test:api --workspace @taxflow/api --",
+    "build:status": "npm run build:status --workspace @taxflow/web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

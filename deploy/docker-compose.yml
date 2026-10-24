@@ -1,0 +1,39 @@
+# TaxFlow บน VPS (~/taxflow/docker-compose.yml) ใช้ image ที่ GitHub Actions build ไว้บน GHCR ไม่ build บนเครื่อง
+#
+#   docker compose pull && docker compose up -d     (job deploy สั่งให้เองทุกครั้งที่ push ขึ้น main)
+#
+# ไฟล์ที่ต้องมีใน ~/taxflow ข้าง ๆ ไฟล์นี้ (แยกจากแอปครุภัณฑ์ใน ~/app)
+#   .env     ความลับของ API (คัดลอกจาก apps/api/.env) + บรรทัด IMAGE_PREFIX=ghcr.io/<github-user>/taxflow
+#   data/    session.key file.key mail.config.json sign/ uploads/  เจ้าของต้องเป็น uid 1000 (ผู้ใช้ node ในคอนเทนเนอร์)
+#   fonts/   Sarabun-*.ttf GoogleSans-*.ttf  ไม่ได้อยู่ใน git และไม่ได้อยู่ใน image จึงวางไว้ที่ VPS
+# TAG ว่าง = latest ส่วน job deploy ส่ง TAG=sha-xxxxxxx มาเพื่อให้ตรงกับ commit ที่ผ่าน CI
+
+services:
+  api:
+    image: ${IMAGE_PREFIX:?ตั้ง IMAGE_PREFIX ใน .env}-api:${TAG:-latest}
+    env_file: .env
+    environment:
+      PORT: 4000
+      WEB_ORIGINS: https://taxflowofficial.online,https://www.taxflowofficial.online
+      PUBLIC_BASE_URL: https://taxflowofficial.online
+      TAXFLOW_DEV: "0"
+      TZ: Asia/Bangkok
+    init: true
+    volumes:
+      - ./data:/app/apps/api/data
+      - ./fonts:/app/apps/api/assets/fonts:ro
+    expose:
+      - "4000"
+    restart: unless-stopped
+
+  web:
+    image: ${IMAGE_PREFIX:?ตั้ง IMAGE_PREFIX ใน .env}-web:${TAG:-latest}
+    environment:
+      TZ: Asia/Bangkok
+    # เปิดเฉพาะในเครื่อง nginx ของ VPS ส่งต่อมาที่นี่ (Docker เปิด port ทะลุ ufw ได้ถ้า bind 0.0.0.0)
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

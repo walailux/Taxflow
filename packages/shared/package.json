@@ -1,0 +1,16 @@
+{
+  "name": "@taxflow/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ตรรกะภาษี ปฏิทิน เลขผู้เสียภาษี และนิยามแบบฟอร์มเอกสาร ใช้ร่วมกันระหว่าง apps/api และ apps/web",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./docschema": "./docschema.js",
+    "./tax": "./tax.js",
+    "./pit": "./pit.js",
+    "./thaiid": "./thaiid.js",
+    "./taxcalendar": "./taxcalendar.js",
+    "./calendar": "./calendar.js"
+  }
+}

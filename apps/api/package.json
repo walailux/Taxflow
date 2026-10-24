@@ -1,0 +1,37 @@
+{
+  "name": "@taxflow/api",
+  "version": "0.18.0",
+  "private": true,
+  "description": "TaxFlow REST API — Express 5 บน Node.js 22 เส้นทางทั้งหมดอยู่ในโฟลเดอร์ routes/",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node scripts/dev.js",
+    "test": "node --test",
+    "db:setup": "node scripts/db-setup.js",
+    "db:migrate": "node scripts/migrate-sqlite-to-pg.js",
+    "db:backup": "node scripts/backup-db.js",
+    "files:migrate": "node scripts/migrate-files-to-storage.js",
+    "env:check": "node scripts/env-check.js",
+    "pdf:sample": "node scripts/pdf-sample.js",
+    "db:check": "node scripts/db-check.js",
+    "pdf:all": "node scripts/pdf-all.js",
+    "sign:setup": "node scripts/sign-setup.js",
+    "sign:verify": "node scripts/sign-verify.js",
+    "test:api": "node scripts/api-smoke.js"
+  },
+  "dependencies": {
+    "@taxflow/shared": "*",
+    "express": "^5.2.1"
+  },
+  "optionalDependencies": {
+    "pg": "^8.11.0",
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@aws-sdk/s3-request-presigner": "^3.1000.0",
+    "pdfkit": "^0.15.0",
+    "@cantoo/pdf-lib": "^2.0.0"
+  }
+}

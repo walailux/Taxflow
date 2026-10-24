@@ -1,0 +1,429 @@
+/* =========================================================
+ * knowledge.css ศูนย์ความรู้ (/guide) ใช้ภายใต้ .ip-body ร่วมกับ info.css (ตัวแปรสีและฟอนต์มาจาก .ip-body)
+ * โฟลเดอร์: แท็บ + กระดาษ 2 แผ่น + ฝาหน้า · ชี้แล้วลอย/กระดาษเลื่อนออก · กดแล้วฝาเปิด (260ms) ก่อนเปลี่ยนหน้า
+ * อนิเมชันทุกตัวอยู่ในช่วง 200–400ms ใช้ transform/opacity เท่านั้น จึงไม่ทำให้เลย์เอาต์ขยับ
+ * ========================================================= */
+.ip-body{--kc-ease:cubic-bezier(.22,.8,.24,1);}
+.tone-orange{--t:#FF6A00;--t-deep:#D9480F;--t-soft:#FFF1E6;--t-mid:#FFD9BF;}
+.tone-blue{--t:#2A78D6;--t-deep:#1C5CAB;--t-soft:#EBF3FD;--t-mid:#C9DEF8;}
+.tone-green{--t:#16A34A;--t-deep:#0F7A37;--t-soft:#E9F8EF;--t-mid:#C4EDD3;}
+.tone-violet{--t:#6D4FD8;--t-deep:#5136B0;--t-soft:#F1EDFD;--t-mid:#D9CFFA;}
+.tone-teal{--t:#0F9D8A;--t-deep:#0B7668;--t-soft:#E6F6F3;--t-mid:#BCE7DF;}
+.tone-amber{--t:#D98A00;--t-deep:#A86800;--t-soft:#FFF6E0;--t-mid:#FCE3A6;}
+.tone-rose{--t:#E0457B;--t-deep:#B8305F;--t-soft:#FDEDF3;--t-mid:#F8CADB;}
+
+.kc-ic{width:22px;height:22px;flex-shrink:0;}
+.kc-ic-sm{width:16px;height:16px;flex-shrink:0;}
+
+/* ---------- ส่วนหัวหน้าแรก ---------- */
+.kc-hero{position:relative;padding:48px 0 28px;overflow:hidden;--px:0;--py:0;}
+.kc-hero::before{content:"";position:absolute;right:-160px;top:-220px;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(255,154,77,.26),rgba(255,154,77,0) 68%);pointer-events:none;animation:ipFloat 14s ease-in-out infinite;}
+.kc-hero::after{content:"";position:absolute;left:-200px;bottom:-260px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,170,.42),rgba(255,214,170,0) 70%);pointer-events:none;animation:ipFloat 18s ease-in-out infinite reverse;}
+.kc-hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:32px;align-items:center;}
+.kc-hero-inner{position:relative;min-width:0;}
+.kc-hero:has(> .ip-wrap > .kc-crumb){padding-top:8px;}
+.kc-hero .kc-crumb{position:relative;z-index:1;padding-bottom:20px;}
+.kc-hero h1{font-size:clamp(30px,4.4vw,48px);line-height:1.2;margin:0 0 14px;}
+.kc-hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--orange),var(--orange-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.kc-lede{font-size: 1.09375rem;line-height:1.75;color:#57525A;margin:0 0 22px;max-width:640px;}
+
+/* ตัวการ์ตูน: วงแหวนหมุน + จานรอง + ขยับตามเมาส์ + เปลี่ยนท่าตามการค้นหา */
+.kc-hero-art{position:relative;display:flex;justify-content:center;align-items:center;min-height:340px;}
+.kc-hero-art .ring{position:absolute;width:310px;height:310px;border-radius:50%;border:2px dashed rgba(255,106,0,.28);animation:ipSpin 40s linear infinite;}
+.kc-hero-art .disc{position:absolute;width:256px;height:256px;border-radius:50%;background:linear-gradient(145deg,#FFE9D6,#FFF7F0);box-shadow:inset 0 -12px 30px rgba(255,140,60,.15);transform:translate(calc(var(--px) * -10px),calc(var(--py) * -10px));transition:transform .4s var(--kc-ease);}
+.kc-mascot{position:relative;width:min(280px,78%);filter:drop-shadow(0 22px 26px rgba(160,70,10,.22));transform:translate(calc(var(--px) * 16px),calc(var(--py) * 12px)) rotate(calc(var(--px) * 4deg));transition:transform .4s var(--kc-ease);animation:kcPop .45s var(--kc-ease) both;}
+@keyframes kcPop{0%{opacity:0;scale:.86;translate:0 10px;}60%{opacity:1;scale:1.03;}100%{opacity:1;scale:1;translate:0 0;}}
+.kc-say{position:absolute;top:8px;right:4px;z-index:2;max-width:200px;padding:9px 15px;border-radius:16px 16px 4px 16px;background:var(--ink);color:#fff;font-size: 0.875rem;font-weight:600;line-height:1.45;box-shadow:0 14px 28px -16px rgba(0,0,0,.45);animation:kcSay .35s var(--kc-ease) both;}
+@keyframes kcSay{from{opacity:0;transform:translateY(6px) scale(.94);}to{opacity:1;transform:none;}}
+.kc-bubble{position:absolute;z-index:2;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size: 0.90625rem;font-weight:600;box-shadow:0 14px 30px -18px rgba(120,50,0,.35);white-space:nowrap;animation:ipBob 6s ease-in-out infinite;}
+.kc-bubble small{display:block;font-size: 0.78125rem;color:var(--ink-soft);font-weight:500;}
+.kc-bubble b{color:var(--orange-deep);}
+.kc-bubble.b1{top:96px;left:-12px;animation-delay:-1.5s;}
+.kc-bubble.b2{bottom:18px;right:-6px;animation-delay:-3s;}
+
+.kc-kbd{flex-shrink:0;height:40px;display:flex;align-items:center;padding:0 16px;border-radius:999px;background:linear-gradient(120deg,var(--orange),var(--orange-deep));color:#fff;font:inherit;font-size: 0.875rem;font-weight:700;box-shadow:0 10px 20px -12px var(--orange-deep);}
+.kc-suggest{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;font-size: 0.84375rem;}
+.kc-suggest > span{color:var(--ink-soft);margin-right:4px;}
+.kc-suggest button{height:30px;padding:0 12px;border-radius:999px;border:1px dashed #E2CDBB;background:transparent;font:inherit;font-size: 0.84375rem;font-weight:600;color:var(--orange-deep);cursor:pointer;transition:background .2s,border-color .2s,transform .2s var(--kc-ease);}
+.kc-suggest button:hover{background:var(--orange-pale);border-color:var(--orange);transform:translateY(-1px);}
+.kc-suggest button.on{background:var(--orange);border-color:var(--orange);border-style:solid;color:#fff;}
+
+.kc-search{position:relative;display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:0 8px 0 18px;height:56px;box-shadow:0 14px 34px -26px rgba(120,50,0,.45);transition:border-color .2s,box-shadow .2s;}
+.kc-search:focus-within{border-color:var(--orange);box-shadow:0 0 0 4px var(--orange-pale),0 14px 34px -26px rgba(120,50,0,.45);}
+.kc-search > svg{width:20px;height:20px;color:var(--ink-soft);flex-shrink:0;}
+.kc-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size: 1.03125rem;color:var(--ink);}
+.kc-search button{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:0;background:#F4F1EE;color:var(--ink-soft);cursor:pointer;}
+.kc-search.sm{height:48px;max-width:420px;margin-bottom:18px;box-shadow:none;}
+
+.kc-filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:16px;padding-bottom:2px;}
+.kc-filters button{flex-shrink:0;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size: 0.90625rem;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+.kc-filters button:hover{color:var(--ink);border-color:#E2D6CC;}
+.kc-filters button.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+
+.kc-main{padding-bottom:64px;}
+.kc-section{margin-top:28px;}
+.kc-h2{display:flex;align-items:center;gap:8px;font-size: 1.3125rem;margin:0 0 16px;}
+.kc-h2 small{font-family:var(--body);font-size: 0.875rem;font-weight:500;color:var(--ink-soft);}
+.kc-h2.sm{font-size: 1.125rem;}
+.kc-sec-head{margin-bottom:16px;}
+.kc-sec-head .kc-h2{margin:0;}
+.kc-kicker{display:inline-flex;align-items:center;gap:8px;font-size: 0.8125rem;font-weight:700;letter-spacing:.4px;color:var(--orange-deep);margin-bottom:4px;}
+.kc-kicker::before{content:"";width:14px;height:3px;border-radius:3px;background:var(--orange);}
+.kc-empty{padding:28px;text-align:center;color:var(--ink-soft);background:#fff;border:1px dashed var(--line);border-radius:18px;}
+
+/* ---------- ปรากฏทีละใบ (ใช้ --i) ---------- */
+@keyframes kcIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.kc-folder,.kc-doc,.kc-result,.kc-term{animation:kcIn .38s var(--kc-ease) both;animation-delay:calc(var(--i,0) * 50ms);}
+.kc-enter{animation:kcIn .32s var(--kc-ease) both;}
+
+/* ---------- โฟลเดอร์ ---------- */
+.kc-folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px 18px;padding-top:14px;}
+.kc-folder{position:relative;display:block;min-height:236px;perspective:900px;outline:none;color:inherit;}
+.kc-folder-tab{position:absolute;left:0;top:-12px;width:46%;height:30px;border-radius:16px 16px 0 0;background:var(--t-mid);transition:transform .3s var(--kc-ease);}
+.kc-folder-tab::after{content:"";position:absolute;right:-18px;bottom:0;width:30px;height:20px;background:var(--t-mid);clip-path:polygon(0 0,40% 0,100% 100%,0 100%);}
+.kc-folder-back{position:absolute;inset:0;border-radius:6px 22px 22px 22px;background:var(--t-mid);}
+.kc-paper{position:absolute;left:14px;right:14px;top:10px;height:72%;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(24,24,27,.08);display:flex;flex-direction:column;gap:7px;padding:16px 18px;transition:transform .32s var(--kc-ease);}
+.kc-paper i{display:block;height:6px;border-radius:4px;background:var(--t-soft);}
+.kc-paper i:nth-child(1){width:55%;background:var(--t-mid);}
+.kc-paper i:nth-child(2){width:80%;}
+.kc-paper i:nth-child(3){width:65%;}
+.kc-paper.p1{transform:rotate(-2deg);}
+.kc-paper.p2{left:28px;right:24px;top:16px;transform:rotate(1.6deg);background:#FFFDFB;}
+.kc-folder-front{position:absolute;left:0;right:0;bottom:0;height:78%;display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:18px 22px 22px 22px;background:linear-gradient(170deg,#fff 0%,var(--t-soft) 130%);border:1px solid var(--t-mid);box-shadow:0 10px 26px -20px rgba(24,24,27,.5);transform-origin:bottom center;transition:transform .32s var(--kc-ease),box-shadow .32s var(--kc-ease);}
+.kc-folder-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.kc-folder-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;color:var(--t);transition:transform .32s var(--kc-ease);}
+.kc-folder-icon .kc-ic{width:30px;height:30px;stroke-width:1.7;}
+.kc-count{font-size: 0.78125rem;font-weight:600;padding:4px 10px;border-radius:999px;background:#fff;color:var(--t-deep);border:1px solid var(--t-mid);white-space:nowrap;}
+.kc-count.lg{font-size: 0.875rem;padding:6px 14px;}
+.kc-folder-title{font-family:var(--display);font-size: 1.125rem;line-height:1.3;}
+.kc-folder-desc{font-size: 0.875rem;line-height:1.55;color:#5E5963;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.kc-folder-more{display:inline-flex;align-items:center;gap:6px;margin-top:auto;font-size: 0.84375rem;font-weight:600;color:var(--t-deep);}
+.kc-folder-more svg{transition:transform .25s var(--kc-ease);}
+
+/* ชี้: โฟลเดอร์ลอย กระดาษเลื่อนขึ้น แท็บขยับ ไอคอนเอียงเล็กน้อย */
+.kc-folder:hover .kc-folder-front,.kc-folder:focus-visible .kc-folder-front{transform:translateY(-4px);box-shadow:0 22px 40px -22px var(--t),0 0 0 4px var(--t-soft);}
+.kc-folder:hover .kc-paper.p1,.kc-folder:focus-visible .kc-paper.p1{transform:translateY(-16px) rotate(-3deg);}
+.kc-folder:hover .kc-paper.p2,.kc-folder:focus-visible .kc-paper.p2{transform:translateY(-26px) rotate(2.5deg);}
+.kc-folder:hover .kc-folder-tab{transform:translateY(-3px);}
+.kc-folder:hover .kc-folder-icon{transform:rotate(-6deg) scale(1.05);}
+.kc-folder:hover .kc-folder-more svg{transform:translateX(4px);}
+.kc-folder:focus-visible .kc-folder-front{outline:2px solid var(--t);outline-offset:3px;}
+
+/* กด: ฝาหน้าพับลง กระดาษลอยออกมา (ก่อนเปลี่ยนหน้า) */
+.kc-folder.is-opening .kc-folder-front{transform:rotateX(-28deg) translateY(4px);box-shadow:0 30px 50px -26px var(--t);}
+.kc-folder.is-opening .kc-paper.p2{transform:translateY(-40px) rotate(0deg) scale(1.03);}
+.kc-folder.is-opening .kc-paper.p1{transform:translateY(-28px) rotate(-1deg);}
+
+/* ---------- ผลการค้นหา ---------- */
+.kc-results{display:grid;gap:10px;}
+.kc-result{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:baseline;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:18px;transition:border-color .2s,transform .2s var(--kc-ease);}
+.kc-result:hover{border-color:#F2C9A8;transform:translateX(3px);}
+.kc-result-kind{grid-row:span 3;align-self:start;font-size: 0.75rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--orange-pale);color:var(--orange-deep);}
+.kc-result-kind.faq{background:#FFF6E0;color:#A86800;}
+.kc-result-kind.term{background:#FDEDF3;color:#B8305F;}
+.kc-result b{font-family:var(--display);font-size: 1rem;}
+.kc-result span:not(.kc-result-kind){font-size: 0.875rem;color:#5E5963;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.kc-result small{font-size: 0.78125rem;color:var(--ink-soft);}
+
+/* ---------- breadcrumb ---------- */
+.kc-crumb{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:22px 0 14px;font-size: 0.875rem;color:var(--ink-soft);}
+.kc-crumb-item{display:inline-flex;align-items:center;gap:4px;min-width:0;}
+.kc-crumb a{color:var(--ink-soft);font-weight:500;transition:color .2s;}
+.kc-crumb a:hover{color:var(--orange-deep);}
+.kc-crumb [aria-current]{color:var(--ink);font-weight:600;}
+.kc-crumb-sep{width:14px;height:14px;transform:rotate(-90deg);color:#C9C1BA;}
+
+/* =========================================================
+ * หน้าด้านใน (โฟลเดอร์ / บทความ)
+ * เนื้อหาวางบน "แผ่นกระดาษ" สีขาว · ส่วนย่อยเป็นไทล์พื้นอ่อนในกริด · ไม่มีไอคอนบนพื้นสี
+ * สีหมวด (--t) ใช้เป็นจุด เส้นเน้น และพื้นอ่อนเท่านั้น
+ * ========================================================= */
+.ip-body{--kc-text:#3F3B45;--kc-soft:#625E69;--kc-hair:#ECE6E0;--kc-tile:#FAF8F5;}
+.kc-label{display:block;margin:0 0 12px;font-family:var(--body);font-size: 0.78125rem;font-weight:600;letter-spacing:.4px;color:var(--ink-soft);}
+
+/* ---------- ปุ่ม ---------- */
+.kc-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 22px;border-radius:999px;border:1px solid transparent;font-family:var(--body);font-size: 0.9375rem;font-weight:600;white-space:nowrap;cursor:pointer;transition:background .2s,border-color .2s,color .2s,gap .25s var(--kc-ease),transform .2s var(--kc-ease);}
+.kc-btn.primary{background:var(--ink);color:#fff;}
+.kc-btn.primary:hover{background:#000;gap:12px;}
+.kc-btn.ghost{background:#fff;border-color:var(--kc-hair);color:var(--ink);}
+.kc-btn.ghost:hover{border-color:#D6CEC6;transform:translateY(-1px);}
+.kc-btn.sm{height:36px;padding:0 14px;font-size: 0.84375rem;gap:6px;}
+
+/* ---------- หัวหน้าโฟลเดอร์ ---------- */
+.kc-folder-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:4px 0 26px;}
+.kc-folder-head h1{font-size:clamp(30px,3.8vw,42px);font-weight:600;line-height:1.25;margin:10px 0 0;}
+.kc-folder-head p{margin:10px 0 0;max-width:620px;font-size: 1.03125rem;line-height:1.75;color:var(--kc-soft);}
+.kc-folder-count{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;font-size: 0.8125rem;color:var(--ink-soft);}
+.kc-folder-count b{font-family:var(--display);font-size: 2.5rem;font-weight:600;line-height:1;color:var(--t);}
+
+/* ป้ายหมวด: จุดสี + ข้อความ */
+.kc-article-cat{display:inline-flex;align-items:center;gap:8px;font-size: 0.84375rem;font-weight:600;color:var(--t-deep,var(--orange-deep));transition:opacity .2s;}
+.kc-article-cat::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--t,var(--orange));}
+a.kc-article-cat:hover{opacity:.75;}
+
+/* ---------- รายการหัวข้อ: แผ่นขาว แถวคั่นเส้นบาง เลขลำดับ ---------- */
+.kc-docs{display:grid;grid-template-columns:1fr;counter-reset:doc;padding:4px 22px;background:#fff;border:1px solid var(--kc-hair);border-radius:22px;}
+.kc-doc{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:start;gap:0 12px;padding:20px 0;border-top:1px solid var(--kc-hair);color:inherit;}
+.kc-doc:first-child{border-top:0;}
+.kc-doc::before{counter-increment:doc;content:counter(doc,decimal-leading-zero);padding-top:3px;font-family:var(--display);font-size: 0.8125rem;font-weight:500;color:#B5AEA7;font-variant-numeric:tabular-nums;transition:color .25s;}
+.kc-docs.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0;background:none;border:0;border-radius:0;}
+.kc-docs.two .kc-doc{padding:18px 18px 18px 14px;background:#fff;border:1px solid var(--kc-hair);border-radius:18px;transition:border-color .25s,transform .25s var(--kc-ease),box-shadow .25s;}
+.kc-docs.two .kc-doc:hover{transform:translateY(-2px);border-color:var(--t-mid);box-shadow:0 14px 28px -22px var(--t);}
+.kc-doc-ic{display:none;}
+.kc-doc-body{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.kc-doc-body b{font-family:var(--display);font-size: 1.0625rem;font-weight:600;line-height:1.45;transition:color .25s;}
+.kc-doc-body > span{font-size: 0.90625rem;line-height:1.65;color:var(--kc-soft);}
+.kc-doc-body small{margin-top:4px;font-size: 0.78125rem;color:var(--ink-soft);}
+.kc-doc-cat{color:var(--t-deep,var(--orange-deep));font-weight:600;}
+.kc-doc-arrow{display:block;width:34px;height:34px;padding:8px;border-radius:50%;background:var(--kc-tile);color:var(--kc-soft);transition:transform .25s var(--kc-ease),background .25s,color .25s;}
+.kc-doc:hover::before{color:var(--t);}
+.kc-doc:hover .kc-doc-body b{color:var(--t-deep);}
+.kc-doc:hover .kc-doc-arrow{transform:translateX(3px);background:var(--t);color:#fff;}
+
+.kc-backlink{display:inline-flex;align-items:center;gap:8px;margin-top:32px;height:44px;padding:0 18px;border-radius:999px;background:#fff;border:1px solid var(--kc-hair);font-size: 0.90625rem;font-weight:600;color:var(--ink);transition:border-color .2s;}
+.kc-backlink svg{transition:transform .25s var(--kc-ease);}
+.kc-backlink:hover{border-color:#D6CEC6;}
+.kc-backlink:hover svg{transform:translateX(-4px);}
+
+/* ---------- FAQ / accordion: แผ่นขาว แถวคั่นเส้นบาง ---------- */
+.kc-acc-group{display:flex;flex-direction:column;padding:0 22px;background:#fff;border:1px solid var(--kc-hair);border-radius:22px;}
+.kc-acc{border-top:1px solid var(--kc-hair);scroll-margin-top:90px;}
+.kc-acc:first-child{border-top:0;}
+.kc-acc-head{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:19px 0;border:0;background:transparent;text-align:left;font-family:var(--display);font-size: 1.03125rem;font-weight:500;line-height:1.5;color:var(--ink);cursor:pointer;transition:color .2s;}
+.kc-acc-head:hover{color:var(--t-deep,var(--orange-deep));}
+.kc-acc-chev{width:30px;height:30px;padding:7px;border-radius:50%;flex-shrink:0;background:var(--kc-tile);color:var(--kc-soft);transition:transform .3s var(--kc-ease),background .2s,color .2s;}
+.kc-acc.open .kc-acc-chev{transform:rotate(180deg);background:var(--ink);color:#fff;}
+.kc-acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s var(--kc-ease);}
+.kc-acc.open .kc-acc-body{grid-template-rows:1fr;}
+.kc-acc-body > div{overflow:hidden;}
+.kc-acc-inner{max-width:680px;padding:0 0 20px;font-size: 0.96875rem;line-height:1.85;color:var(--kc-text);opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .3s var(--kc-ease);}
+.kc-acc.open .kc-acc-inner{opacity:1;transform:none;}
+.kc-acc-inner p{margin:0 0 6px;}
+.kc-acc-inner p:last-child{margin:0;}
+/* accordion ที่อยู่ในบทความ (อยู่บนแผ่นขาวแล้ว) ใช้พื้นอ่อนแทน */
+.kc-article .kc-acc-group{background:var(--kc-tile);border-color:var(--kc-hair);border-radius:18px;padding:0 18px;}
+.kc-article .kc-acc-chev{background:#fff;}
+
+/* ---------- คำศัพท์ ---------- */
+.kc-terms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;}
+.kc-term{padding:18px 20px;background:#fff;border:1px solid var(--kc-hair);border-radius:18px;scroll-margin-top:90px;transition:border-color .3s,box-shadow .3s;}
+.kc-term dt{font-family:var(--display);font-size: 1.03125rem;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.kc-term dd{margin:0;font-size: 0.9375rem;line-height:1.75;color:var(--kc-soft);}
+.kc-term:target{border-color:var(--t);box-shadow:0 0 0 4px var(--t-soft);}
+
+/* ---------- หน้าบทความ ---------- */
+.kc-read{max-width:1120px;}
+.kc-read-grid{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:48px;align-items:start;}
+.kc-read-main{min-width:0;max-width:780px;}
+.kc-article{padding:40px 44px 44px;background:#fff;border:1px solid var(--kc-hair);border-radius:28px;box-shadow:0 1px 2px rgba(24,24,27,.03),0 24px 48px -40px rgba(80,40,10,.25);}
+.kc-article-head{padding-bottom:26px;margin-bottom:26px;border-bottom:1px solid var(--kc-hair);}
+.kc-article-head h1{font-size:clamp(28px,3.6vw,40px);font-weight:600;line-height:1.3;margin:14px 0 10px;}
+.kc-article-desc{margin:0;font-size: 1.0625rem;line-height:1.7;color:var(--kc-soft);}
+.kc-article-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:20px;}
+.kc-article-meta{display:flex;flex-wrap:wrap;margin:0;font-size: 0.84375rem;color:var(--ink-soft);}
+.kc-article-meta span + span::before{content:"";display:inline-block;width:3px;height:3px;margin:0 12px 3px;border-radius:50%;background:currentColor;}
+.kc-article-actions{display:flex;gap:8px;}
+.kc-article-actions .kc-btn.ghost{background:var(--kc-tile);border-color:transparent;}
+.kc-article-actions .kc-btn.ghost:hover{background:#F2EEE9;}
+
+/* สรุป: พื้นอ่อนตามสีหมวด + เส้นเน้นด้านซ้าย */
+.kc-summary{margin:0;padding:20px 24px;border-radius:18px;background:var(--t-soft,#FFF4EC);box-shadow:inset 3px 0 0 var(--t,var(--orange));}
+.kc-summary b{display:block;margin-bottom:6px;font-family:var(--body);font-size: 0.78125rem;font-weight:600;letter-spacing:.4px;color:var(--t-deep,var(--orange-deep));}
+.kc-summary p{margin:0;font-size: 1.0625rem;line-height:1.85;color:var(--ink);}
+
+/* สารบัญแบบชิป (แสดงเมื่อไม่มีแถบด้านขวา) */
+.kc-toc-chips{display:none;margin-top:24px;}
+.kc-toc-chips > div{display:flex;flex-wrap:wrap;gap:8px;}
+.kc-toc-chips a{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--kc-tile);border:1px solid var(--kc-hair);font-size: 0.875rem;font-weight:500;color:var(--ink);transition:border-color .2s;}
+.kc-toc-chips a:hover{border-color:var(--t);}
+.kc-toc-chips em{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;font-style:normal;font-size: 0.78125rem;font-weight:600;color:var(--t-deep);}
+
+.kc-block{margin-top:40px;scroll-margin-top:96px;}
+.kc-block-title{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size: 1.25rem;font-weight:600;line-height:1.45;}
+.kc-block-title::before{content:"";width:4px;height:18px;border-radius:4px;background:var(--t,var(--orange));}
+.kc-text{margin:24px 0 0;font-size: 1rem;line-height:1.85;color:var(--kc-text);}
+.kc-note{margin:0 0 12px;font-size: 0.84375rem;color:var(--ink-soft);}
+
+.kc-bullets{list-style:none;margin:0;padding:0;display:grid;gap:12px;}
+.kc-bullets li{position:relative;padding-left:22px;font-size: 1rem;line-height:1.8;color:var(--kc-text);}
+.kc-bullets li::before{content:"";position:absolute;left:4px;top:.78em;width:6px;height:6px;border-radius:50%;background:var(--t,var(--orange));}
+
+.kc-check{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.kc-check li{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:14px;background:var(--kc-tile);font-size: 0.96875rem;line-height:1.7;color:var(--kc-text);}
+.kc-check li > span{display:grid;place-items:center;flex-shrink:0;width:22px;height:22px;margin-top:2px;border-radius:50%;background:#fff;border:1px solid #CFE9D8;color:var(--ok);}
+.kc-check li > span svg{width:13px;height:13px;}
+
+.kc-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.kc-steps li{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr);gap:0 16px;padding:16px 18px;border-radius:16px;background:var(--kc-tile);}
+.kc-steps em{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid var(--t-mid,var(--orange-soft));color:var(--t-deep,var(--orange-deep));font-family:var(--display);font-size: 0.875rem;font-style:normal;font-weight:600;}
+.kc-steps b{display:block;margin:4px 0 4px;font-family:var(--display);font-size: 1.03125rem;font-weight:600;line-height:1.45;}
+.kc-steps span{font-size: 0.9375rem;line-height:1.75;color:var(--kc-soft);}
+
+/* หมายเหตุ / ข้อควรระวัง / ตัวอย่าง */
+.kc-callout{--c:#2A6FC2;--cb:#F3F7FD;margin-top:36px;padding:18px 22px;border-radius:16px;background:var(--cb);box-shadow:inset 3px 0 0 var(--c);}
+.kc-callout b{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-family:var(--body);font-size: 0.8125rem;font-weight:600;letter-spacing:.3px;color:var(--c);}
+.kc-callout b::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.kc-callout p{margin:0;font-size: 0.9375rem;line-height:1.8;color:var(--kc-text);}
+.kc-callout.warn{--c:#B26B00;--cb:#FFF8EA;}
+.kc-callout.example{--c:#6D4FD8;--cb:#F6F3FE;}
+
+/* การ์ดในบทความ: ไทล์พื้นอ่อน 2 คอลัมน์ */
+.kc-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.kc-card{display:flex;flex-direction:column;padding:18px 20px 20px;border-radius:18px;background:var(--kc-tile);border:1px solid transparent;transition:border-color .25s,background .25s;}
+.kc-card:hover{background:#fff;border-color:var(--kc-hair);}
+.kc-card-ic{display:block;margin-bottom:10px;color:var(--t,var(--orange-deep));}
+.kc-card b{display:block;margin:12px 0 6px;font-family:var(--display);font-size: 1.0625rem;font-weight:600;line-height:1.45;}
+.kc-card p{margin:0;font-size: 0.90625rem;line-height:1.75;color:var(--kc-soft);}
+.kc-tag{--g:#C2410C;align-self:flex-start;display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:999px;background:#fff;border:1px solid var(--kc-hair);font-size: 0.78125rem;font-weight:600;color:var(--g);}
+.kc-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.kc-tag.blue{--g:#1C5CAB;}
+.kc-tag.green{--g:#0F7A37;}
+.kc-tag.violet{--g:#5136B0;}
+.kc-tag.red{--g:#B91C1C;}
+.kc-tag.grey{--g:#6B6670;}
+.kc-tag.amber{--g:#A86800;}
+
+/* ตาราง: หัวตารางครั้งเดียวบนจอกว้าง · มือถือแสดงชื่อคอลัมน์ในแต่ละช่อง */
+.kc-table{overflow:hidden;border:1px solid var(--kc-hair);border-radius:18px;}
+.kc-row{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:4px 24px;padding:15px 20px;border-top:1px solid var(--kc-hair);}
+.kc-row-head{padding:12px 20px;border-top:0;background:var(--kc-tile);font-size: 0.78125rem;font-weight:600;letter-spacing:.3px;color:var(--ink-soft);}
+.kc-row small{display:none;font-size: 0.75rem;font-weight:600;color:var(--ink-soft);}
+.kc-row span{font-size: 0.9375rem;line-height:1.7;color:var(--kc-text);}
+.kc-row > div:first-child span{font-weight:600;color:var(--ink);}
+
+/* ตัวเลขสำคัญ: ไทล์ */
+.kc-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:36px;}
+.kc-metric{padding:18px 20px;border-radius:18px;background:var(--kc-tile);}
+.kc-metric b{display:flex;align-items:baseline;gap:6px;font-family:var(--display);font-size: 2rem;font-weight:600;line-height:1.15;color:var(--t-deep,var(--ink));}
+.kc-metric b small{font-size: 0.875rem;font-weight:500;color:var(--ink-soft);}
+.kc-metric span{display:block;margin-top:6px;font-size: 0.84375rem;line-height:1.6;color:var(--kc-soft);}
+
+/* ลำดับงาน: ไทล์เรียงกัน มีเลขในวงกลม + เส้นเชื่อม */
+.kc-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;counter-reset:flow;}
+.kc-flow li{position:relative;counter-increment:flow;display:flex;flex-direction:column;gap:10px;padding:16px 16px 18px;border-radius:16px;background:var(--kc-tile);font-size: 0.9375rem;font-weight:500;line-height:1.6;color:var(--ink);}
+.kc-flow li::before{content:counter(flow);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#fff;border:1px solid var(--t-mid,var(--orange-soft));font-family:var(--display);font-size: 0.8125rem;font-weight:600;color:var(--t-deep,var(--orange-deep));}
+.kc-flow li.last{background:#F1F9F4;}
+.kc-flow li.last::before{content:"✓";border-color:#CFE9D8;color:var(--ok);}
+
+/* เปรียบเทียบ */
+.kc-compare{display:grid;gap:12px;margin-top:36px;}
+.kc-compare.two{grid-template-columns:repeat(2,minmax(0,1fr));}
+.kc-compare-col{--c:var(--ok);--cb:#F4FAF6;padding:20px 22px;border-radius:18px;background:var(--cb);box-shadow:inset 0 3px 0 var(--c);}
+.kc-compare-col.no{--c:var(--danger);--cb:#FDF6F6;}
+.kc-compare-col b{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-family:var(--display);font-size: 1.03125rem;font-weight:600;}
+.kc-compare-col b span{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#fff;color:var(--c);}
+.kc-compare-col ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size: 0.9375rem;line-height:1.75;color:var(--kc-text);}
+.kc-compare-col li{position:relative;padding-left:16px;}
+.kc-compare-col li::before{content:"";position:absolute;left:2px;top:.78em;width:5px;height:5px;border-radius:50%;background:var(--c);opacity:.5;}
+
+.kc-bars{display:grid;gap:8px;}
+.kc-bar-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:center;padding:16px 20px;border-radius:16px;background:var(--kc-tile);}
+.kc-bar-row b{display:block;font-size: 0.96875rem;font-weight:600;}
+.kc-bar-row small{font-size: 0.8125rem;color:var(--ink-soft);}
+.kc-bar{height:8px;border-radius:999px;background:#fff;overflow:hidden;}
+.kc-bar i{display:block;height:100%;width:var(--w);border-radius:999px;background:var(--t,var(--orange));transform-origin:left;animation:kcGrow .6s var(--kc-ease) both;}
+@keyframes kcGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+.kc-bar-row > div:last-child span{display:block;margin-top:8px;font-size: 0.84375rem;font-weight:600;color:var(--ink);text-align:right;}
+
+.kc-linkbtn{display:inline-flex;align-items:center;gap:8px;margin-top:32px;height:46px;padding:0 22px;border-radius:999px;background:var(--ink);color:#fff !important;font-size: 0.9375rem;font-weight:600;transition:gap .25s var(--kc-ease),background .2s;}
+.kc-linkbtn:hover{gap:12px;background:#000;}
+
+/* ท้ายบทความ: การ์ดอ่านต่อ + ปุ่ม */
+.kc-endcard{display:flex;align-items:center;justify-content:space-between;gap:20px 28px;flex-wrap:wrap;margin-top:20px;padding:26px 28px;border-radius:24px;background:var(--ink);color:#fff;}
+.kc-endcard-text{flex:1 1 320px;min-width:0;}
+.kc-endcard .kc-label{color:rgba(255,255,255,.6);margin-bottom:6px;}
+.kc-endcard b{display:block;font-family:var(--display);font-size: 1.1875rem;font-weight:600;line-height:1.45;}
+.kc-endcard p{margin:4px 0 0;font-size: 0.90625rem;line-height:1.65;color:rgba(255,255,255,.72);}
+.kc-endcard-actions{display:flex;flex-wrap:wrap;gap:10px;}
+.kc-endcard .kc-btn.primary{background:var(--orange);color:#fff;}
+.kc-endcard .kc-btn.primary:hover{background:var(--orange-deep);}
+.kc-endcard .kc-btn.ghost{background:transparent;border-color:rgba(255,255,255,.28);color:#fff;}
+.kc-endcard .kc-btn.ghost:hover{border-color:#fff;}
+
+.kc-related{margin-top:44px;}
+.kc-pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.kc-pager-link{display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:18px;background:#fff;border:1px solid var(--kc-hair);transition:border-color .2s;}
+.kc-pager-link:hover{border-color:#D6CEC6;}
+.kc-pager-link small{display:flex;align-items:center;gap:6px;font-size: 0.8125rem;color:var(--ink-soft);}
+.kc-pager-link small svg{transition:transform .25s var(--kc-ease);}
+.kc-pager-link b{font-family:var(--display);font-size: 1rem;font-weight:600;line-height:1.45;}
+.kc-pager-link:hover small svg{transform:translateX(-3px);}
+.kc-pager-link.next{text-align:right;align-items:flex-end;}
+.kc-pager-link.next:hover small svg{transform:translateX(3px);}
+
+/* แถบด้านขวา: สารบัญ + ข้อมูลบทความ + ปุ่ม */
+.kc-rail{position:sticky;top:96px;display:flex;flex-direction:column;gap:16px;}
+.kc-toc,.kc-facts{padding:20px;background:#fff;border:1px solid var(--kc-hair);border-radius:20px;}
+.kc-toc{display:flex;flex-direction:column;}
+.kc-toc a{display:block;padding:7px 0 7px 14px;border-left:2px solid var(--kc-hair);font-size: 0.875rem;line-height:1.5;color:var(--kc-soft);transition:color .2s,border-color .2s;}
+.kc-toc a:hover{color:var(--ink);}
+.kc-toc a.on{color:var(--ink);font-weight:600;border-left-color:var(--t);}
+.kc-facts{display:grid;gap:14px;margin:0;}
+.kc-facts dt{font-size: 0.78125rem;font-weight:600;letter-spacing:.3px;color:var(--ink-soft);}
+.kc-facts dd{margin:2px 0 0;font-size: 0.90625rem;color:var(--ink);}
+.kc-facts a{color:var(--t-deep);font-weight:600;}
+
+/* พิมพ์: เหลือเฉพาะเนื้อหาบทความ */
+@media print{
+  .ip-nav,.ip-progress,.ip-footer,.ip-totop,.kc-crumb,.kc-rail,.kc-article-actions,.kc-toc-chips,.kc-endcard,.kc-related,.kc-pager{display:none !important;}
+  .ip-body{background:#fff;}
+  .kc-read-grid{display:block;}
+  .kc-article{border:0;box-shadow:none;padding:0;}
+}
+
+/* ---------- มือถือ ---------- */
+@media (max-width:960px){
+  .kc-hero-grid{grid-template-columns:1fr;gap:8px;}
+  .kc-hero-art{order:-1;min-height:260px;}
+  .kc-hero-art .ring{width:236px;height:236px;}
+  .kc-hero-art .disc{width:196px;height:196px;}
+  .kc-mascot{width:200px;}
+  .kc-bubble.b1{left:calc(50% - 250px);top:70px;}
+  .kc-bubble.b2{right:calc(50% - 250px);bottom:10px;}
+  .kc-say{right:calc(50% - 230px);}
+  /* บทความ: ซ่อนแถบด้านขวา เนื้อหาเต็มความกว้าง */
+  .kc-read-grid{grid-template-columns:1fr;gap:0;}
+  .kc-read-main{max-width:none;}
+  .kc-rail{display:none;}
+  .kc-toc-chips{display:block;}
+}
+@media (max-width:720px){
+  .kc-hero{padding:32px 0 18px;}
+  .kc-bubble{display:none;}
+  .kc-say{right:0;top:0;}
+  .kc-kbd{display:none;}
+  .kc-lede{font-size: 1rem;}
+  .kc-search{height:52px;}
+  .kc-folders{grid-template-columns:1fr;gap:26px;}
+  .kc-folder{min-height:210px;}
+  .kc-docs,.kc-docs.compact,.kc-docs.two,.kc-terms,.kc-cards,.kc-compare.two{grid-template-columns:1fr;}
+  .kc-folder-head{align-items:flex-start;flex-direction:column;gap:14px;}
+  .kc-folder-count{flex-direction:row;align-items:baseline;gap:6px;}
+  .kc-folder-count b{font-size: 1.75rem;}
+  .kc-docs{padding:2px 16px;}
+  .kc-doc{grid-template-columns:30px minmax(0,1fr) auto;padding:18px 0;}
+  .kc-article{padding:24px 20px 28px;border-radius:22px;}
+  .kc-article-head{padding-bottom:20px;margin-bottom:20px;}
+  .kc-summary{padding:18px 18px 18px 20px;}
+  .kc-summary p{font-size: 1rem;}
+  .kc-block{margin-top:32px;}
+  .kc-row{grid-template-columns:1fr;gap:8px;padding:14px 16px;}
+  .kc-row-head{display:none;}
+  .kc-row:nth-child(2){border-top:0;}
+  .kc-row small{display:block;}
+  .kc-metrics{grid-template-columns:1fr 1fr;}
+  .kc-flow{grid-template-columns:1fr 1fr;}
+  .kc-bar-row{grid-template-columns:1fr;gap:8px;}
+  .kc-endcard{padding:22px 20px;}
+  .kc-endcard-actions,.kc-endcard-actions .kc-btn{width:100%;}
+  .kc-acc-group{padding:0 16px;}
+  .kc-pager{grid-template-columns:1fr;}
+  .kc-pager-link.next{text-align:left;align-items:flex-start;}
+}
+
+/* ---------- ลดการเคลื่อนไหว ---------- */
+@media (prefers-reduced-motion:reduce){
+  .kc-folder,.kc-doc,.kc-result,.kc-term,.kc-enter,.kc-bar i,.kc-mascot,.kc-say,.kc-bubble,.kc-hero::before,.kc-hero::after,.kc-hero-art .ring{animation:none !important;}
+  .kc-mascot,.kc-hero-art .disc{transform:none !important;}
+  .kc-folder *,.kc-doc,.kc-doc *,.kc-acc-body,.kc-acc-inner{transition:none !important;}
+}

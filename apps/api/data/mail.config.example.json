@@ -1,0 +1,8 @@
+{
+  "_readme": "คัดลอกไฟล์นี้เป็นชื่อ mail.config.json (ในโฟลเดอร์ data/ เดียวกันนี้) แล้วกรอกข้อมูลด้านล่างให้ครบ ระบบจะเริ่มส่ง OTP เข้า Gmail จริงทันทีเมื่อรันเซิร์ฟเวอร์ใหม่",
+  "host": "smtp.gmail.com",
+  "port": 465,
+  "user": "your.name@gmail.com",
+  "pass": "xxxx xxxx xxxx xxxx",
+  "fromName": "TaxFlow"
+}

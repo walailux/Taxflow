@@ -1,0 +1,160 @@
+/*
+ * theme-dark.css โหมดกลางคืน (เปิดด้วย <html data-theme="dark"> ดู lib/theme.js)
+ * 1) สลับค่าสีหลักของ theme (index.css) ที่จุดเดียว คลาสที่อ้างสีหลัก (bg-paper, text-ink, border-line ...) เปลี่ยนตามอัตโนมัติ
+ * 2) คลาสที่ใส่สีตายตัว (bg-white และ hex เฉพาะจุด) แมปเป็นโทนมืดที่เทียบเท่ากันด้านล่าง
+ * ไฟล์นี้สร้างจากรายการคลาสที่ใช้จริงในโค้ด ถ้าเพิ่มคลาสสีตายตัวใหม่ ให้เพิ่มเข้ากลุ่มที่เหมาะสมด้วย
+ */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #121110;
+  --color-surface: #1C1A19;
+  --color-tile: #262321;
+  --color-field: #24211F;
+  --color-ink: #F3F1EF;
+  --color-ink-soft: #A8A29E;
+  --color-line: #34302D;
+  --color-orange-deep: #FF8A3D;
+  --color-orange-soft: #5A3315;
+  --color-orange-pale: #2B1C11;
+  --color-ok: #4ADE80;
+  --color-ok-soft: #10261A;
+  --color-danger: #F87171;
+  --color-danger-soft: #3A1717;
+  --color-info: #8CC0EC;
+  --color-info-soft: #10243A;
+  --color-dev: #E8C766;
+  --color-dev-soft: #2C2509;
+  /* ไอคอนภาพประกอบเมนู (NavArt) */
+  --da-line: #FF7A1A;
+  --na-line: #FF8A3D; --na-paper: #2A2623; --na-accent: #FF8A3D; --na-soft: #6B3E1E; --na-mute: #4A3324;
+}
+
+/* พื้นเข้ม (ปุ่มดำ ทูลทิป ป้าย) ยังต้องเป็นสีเข้มกว่าการ์ด ตัวอักษรขาวบนพื้นนี้จึงยังอ่านได้ */
+html[data-theme="dark"] .bg-ink,
+html[data-theme="dark"] .tf-btn-dark { background-color: #3A3633; }
+html[data-theme="dark"] .tf-btn-dark:hover:not(:disabled) { background-color: #4A4541; }
+html[data-theme="dark"] .bg-ink.text-white, html[data-theme="dark"] .tf-btn-dark { color: #fff; }
+
+/* คลาสพื้นขาวแบบบังคับ (!bg-white) เช่น ช่องค้นหาบนแถบบน ต้องบังคับกลับด้วย !important */
+/* !important ในเลเยอร์ชนะ !important นอกเลเยอร์ จึงต้องประกาศไว้ใน layer utilities เดียวกับ Tailwind */
+@layer utilities { html[data-theme="dark"] .\!bg-white { background-color: var(--color-surface) !important; } }
+
+/* ส่วนประกอบใน index.css ที่ใช้สีตายตัว */
+html[data-theme="dark"] .tf-input:hover:not(:disabled):not(:focus),
+html[data-theme="dark"] .tf-seg:hover,
+html[data-theme="dark"] .tf-btn-soft:hover:not(:disabled) { background: #2E2A28; }
+html[data-theme="dark"] .tf-input::placeholder { color: #6E6863; }
+html[data-theme="dark"] .tf-seg::after,
+html[data-theme="dark"] .tf-choice input { border-color: #57524E; }
+html[data-theme="dark"] .tf-hatch-muted { background-image: repeating-linear-gradient(135deg, #3A3633 0 2px, transparent 2px 7px); }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb { background-color: #45403C; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background-color: #5F5A55; }
+html[data-theme="dark"] * { scrollbar-color: #45403C transparent; }
+/* รูปเอกสาร/ตัวอย่าง PDF และโลโก้ที่เป็นพื้นขาว คงพื้นขาวไว้ (กระดาษ) */
+html[data-theme="dark"] img { color-scheme: light; }
+
+/* คลาสสีตายตัวที่ใช้ในหน้าจอ · อยู่ใน layer utilities และใช้ :where() ให้ความสำคัญเท่าคลาสปกติ
+ * คลาส hover:/focus: ที่ใส่คู่กันจึงยังทำงาน (ถ้าไม่ใส่ layer CSS นอก layer จะชนะคลาส Tailwind ทุกตัว) */
+@layer utilities {
+  :where(html[data-theme="dark"]) .bg-\[\#EFEBE7\],
+  :where(html[data-theme="dark"]) .bg-\[\#F1EBE5\],
+  :where(html[data-theme="dark"]) .bg-\[\#F7F3F0\],
+  :where(html[data-theme="dark"]) .bg-\[\#F1EFED\],
+  :where(html[data-theme="dark"]) .bg-\[\#F1EEEB\],
+  :where(html[data-theme="dark"]) .bg-\[\#EFECE9\],
+  :where(html[data-theme="dark"]) .bg-\[\#EBEAE8\],
+  :where(html[data-theme="dark"]) .bg-\[\#FAFAF9\],
+  :where(html[data-theme="dark"]) .bg-\[\#F6F4F1\],
+  :where(html[data-theme="dark"]) .bg-\[\#EFEDEA\],
+  :where(html[data-theme="dark"]) .bg-\[\#E7E1DB\],
+  :where(html[data-theme="dark"]) .bg-\[\#E5E0DB\] { background-color: var(--color-tile); }
+  :where(html[data-theme="dark"]) .bg-white,
+  :where(html[data-theme="dark"]) .bg-\[\#FFFCFA\],
+  :where(html[data-theme="dark"]) .bg-\[\#FCFBFA\] { background-color: var(--color-surface); }
+  :where(html[data-theme="dark"]) .bg-white\/95,
+  :where(html[data-theme="dark"]) .bg-white\/90,
+  :where(html[data-theme="dark"]) .bg-white\/85,
+  :where(html[data-theme="dark"]) .bg-white\/80 { background-color: color-mix(in srgb, var(--color-surface) 92%, transparent); }
+  :where(html[data-theme="dark"]) .bg-white\/70,
+  :where(html[data-theme="dark"]) .bg-white\/60 { background-color: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+  :where(html[data-theme="dark"]) .bg-\[\#FFF4DB\],
+  :where(html[data-theme="dark"]) .bg-\[\#FFF8E8\],
+  :where(html[data-theme="dark"]) .bg-\[\#FEF7E0\],
+  :where(html[data-theme="dark"]) .bg-\[\#FEF6E4\],
+  :where(html[data-theme="dark"]) .bg-\[\#FEF3C7\] { background-color: #2A2309; }
+  :where(html[data-theme="dark"]) .bg-\[\#FEE2E2\],
+  :where(html[data-theme="dark"]) .bg-\[\#FDECEC\] { background-color: var(--color-danger-soft); }
+  :where(html[data-theme="dark"]) .bg-\[\#E6F4EA\],
+  :where(html[data-theme="dark"]) .bg-\[\#DCFCE7\] { background-color: var(--color-ok-soft); }
+  :where(html[data-theme="dark"]) .bg-\[\#E8F0FE\],
+  :where(html[data-theme="dark"]) .bg-\[\#f8faff\] { background-color: var(--color-info-soft); }
+  :where(html[data-theme="dark"]) .bg-\[\#FFE9D6\]\/70 { background-color: var(--color-orange-pale); }
+  :where(html[data-theme="dark"]) .text-\[\#57534E\],
+  :where(html[data-theme="dark"]) .text-\[\#44403C\],
+  :where(html[data-theme="dark"]) .text-\[\#3c4043\] { color: #CFC9C3; }
+  :where(html[data-theme="dark"]) .text-\[\#78716C\],
+  :where(html[data-theme="dark"]) .text-\[\#8A847E\] { color: var(--color-ink-soft); }
+  :where(html[data-theme="dark"]) .text-\[\#8A5A00\],
+  :where(html[data-theme="dark"]) .text-\[\#9A6400\],
+  :where(html[data-theme="dark"]) .text-\[\#B45309\],
+  :where(html[data-theme="dark"]) .text-\[\#7A5B00\],
+  :where(html[data-theme="dark"]) .text-\[\#7A5200\],
+  :where(html[data-theme="dark"]) .text-\[\#9A6700\],
+  :where(html[data-theme="dark"]) .text-\[\#92400E\],
+  :where(html[data-theme="dark"]) .text-\[\#B06000\] { color: #F2C46B; }
+  :where(html[data-theme="dark"]) .text-\[\#15803D\],
+  :where(html[data-theme="dark"]) .text-\[\#188038\] { color: #6EE7A0; }
+  :where(html[data-theme="dark"]) .text-\[\#B91C1C\],
+  :where(html[data-theme="dark"]) .text-\[\#D93025\] { color: #F87171; }
+  :where(html[data-theme="dark"]) .text-\[\#1967D2\] { color: #8AB4F8; }
+  :where(html[data-theme="dark"]) .text-\[\#C9C3BD\],
+  :where(html[data-theme="dark"]) .text-\[\#C9C1BA\],
+  :where(html[data-theme="dark"]) .text-\[\#C4BFBA\],
+  :where(html[data-theme="dark"]) .text-\[\#C9C7C4\],
+  :where(html[data-theme="dark"]) .text-\[\#D6D3D1\] { color: #5F5A55; }
+  :where(html[data-theme="dark"]) .ring-\[\#E2DED9\],
+  :where(html[data-theme="dark"]) .ring-\[\#E7E1DB\] { --tw-ring-color: var(--color-line); }
+  :where(html[data-theme="dark"]) .border-\[\#E4E1DD\],
+  :where(html[data-theme="dark"]) .border-\[\#E3D9CF\],
+  :where(html[data-theme="dark"]) .border-\[\#D6D3D1\],
+  :where(html[data-theme="dark"]) .border-\[\#dadce0\] { border-color: var(--color-line); }
+  :where(html[data-theme="dark"]) .border-\[\#F0BFBF\],
+  :where(html[data-theme="dark"]) .border-\[\#FED7AA\],
+  :where(html[data-theme="dark"]) .border-\[\#F0D98A\],
+  :where(html[data-theme="dark"]) .border-\[\#CFE2F3\],
+  :where(html[data-theme="dark"]) .border-\[\#BFE6CF\],
+  :where(html[data-theme="dark"]) .border-\[\#BFE6CD\] { border-color: rgba(255, 255, 255, .14); }
+  :where(html[data-theme="dark"]) .ring-\[\#F6C9C9\],
+  :where(html[data-theme="dark"]) .ring-\[\#F5DFA8\],
+  :where(html[data-theme="dark"]) .ring-\[\#C9DDF0\],
+  :where(html[data-theme="dark"]) .ring-\[\#BFE6CD\] { --tw-ring-color: rgba(255, 255, 255, .14); }
+  
+}
+
+/* bg-white แบบมีเงื่อนไข (จอใหญ่ / ชี้ / โฟกัส) และคลาสที่ต้องชนะ bg-white เมื่อใส่คู่กัน (เช่น bg-white lg:bg-transparent)
+ * ประกาศหลังกลุ่มด้านบน ลำดับในเลเยอร์เดียวกันจึงถูกต้องเหมือนใน Tailwind */
+@layer utilities {
+  :where(html[data-theme="dark"]) .hover\:bg-white:hover,
+  :where(html[data-theme="dark"]) .focus\:bg-white:focus { background-color: var(--color-surface); }
+  :where(html[data-theme="dark"]) .hover\:bg-white\/70:hover { background-color: color-mix(in srgb, var(--color-surface) 70%, transparent); }
+  @media (width >= 40rem) { :where(html[data-theme="dark"]) .sm\:bg-transparent { background-color: transparent; } }
+  @media (width >= 48rem) { :where(html[data-theme="dark"]) .md\:bg-transparent { background-color: transparent; } }
+  @media (width >= 64rem) {
+    :where(html[data-theme="dark"]) .lg\:bg-white { background-color: var(--color-surface); }
+    :where(html[data-theme="dark"]) .lg\:bg-transparent { background-color: transparent; }
+  }
+}
+
+/* ปุ่มสลับโหมด: เปลี่ยนไอคอนแบบหมุนเข้า */
+@keyframes tf-theme-in { from { transform: rotate(-90deg) scale(.6); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+.tf-theme-icon { animation: tf-theme-in .35s var(--ease-pop) both; }
+/* เปลี่ยนโหมดแล้วสีค่อย ๆ เปลี่ยน ไม่กระพริบ (เฉพาะช่วงสลับ ดู lib/theme.js) */
+html.tf-theme-switching, html.tf-theme-switching * { transition: background-color .25s ease, color .25s ease, border-color .25s ease !important; }
+@media (prefers-reduced-motion: reduce) { .tf-theme-icon { animation: none; } }
+
+
+/* ป้ายจำนวนแจ้งเตือน: ขอบรอบป้ายเป็นสีพื้นปุ่ม (ไม่ใช่ขาว) */
+html[data-theme="dark"] .tf-badge-pop { --tw-ring-color: var(--color-surface); }
+
+/* ช่องวันในปฏิทินตอนชี้ */
+@layer utilities { :where(html[data-theme="dark"]) .hover\:bg-\[\#EFEBE7\]:hover { background-color: #2E2A28; } }

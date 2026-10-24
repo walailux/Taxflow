@@ -1,0 +1,34 @@
+{
+  "name": "@taxflow/web",
+  "version": "0.18.0",
+  "private": true,
+  "type": "module",
+  "description": "หน้าเว็บ TaxFlow ver18 (React 19 + Vite + Tailwind CSS 4 + React Router) — WP2",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:status": "vite build --mode status",
+    "watch:status": "vite build --mode status --watch"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.0",
+    "@taxflow/shared": "*",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "@tesseract.js-data/tha": "^1.0.0",
+    "pdfjs-dist": "^6.3.289",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^7.9.0",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.1.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}

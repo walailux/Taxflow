@@ -1,0 +1,51 @@
+# TaxFlow ver18 — รันทั้งระบบด้วย Docker
+#
+#   docker compose up -d --build     เปิดใช้งาน (ครั้งแรกจะ build ก่อน ใช้เวลาสักครู่)
+#   docker compose logs -f api       ดู log ของ API (รหัส OTP ของบัญชีทดลองแสดงที่นี่)
+#   docker compose down              ปิด (ข้อมูลยังอยู่ใน volume)
+#   docker compose down -v           ปิดและล้างข้อมูลทิ้งทั้งหมด
+#
+# เปิดหน้าเว็บที่ http://localhost:8080
+# หน้าเว็บกับ API อยู่โดเมนเดียวกัน (nginx ส่งต่อ /api ให้) คุกกี้ session จึงทำงานตามปกติ
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 4000
+      # โดเมนของหน้าเว็บ ใช้กับ CORS และการกัน CSRF
+      WEB_ORIGINS: http://localhost:8080
+      # ใช้สร้างลิงก์ตรวจสอบเอกสารให้ชี้กลับมาที่หน้าเว็บ
+      PUBLIC_BASE_URL: http://localhost:8080
+      TZ: Asia/Bangkok
+    # PID 1 ของ Docker เก็บ zombie process และส่งสัญญาณหยุดให้ node อย่างถูกต้อง
+    init: true
+    volumes:
+      # ฐานข้อมูล SQLite คีย์เข้ารหัส และไฟล์ที่ผู้ใช้อัปโหลด อยู่ใน volume แยกจากเครื่อง
+      # ไม่ได้ผูกกับ apps/api/data บนเครื่อง เพื่อไม่ให้ชนกับ API ที่รันตอนพัฒนา
+      # (SQLite ไฟล์เดียวกันถูกเขียนจากสองโปรเซสพร้อมกันแล้วข้อมูลเสียหายได้)
+      - taxflow-data:/app/apps/api/data
+    expose:
+      - "4000"
+    ports:
+      # เปิดไว้ให้เรียก API ตรง ๆ ตอนแก้ปัญหา (ใช้ 4100 เพราะ 4000 มักถูก API ตอนพัฒนาจองอยู่)
+      - "127.0.0.1:4100:4000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      TZ: Asia/Bangkok
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  taxflow-data:

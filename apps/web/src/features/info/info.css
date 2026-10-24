@@ -1,0 +1,425 @@
+/* =========================================================
+ * info.css หน้าข้อมูลสาธารณะ (ภาพรวมระบบ / คู่มือ / นโยบายความเป็นส่วนตัว / กฎหมาย)
+ * ย้ายจาก _public_legacy/css/info.css ใช้เฉพาะภายใต้ .ip-body · หน้าคู่มือใช้คลาส gd-*
+ * ========================================================= */
+.ip-body{
+  --orange:#FF6A00; --orange-deep:#E85A00; --orange-soft:#FFE1CC; --orange-pale:#FFF4EC;
+  --bg:#FAF8F6; --white:#FFFFFF; --ink:#18181B; --ink-soft:#66626B; --line:#EEE8E2;
+  --ok:#16A34A; --ok-soft:#E8F7EE; --danger:#DC2626; --radius:20px;
+  --shadow:0 18px 44px -22px rgba(217,78,0,.32);
+  --ease:cubic-bezier(.2,.8,.2,1); --ease-pop:cubic-bezier(.2,.9,.3,1.2);
+  --display:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif; --body:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;
+  min-height:100vh;font-family:var(--body);font-variant-numeric:tabular-nums;color:var(--ink);font-size: 0.9375rem;line-height:1.7;
+}
+:where(.ip-body) :is(h1,h2,h3,h4){font-family:var(--display);font-weight:600;line-height:1.35;}
+:where(.ip-body) ul{list-style:disc;padding-left:20px;}
+:where(.ip-body) ol{list-style:decimal;padding-left:20px;}
+:where(.ip-body) a{color:inherit;text-decoration:none;}
+.ip-body{background:var(--bg);overflow-x:hidden;}
+html:has(.ip-body){overflow-x:hidden;scroll-behavior:smooth;}
+.ip-hero::before,.ip-hero::after{pointer-events:none;}
+.ip-wrap{max-width:1160px;margin:0 auto;padding:0 28px;}
+
+/* ---------- แถบความคืบหน้าการอ่าน ---------- */
+.ip-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--orange),#FFB066);z-index:120;transition:width .08s linear;}
+
+/* ---------- แถบเมนูด้านบน ---------- */
+.ip-nav{position:sticky;top:0;z-index:100;background:rgba(255,251,248,.82);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid transparent;transition:border-color .2s,box-shadow .2s;}
+.ip-nav.scrolled{border-color:var(--line);box-shadow:0 8px 30px -18px rgba(120,50,0,.25);}
+.ip-nav-inner{max-width:1160px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:20px;}
+.ip-brand img{height:36px;display:block;}
+.ip-menu{display:flex;align-items:center;gap:4px;margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;}
+.ip-menu a{position:relative;display:block;padding:8px 16px;border-radius:999px;font-size: 0.9375rem;font-weight:600;color:var(--ink-soft);text-decoration:none;transition:color .18s,background .18s;white-space:nowrap;}
+.ip-menu a:hover{color:var(--ink);background:#FAF3ED;}
+.ip-menu a.active{color:#fff;background:var(--ink);}
+.ip-back{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;font-size: 0.9375rem;font-weight:600;color:#fff;text-decoration:none;background:linear-gradient(135deg,var(--orange),var(--orange-deep));box-shadow:0 10px 24px -12px rgba(217,78,0,.7);transition:transform .18s,box-shadow .18s;white-space:nowrap;}
+.ip-back svg{width:17px;height:17px;transition:transform .2s;}
+.ip-back:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px rgba(217,78,0,.8);}
+.ip-back:hover svg{transform:translateX(-3px);}
+.ip-burger{display:none;margin-left:auto;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;align-items:center;justify-content:center;cursor:pointer;}
+.ip-burger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative;transition:.2s;}
+.ip-burger span::before,.ip-burger span::after{content:"";position:absolute;left:0;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:.2s;}
+.ip-burger span::before{top:-6px;}.ip-burger span::after{top:6px;}
+.ip-nav.open .ip-burger span{background:transparent;}
+.ip-nav.open .ip-burger span::before{top:0;transform:rotate(45deg);}
+.ip-nav.open .ip-burger span::after{top:0;transform:rotate(-45deg);}
+
+/* ---------- ส่วนหัวหน้า ---------- */
+.ip-hero{position:relative;padding:56px 0 40px;}
+.ip-hero::before{content:"";position:absolute;inset:-40% -10% auto auto;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(255,154,77,.28),rgba(255,154,77,0) 68%);z-index:0;animation:ipFloat 14s ease-in-out infinite;}
+.ip-hero::after{content:"";position:absolute;left:-180px;bottom:-240px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,170,.45),rgba(255,214,170,0) 70%);z-index:0;animation:ipFloat 18s ease-in-out infinite reverse;}
+.ip-hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:28px;align-items:center;}
+.ip-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size: 0.90625rem;font-weight:600;color:var(--orange-deep);background:#fff;border:1px solid var(--orange-soft);padding:6px 14px;border-radius:999px;margin-bottom:18px;}
+.ip-eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(255,106,0,.18);animation:ipPulse 2.4s ease-in-out infinite;}
+.ip-hero h1{font-size:clamp(30px,4.2vw,48px);line-height:1.22;margin:0 0 16px;letter-spacing:-.2px;}
+.ip-hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--orange),var(--orange-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.ip-lede{font-size: 1.15625rem;line-height:1.85;color:#57525A;max-width:620px;}
+.ip-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;}
+.ip-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:999px;font-weight:600;font-size: 0.9375rem;text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s;font-family:var(--body);}
+.ip-btn.solid{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;box-shadow:0 12px 26px -14px rgba(217,78,0,.8);}
+.ip-btn.ghost{background:#fff;color:var(--ink);border-color:var(--line);}
+.ip-btn:hover{transform:translateY(-2px);}
+.ip-btn.ghost:hover{border-color:var(--orange);color:var(--orange-deep);}
+.ip-hero-art{position:relative;display:flex;justify-content:center;align-items:center;min-height:300px;}
+.ip-hero-art .ring{position:absolute;width:300px;height:300px;border-radius:50%;border:2px dashed rgba(255,106,0,.25);animation:ipSpin 40s linear infinite;}
+.ip-hero-art .disc{position:absolute;width:250px;height:250px;border-radius:50%;background:linear-gradient(145deg,#FFE9D6,#FFF7F0);box-shadow:inset 0 -12px 30px rgba(255,140,60,.15);}
+.ip-hero-art img{position:relative;width:min(290px,80%);filter:drop-shadow(0 22px 26px rgba(160,70,10,.22));animation:ipBob 5s ease-in-out infinite;}
+.ip-bubble{position:absolute;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size: 0.90625rem;font-weight:600;box-shadow:0 14px 30px -18px rgba(120,50,0,.35);white-space:nowrap;animation:ipBob 6s ease-in-out infinite;}
+.ip-bubble small{display:block;font-size: 0.78125rem;color:var(--ink-soft);font-weight:500;}
+.ip-bubble.b1{top:18px;left:0;animation-delay:-1.5s;}
+.ip-bubble.b2{bottom:26px;right:0;animation-delay:-3s;}
+.ip-bubble b{color:var(--orange-deep);}
+
+/* ---------- ตัวเลขสำคัญ ---------- */
+.ip-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:38px;}
+.ip-stat{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:18px;padding:18px 20px;backdrop-filter:blur(6px);}
+.ip-stat b{display:block;font-family:var(--display);font-size: 2.125rem;font-weight:600;line-height:1.15;color:var(--ink);}
+.ip-stat b small{font-size: 1rem;font-weight:500;color:var(--ink-soft);margin-left:4px;}
+.ip-stat > span{font-size: 0.90625rem;color:var(--ink-soft);line-height:1.5;display:block;margin-top:4px;}
+
+/* ---------- โครงเนื้อหา + สารบัญ ---------- */
+.ip-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:44px;padding-top:24px;padding-bottom:70px;align-items:start;}
+.ip-toc{position:sticky;top:92px;}
+.ip-toc-title{font-size: 0.84375rem;font-weight:600;color:var(--ink-soft);letter-spacing:.3px;margin:0 0 10px 14px;}
+.ip-toc a{display:block;position:relative;padding:8px 14px;font-size: 0.90625rem;color:var(--ink-soft);text-decoration:none;border-left:2px solid var(--line);line-height:1.45;transition:color .18s,border-color .18s,background .18s;}
+.ip-toc a:hover{color:var(--ink);}
+.ip-toc a.active{color:var(--orange-deep);border-color:var(--orange);font-weight:600;background:linear-gradient(90deg,var(--orange-pale),transparent);}
+.ip-main{min-width:0;}
+
+/* ---------- หน้าเลื่อนซ้าย-ขวาแบบแท็บเล็ต (Pager.jsx) ---------- */
+.ip-pager-wrap{padding-top:24px;padding-bottom:70px;scroll-margin-top:64px;}
+.ip-pager{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:32px;padding:14px 14px 18px;margin-bottom:28px;box-shadow:0 34px 70px -46px rgba(120,50,0,.4);}
+.ip-pg-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:5px;background:#fff;border:1px solid var(--line);border-radius:999px;}
+.ip-pg-tabs::-webkit-scrollbar{display:none;}
+.ip-pg-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:9px;border:0;background:transparent;padding:8px 16px 8px 8px;border-radius:999px;font-family:var(--body);font-size: 0.9375rem;font-weight:600;color:var(--ink-soft);white-space:nowrap;cursor:pointer;transition:color .2s,background .25s;}
+.ip-pg-tab .n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#F4EEE9;color:var(--ink-soft);font-family:var(--display);font-size: 0.84375rem;transition:background .25s,color .25s;}
+.ip-pg-tab:hover{color:var(--ink);}
+.ip-pg-tab.active{background:var(--ink);color:#fff;}
+.ip-pg-tab.active .n{background:var(--orange);color:#fff;}
+.ip-pg-bar{height:3px;margin:12px 14px 0;background:var(--line);border-radius:3px;overflow:hidden;}
+.ip-pg-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--orange),#FFB066);transition:width .4s var(--ease);}
+.ip-pg-track{display:flex;gap:28px;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;margin-top:6px;transition:height .35s var(--ease);}
+.ip-pg-track::-webkit-scrollbar{display:none;}
+.ip-pg-track.dragging{scroll-snap-type:none;cursor:grabbing;user-select:none;}
+.ip-pg-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;padding:22px 12px 8px;opacity:.3;transition:opacity .35s;}
+.ip-pg-slide.on{opacity:1;}
+.ip-pager .ip-section{margin-bottom:0;}
+.ip-pager .reveal{opacity:1;transform:none;transition:none;}
+.ip-pager .kc-summary{margin-top:4px;}.ip-pg-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 8px 0;padding-top:16px;border-top:1px dashed var(--line);}
+.ip-pg-nav{display:inline-flex;align-items:center;gap:10px;min-width:0;max-width:40%;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 18px 6px 6px;font-family:var(--body);font-size: 0.9375rem;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;}
+.ip-pg-nav span{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.35;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ip-pg-nav small{font-size: 0.78125rem;font-weight:500;color:var(--ink-soft);}
+.ip-pg-nav svg{flex:none;width:36px;height:36px;padding:9px;border-radius:50%;background:var(--orange-pale);color:var(--orange-deep);transition:background .2s,color .2s;}
+.ip-pg-nav.next{padding:6px 6px 6px 18px;}
+.ip-pg-nav.next span{align-items:flex-end;text-align:right;}
+.ip-pg-nav:hover:not(:disabled){border-color:var(--orange);box-shadow:0 10px 24px -16px rgba(217,78,0,.6);}
+.ip-pg-nav:hover:not(:disabled) svg{background:var(--orange);color:#fff;}
+.ip-pg-nav:disabled{visibility:hidden;}
+.ip-pg-dots{display:flex;align-items:center;gap:8px;}
+.ip-pg-dots button{width:8px;height:8px;padding:0;border:0;border-radius:999px;background:#E3DAD2;cursor:pointer;transition:width .3s var(--ease),background .3s;}
+.ip-pg-dots button.active{width:26px;background:var(--orange);}
+
+/* ---------- ส่วนเนื้อหา ---------- */
+.ip-section{scroll-margin-top:90px;margin-bottom:56px;}
+.ip-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;}
+.ip-kicker{font-size: 0.84375rem;font-weight:600;color:var(--orange-deep);letter-spacing:.3px;margin-bottom:6px;}
+.ip-section h2{font-size:clamp(22px,2.6vw,28px);line-height:1.3;margin:0;}
+.ip-section-head p,.ip-sub{font-size: 1rem;color:var(--ink-soft);line-height:1.8;margin-top:8px;max-width:680px;}
+.ip-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;transition:transform .25s,box-shadow .25s,border-color .25s;}
+.ip-card.hover:hover{transform:translateY(-4px);box-shadow:0 22px 40px -26px rgba(120,50,0,.35);border-color:#F2D2B8;}
+.ip-card h3{font-size: 1.15625rem;margin:0 0 8px;line-height:1.4;}
+.ip-card p{font-size: 0.9375rem;color:#57525A;line-height:1.8;margin:0;}
+.ip-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.ip-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+.ip-grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+.ip-tag{display:inline-block;font-size: 0.84375rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--orange-pale);color:var(--orange-deep);margin-bottom:10px;}
+.ip-tag.green{background:var(--ok-soft);color:var(--ok);}
+.ip-tag.blue{background:#EAF0FF;color:#3457B2;}
+.ip-tag.purple{background:#F1EAFB;color:#6B35B0;}
+.ip-tag.grey{background:#F1EDEA;color:#6F6B72;}
+.ip-tag.red{background:#FCEBEB;color:var(--danger);}
+.ip-list{list-style:none;padding:0;margin:12px 0 0;}
+.ip-list li{position:relative;padding:0 0 0 20px;margin-bottom:10px;font-size: 0.9375rem;line-height:1.75;color:#45414A;}
+.ip-list li::before{content:"";position:absolute;left:3px;top:.72em;width:7px;height:7px;border-radius:50%;background:var(--orange);opacity:.75;}
+.ip-list li b{color:var(--ink);}
+.ip-note{display:flex;gap:18px;align-items:center;background:linear-gradient(120deg,#FFF1E4,#FFF8F2);border:1px solid var(--orange-soft);border-radius:20px;padding:20px 24px;font-size: 0.9375rem;line-height:1.8;color:#4A4046;}
+.ip-note img{width:84px;flex-shrink:0;}
+.ip-note b{color:var(--ink);}
+
+/* ---------- ขั้นตอนการทำงาน ---------- */
+.ip-flow{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;counter-reset:flow;}
+.ip-flow::before{content:"";position:absolute;top:27px;left:8%;right:8%;height:3px;background:var(--line);border-radius:3px;}
+.ip-flow::after{content:"";position:absolute;top:27px;left:8%;height:3px;width:0;background:linear-gradient(90deg,var(--orange),#FFB066);border-radius:3px;transition:width 1.6s cubic-bezier(.3,.8,.3,1);}
+.ip-flow.in::after{width:84%;}
+.ip-step{position:relative;text-align:center;padding:0 4px;}
+.ip-step .dot{position:relative;z-index:1;width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:#fff;border:2px solid var(--orange-soft);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size: 1.21875rem;color:var(--orange-deep);transition:background .4s,color .4s,border-color .4s,transform .4s;}
+.ip-flow.in .ip-step .dot{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;border-color:transparent;}
+.ip-step:hover .dot{transform:scale(1.08);}
+.ip-step b{display:block;font-family:var(--display);font-size: 1rem;font-weight:600;margin-bottom:4px;}
+.ip-step span{font-size: 0.90625rem;color:var(--ink-soft);line-height:1.6;display:block;}
+
+/* ---------- แท็บ ---------- */
+.ip-tabs{position:relative;display:inline-flex;flex-wrap:wrap;gap:4px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px;margin-bottom:20px;}
+.ip-tab{position:relative;z-index:1;border:0;background:transparent;padding:9px 18px;border-radius:999px;font-family:var(--body);font-size: 0.9375rem;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:color .2s;}
+.ip-tab:hover{color:var(--ink);}
+.ip-tab.active{color:#fff;}
+.ip-tab-ink{position:absolute;z-index:0;top:5px;left:5px;height:calc(100% - 10px);border-radius:999px;background:var(--ink);transition:transform .35s cubic-bezier(.3,.9,.3,1),width .35s cubic-bezier(.3,.9,.3,1);}
+.ip-panel{display:none;}
+.ip-panel.active{display:block;animation:ipFadeUp .45s cubic-bezier(.2,.8,.3,1) both;}
+
+/* ---------- การ์ดบทบาท ---------- */
+.ip-role{display:grid;grid-template-columns:220px minmax(0,1fr);gap:26px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px 30px;overflow:hidden;position:relative;}
+.ip-role::before{content:"";position:absolute;left:-60px;top:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,var(--orange-pale),transparent 70%);}
+.ip-role-art{position:relative;text-align:center;}
+.ip-role-art img{width:190px;animation:ipBob 5s ease-in-out infinite;filter:drop-shadow(0 16px 18px rgba(160,70,10,.18));}
+.ip-role h3{font-size: 1.5rem;margin:0 0 6px;}
+.ip-role .desc{font-size: 1rem;color:var(--ink-soft);line-height:1.75;margin-bottom:6px;}
+.ip-role .ip-list{columns:2;column-gap:28px;}
+.ip-role .ip-list li{break-inside:avoid;}
+
+/* ---------- เปรียบเทียบสองฝั่ง ---------- */
+.ip-compare .ip-card{position:relative;overflow:hidden;padding-top:28px;}
+.ip-compare .ip-card::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--ok);}
+.ip-compare .ip-card.no::before{background:var(--danger);}
+.ip-compare .ip-card.warn::before{background:#E09B00;}
+
+/* ---------- ตัวเลขนับ ---------- */
+.ip-metric{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;text-align:left;position:relative;overflow:hidden;}
+.ip-metric b{display:block;font-family:var(--display);font-size: 2.375rem;font-weight:600;line-height:1.1;color:var(--orange-deep);}
+.ip-metric b small{font-size: 1rem;color:var(--ink-soft);font-weight:500;margin-left:4px;}
+.ip-metric > span{display:block;font-size: 0.9375rem;color:#57525A;margin-top:8px;line-height:1.6;}
+.ip-metric::after{content:"";position:absolute;right:-30px;bottom:-30px;width:110px;height:110px;border-radius:50%;background:var(--orange-pale);z-index:0;}
+.ip-metric > *{position:relative;z-index:1;}
+
+/* ---------- ตัวกรองแบบชิป ---------- */
+.ip-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.ip-chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 15px;font-family:var(--body);font-size: 0.90625rem;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:.18s;}
+.ip-chip:hover{border-color:var(--orange);color:var(--ink);}
+.ip-chip.active{background:var(--orange-pale);border-color:var(--orange);color:var(--orange-deep);}
+.ip-data{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.ip-data .ip-card{padding:20px 22px;transition:opacity .3s,transform .3s;}
+.ip-data .ip-card.hide{display:none;}
+.ip-data .basis{display:block;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size: 0.90625rem;color:var(--ink-soft);}
+.ip-data .basis b{color:var(--ink);font-weight:600;}
+
+/* ---------- เส้นเวลาเก็บรักษา ---------- */
+.ip-retention{background:#fff;border:1px solid var(--line);border-radius:22px;padding:10px 26px;}
+.ip-ret-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:center;padding:16px 0;border-bottom:1px solid #F6EEE7;}
+.ip-ret-row:last-child{border-bottom:0;}
+.ip-ret-row h4{font-family:var(--display);font-size: 1rem;font-weight:600;margin:0;}
+.ip-ret-row p{font-size: 0.90625rem;color:var(--ink-soft);margin:2px 0 0;line-height:1.6;}
+.ip-bar{position:relative;height:12px;background:#F4EDE7;border-radius:999px;overflow:hidden;}
+.ip-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;background:linear-gradient(90deg,#FFB066,var(--orange));transition:width 1.4s cubic-bezier(.3,.8,.3,1);}
+.ip-bar-label{display:flex;justify-content:space-between;font-size: 0.84375rem;margin-top:6px;color:var(--ink-soft);}
+.ip-bar-label b{color:var(--ink);font-weight:600;}
+
+/* ---------- Accordion ---------- */
+.ip-acc{background:#fff;border:1px solid var(--line);border-radius:18px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.ip-acc[open]{border-color:#F2D2B8;box-shadow:0 18px 36px -28px rgba(120,50,0,.35);}
+.ip-acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:18px 22px;font-family:var(--display);font-size: 1.09375rem;font-weight:600;}
+.ip-acc summary::-webkit-details-marker{display:none;}
+.ip-acc summary .meta{margin-left:auto;font-family:var(--body);font-size: 0.84375rem;font-weight:600;color:var(--orange-deep);background:var(--orange-pale);padding:3px 10px;border-radius:999px;white-space:nowrap;}
+.ip-acc summary .chev{width:28px;height:28px;border-radius:50%;background:#F6EFE9;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .3s,background .3s;}
+.ip-acc summary .chev svg{width:15px;height:15px;}
+.ip-acc[open] summary .chev{transform:rotate(180deg);background:var(--orange-pale);color:var(--orange-deep);}
+.ip-acc .body{padding:0 22px 20px 22px;font-size: 0.9375rem;line-height:1.85;color:#4A464D;animation:ipFadeUp .35s ease both;}
+.ip-acc .body p{margin:0 0 8px;}
+
+/* ---------- ตารางกฎหมาย ---------- */
+.ip-table-wrap{background:#fff;border:1px solid var(--line);border-radius:22px;overflow:auto;}
+.ip-table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;}
+.ip-table th{position:sticky;top:0;background:#FFF4EA;font-family:var(--display);font-size: 0.9375rem;font-weight:600;text-align:left;padding:14px 18px;border-bottom:1px solid var(--orange-soft);}
+.ip-table td{padding:16px 18px;font-size: 0.9375rem;line-height:1.7;color:#45414A;vertical-align:top;border-bottom:1px solid #F6EEE7;transition:background .2s;}
+.ip-table tr:last-child td{border-bottom:0;}
+.ip-table td:first-child{font-weight:600;color:var(--ink);width:26%;}
+.ip-table td:first-child small{display:block;font-weight:500;font-size: 0.84375rem;color:var(--ink-soft);}
+.ip-table tbody tr:hover td{background:#FFFAF5;}
+.ip-duty{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;}
+.ip-duty .ip-card{padding:20px 22px;}
+.ip-steps-inline{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;counter-reset:st;}
+.ip-steps-inline span{counter-increment:st;display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px 8px 8px;font-size: 0.9375rem;font-weight:600;}
+.ip-steps-inline span::before{content:counter(st);width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-size: 0.90625rem;display:flex;align-items:center;justify-content:center;font-family:var(--display);}
+.ip-howto{margin-top:20px;background:linear-gradient(120deg,#FFF1E4,#FFF9F4);border:1px solid var(--orange-soft);border-radius:20px;padding:20px 22px;}
+.ip-howto h4{font-family:var(--display);font-size: 1.09375rem;font-weight:600;margin:0;}
+
+/* ---------- แถบปิดท้าย ---------- */
+.ip-cta{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:center;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;border-radius:28px;padding:34px 40px;margin-bottom:10px;}
+.ip-cta::before{content:"";position:absolute;right:-80px;top:-120px;width:340px;height:340px;border-radius:50%;background:rgba(255,255,255,.12);}
+.ip-cta h2{color:#fff;font-size: 1.875rem;margin:0 0 6px;position:relative;}
+.ip-cta p{color:rgba(255,255,255,.9);font-size: 1rem;line-height:1.8;margin:0;position:relative;}
+.ip-cta .ip-hero-actions{position:relative;margin-top:18px;}
+.ip-cta .ip-btn.solid{background:#fff;color:var(--orange-deep);box-shadow:none;}
+.ip-cta .ip-btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55);}
+.ip-cta img{width:190px;position:relative;animation:ipBob 5s ease-in-out infinite;filter:drop-shadow(0 18px 20px rgba(80,20,0,.3));}
+
+.ip-footer{border-top:1px solid var(--line);padding:26px 0 40px;font-size: 0.90625rem;color:var(--ink-soft);}
+.ip-footer .ip-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;}
+.ip-footer img{height:26px;opacity:.9;}
+.ip-footer a{color:var(--ink-soft);text-decoration:none;margin-left:18px;font-weight:600;}
+.ip-footer a:hover{color:var(--orange-deep);}
+
+.ip-totop{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 14px 30px -16px rgba(120,50,0,.45);opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s;z-index:90;}
+.ip-totop.show{opacity:1;transform:none;pointer-events:auto;}
+.ip-totop svg{width:18px;height:18px;}
+.ip-totop:hover{color:var(--orange-deep);border-color:var(--orange);}
+
+/* ---------- แอนิเมชัน ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.8,.3,1),transform .7s cubic-bezier(.2,.8,.3,1);transition-delay:var(--d,0s);}
+.reveal.in{opacity:1;transform:none;}
+@keyframes ipBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+@keyframes ipFloat{0%,100%{transform:translate(0,0);}50%{transform:translate(-30px,24px);}}
+@keyframes ipSpin{to{transform:rotate(360deg);}}
+@keyframes ipPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,106,0,.18);}50%{box-shadow:0 0 0 8px rgba(255,106,0,.05);}}
+@keyframes ipFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .reveal{opacity:1;transform:none;}
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1080px){
+  .ip-layout{grid-template-columns:1fr;gap:0;}
+  .ip-toc{display:none;}
+  .ip-menu a{padding:8px 12px;font-size: 0.90625rem;}
+}
+@media (max-width:920px){
+  .ip-burger{display:flex;}
+  .ip-menu{position:absolute;left:16px;right:16px;top:calc(100% + 8px);flex-direction:column;align-items:stretch;border-radius:18px;padding:8px;box-shadow:0 24px 50px -20px rgba(80,30,0,.35);opacity:0;transform:translateY(-8px);pointer-events:none;transition:.22s;}
+  .ip-menu a{padding:12px 16px;font-size: 1rem;border-radius:12px;}
+  .ip-nav.open .ip-menu{opacity:1;transform:none;pointer-events:auto;}
+  .ip-nav-inner .ip-back{order:2;}
+  .ip-nav-inner .ip-burger{order:3;margin-left:0;}
+  .ip-nav-inner{justify-content:space-between;}
+  .ip-nav-inner .ip-brand{margin-right:auto;}
+  .ip-hero-grid{grid-template-columns:1fr;}
+  .ip-hero-art{min-height:250px;order:-1;}
+  .ip-hero-art .ring{width:230px;height:230px;}
+  .ip-hero-art .disc{width:190px;height:190px;}
+  .ip-hero-art img{width:210px;}
+  .ip-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ip-flow{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:26px;}
+  .ip-flow::before,.ip-flow::after{display:none;}
+  .ip-grid-3,.ip-grid-4{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ip-role{grid-template-columns:1fr;text-align:left;}
+  .ip-role-art img{width:150px;}
+  .ip-cta{grid-template-columns:1fr;}
+  .ip-cta img{display:none;}
+}
+@media (max-width:640px){
+  .ip-wrap,.ip-nav-inner{padding-left:16px;padding-right:16px;}
+  .ip-layout{padding-top:10px;}
+  .ip-pager-wrap{padding-top:10px;padding-left:10px;padding-right:10px;}
+  .ip-pager{border-radius:24px;padding:10px 8px 14px;}
+  .ip-pg-slide{padding:18px 6px 6px;}
+  .ip-pg-nav{max-width:none;padding:6px;}
+  .ip-pg-nav.next{padding:6px;}
+  .ip-pg-nav span{display:none;}
+  .ip-hero{padding:30px 0 20px;}
+  .ip-lede{font-size: 1rem;}
+  .ip-back span{display:none;}
+  .ip-back{padding:10px 12px;}
+  .ip-grid-2,.ip-grid-3,.ip-grid-4,.ip-data,.ip-duty{grid-template-columns:1fr;}
+  .ip-flow{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ip-role{padding:22px 18px;}
+  .ip-role .ip-list{columns:1;}
+  .ip-ret-row{grid-template-columns:1fr;gap:10px;}
+  .ip-note{flex-direction:column;align-items:flex-start;}
+  .ip-cta{padding:26px 22px;}
+  .ip-stat b{font-size: 1.625rem;}
+  .ip-section{margin-bottom:42px;}
+  .ip-tabs{display:flex;border-radius:18px;}
+  .ip-tab{flex:1 1 auto;}
+  .ip-tab-ink{display:none;}
+  .ip-tab.active{background:var(--ink);}
+  .ip-footer a{margin:0 14px 0 0;}
+}
+
+/* ---------- หน้าคู่มือ (gd-*) ---------- */
+.gd-mt{margin-top:18px;}
+.gd-h3{font-size: 1.1875rem;margin:30px 0 14px;}
+
+/* ขั้นตอนแบบเส้นเวลา */
+.gd-steps{list-style:none;padding:0;margin:0;counter-reset:gd;display:flex;flex-direction:column;gap:12px;}
+.gd-steps li{counter-increment:gd;position:relative;display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 20px 16px 72px;min-height:64px;justify-content:center;transition:border-color .2s,transform .2s;}
+.gd-steps li:hover{border-color:#F2D2B8;transform:translateX(3px);}
+.gd-steps li::before{content:counter(gd);position:absolute;left:18px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;font-family:var(--display);font-weight:600;font-size: 1.0625rem;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -12px rgba(217,78,0,.7);}
+.gd-steps li:not(:last-child)::after{content:"";position:absolute;left:36px;top:calc(50% + 24px);height:calc(100% - 36px);width:2px;background:var(--orange-soft);}
+.gd-steps b{font-family:var(--display);font-size: 1.0625rem;font-weight:600;}
+.gd-steps span{font-size: 0.9375rem;color:#57525A;line-height:1.7;}
+
+/* กล่องเคล็ดลับ */
+.gd-tip{display:flex;flex-direction:column;gap:4px;margin-top:18px;background:linear-gradient(120deg,#FFF1E4,#FFF8F2);border:1px solid var(--orange-soft);border-left:4px solid var(--orange);border-radius:16px;padding:16px 20px;font-size: 0.9375rem;line-height:1.8;color:#4A4046;}
+.gd-tip b{font-family:var(--display);font-size: 1rem;color:var(--ink);}
+.gd-tip a{color:var(--orange-deep);font-weight:600;text-decoration:underline;}
+.gd-tip.warn{background:#FFFBEB;border-color:#FDE7B0;border-left-color:#E0A100;}
+
+/* การ์ดที่มีไอคอน */
+.gd-icon-card .gd-ic{width:46px;height:46px;border-radius:14px;background:var(--orange-pale);color:var(--orange-deep);display:flex;align-items:center;justify-content:center;margin-bottom:14px;transition:transform .25s;}
+.gd-icon-card .gd-ic svg{width:22px;height:22px;}
+.gd-icon-card:hover .gd-ic{transform:scale(1.08) rotate(-4deg);}
+
+/* เริ่มเร็วตามบทบาท */
+.gd-quick{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;}
+.gd-quick-head{display:flex;align-items:center;gap:18px;margin-bottom:20px;}
+.gd-quick-head img{width:92px;flex-shrink:0;filter:drop-shadow(0 12px 16px rgba(160,70,10,.18));}
+.gd-quick-head h3{font-size: 1.3125rem;margin:0 0 4px;}
+.gd-quick-head p{font-size: 0.96875rem;color:#57525A;line-height:1.75;margin:0;}
+.gd-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.gd-quick-step{display:flex;flex-direction:column;gap:4px;background:var(--bg);border-radius:18px;padding:16px;}
+.gd-quick-step em{font-style:normal;width:30px;height:30px;border-radius:10px;background:var(--ink);color:#fff;font-family:var(--display);font-size: 0.9375rem;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
+.gd-quick-step b{font-family:var(--display);font-size: 1rem;font-weight:600;line-height:1.4;}
+.gd-quick-step span{font-size: 0.90625rem;color:#57525A;line-height:1.65;}
+
+/* ตารางเอกสารตามบทบาท */
+.gd-table{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+.gd-row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,2fr);gap:16px;padding:14px 20px;border-top:1px solid #F6EEE7;font-size: 0.9375rem;line-height:1.7;}
+.gd-row span:first-child{font-weight:600;}
+.gd-row span:last-child{color:#57525A;}
+.gd-row-head{border-top:0;background:#FFF4EA;font-family:var(--display);}
+.gd-row-head span:last-child{color:var(--ink);font-weight:600;}
+
+/* เส้นทางแบบชิป */
+.gd-flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;}
+.gd-flow span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size: 0.90625rem;font-weight:600;}
+.gd-flow span.on{background:var(--ok-soft);border-color:#BEE6D2;color:var(--ok);}
+.gd-flow i{width:18px;height:2px;background:var(--orange-soft);border-radius:2px;}
+
+/* สถานะเอกสาร */
+.gd-status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;position:relative;}
+.gd-status-item{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;}
+.gd-status-item p{font-size: 0.90625rem;color:#57525A;line-height:1.65;margin:10px 0 0;}
+.gd-pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size: 0.875rem;font-weight:600;}
+
+/* สร้างได้ / ไม่ได้ */
+.gd-scope{border-radius:20px;padding:22px 24px;}
+.gd-scope.ok{background:var(--ok-soft);border:1px solid #BEE6D2;}
+.gd-scope.no{background:#FCEFEF;border:1px solid #F3D2D2;}
+.gd-scope h3{display:flex;align-items:center;gap:10px;font-size: 1.125rem;margin:0 0 12px;}
+.gd-scope h3 span{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;}
+.gd-scope h3 svg{width:17px;height:17px;}
+.gd-scope.ok h3{color:var(--ok);} .gd-scope.ok h3 span{background:var(--ok);}
+.gd-scope.no h3{color:#B42323;} .gd-scope.no h3 span{background:#D14343;}
+.gd-scope ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;}
+.gd-scope li{font-size: 0.9375rem;line-height:1.7;color:#3F3B42;}
+
+.gd-admin{margin-top:18px;font-size: 0.90625rem;color:var(--ink-soft);line-height:1.8;background:#fff;border:1px dashed var(--line);border-radius:16px;padding:14px 18px;}
+
+@media (max-width:1080px){
+  .gd-quick-grid,.gd-status{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:640px){
+  .gd-quick{padding:18px;}
+  .gd-quick-head{flex-direction:column;align-items:flex-start;}
+  .gd-quick-head img{width:76px;}
+  .gd-quick-grid,.gd-status{grid-template-columns:1fr;}
+  .gd-row{grid-template-columns:1fr;gap:2px;}
+  .gd-steps li{padding-left:66px;}
+}
+
+/* ---------- ส่วนที่ React ควบคุม: แถบวัด ตัวกรองการ์ด ---------- */
+.in .ip-bar i,.ip-bar.in i{width:var(--w,0);}
+.ip-filtered[data-filter="legal"] .ip-card:not([data-basis~="legal"]),
+.ip-filtered[data-filter="contract"] .ip-card:not([data-basis~="contract"]),
+.ip-filtered[data-filter="consent"] .ip-card:not([data-basis~="consent"]),
+.ip-filtered[data-filter="interest"] .ip-card:not([data-basis~="interest"]){display:none;}
+.ip-filtered .ip-card{animation:ipFadeUp .4s both;}

@@ -1,0 +1,20 @@
+# ไฟล์ที่ห้ามหลุดเข้า image (ความลับ) หรือไม่จำเป็นต้องใช้ตอน build (ขนาดใหญ่)
+node_modules
+**/node_modules
+apps/web/dist
+apps/web/dist-status
+apps/api/out
+apps/api/backups
+
+# ความลับและข้อมูลในเครื่อง: คีย์ ฐานข้อมูล ไฟล์ที่ผู้ใช้อัปโหลด และค่าตั้งอีเมลจริง
+# (ข้อมูลของคอนเทนเนอร์อยู่ใน volume แยกต่างหาก ดู docker-compose.yml)
+.env
+.env.local
+**/.env
+**/.env.local
+apps/api/data
+apps/api/assets/fonts/*.ttf.download
+
+.git
+.claude
+*.log

@@ -1,0 +1,424 @@
+@import "tailwindcss";
+
+/*
+ * ชุดสีและตัวอักษรของ TaxFlow ประกาศเป็น theme ของ Tailwind จึงใช้เป็นคลาสได้ เช่น bg-orange, text-ink-soft
+ * ใช้ static เพื่อให้ตัวแปร CSS ทุกตัวถูกสร้างเสมอ คลาส tf-* ด้านล่างอ้างถึงตัวแปรเหล่านี้โดยตรง
+ */
+@theme static {
+  --color-orange: #FF6A00;
+  --color-orange-deep: #E85A00;
+  --color-orange-soft: #FFE1CC;
+  --color-orange-pale: #FFF4EC;
+  --color-paper: #EFEDEB;
+  --color-surface: #FFFFFF;
+  --color-tile: #F5F5F4;
+  --color-field: #F5F3F1;
+  --color-ink: #18181B;
+  --color-ink-soft: #71717A;
+  --color-line: #ECE7E2;
+  --color-ok: #16A34A;
+  --color-ok-soft: #E8F7EE;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FEF0F0;
+  --color-info: #1D5E93;
+  --color-info-soft: #EDF5FC;
+  --color-dev: #7A5B00;
+  --color-dev-soft: #FFF8E5;
+
+  /* ใช้ฟอนต์เดียวทั้งเว็บ (หัวข้อ เนื้อหา ตัวเลข/รหัสเอกสาร) ต่างกันแค่น้ำหนัก · font-mono เหลือไว้เป็นชื่อเรียกของ "ตัวเลขเรียงหลักตรง"
+     ค่าเริ่มต้น Google Sans · ผู้ใช้เปลี่ยนได้จากเมนูการแสดงผล (--app-font ตั้งที่ <html> ดู src/lib/appearance.js) */
+  --font-display: var(--app-font, "Google Sans", "IBM Plex Sans Thai", sans-serif);
+  --font-sans: var(--app-font, "Google Sans", "IBM Plex Sans Thai", sans-serif);
+  --font-mono: var(--app-font, "Google Sans", "IBM Plex Sans Thai", sans-serif);
+
+  --shadow-brand: 0 10px 24px -12px rgba(232, 90, 0, 0.55);
+  --shadow-card: 0 30px 80px -30px rgba(24, 24, 27, 0.25), 0 2px 6px rgba(24, 24, 27, 0.04);
+  --radius-card: 28px;
+  --ease-slide: cubic-bezier(.76, 0, .24, 1);
+  --ease-pop: cubic-bezier(.2, .9, .3, 1.2);
+}
+
+/* ความหนาตัวอักษรที่ผู้ใช้เลือก (เมนู Aa): ตั้ง --font-weight-normal/medium/semibold/bold ที่ <html> โดยตรง ดู src/lib/appearance.js */
+
+@layer base {
+  /*
+   * ความหนาแน่นของหน้าจอ: ขนาดตัวอักษร ไอคอน ระยะห่าง และความสูงปุ่มทั้งหมดเป็น rem จึงย่อ/ขยายตามค่านี้พร้อมกัน
+   * มือถือคง 16px (ช่องกรอก >= 16px กัน iOS ซูมเองตอนแตะ) · แท็บเล็ต 15px · จอคอมพิวเตอร์ 14px ให้เห็นเนื้อหาครบโดยไม่ต้องเลื่อนมาก
+   * ใช้แทน CSS zoom เพราะ zoom ทำให้หน่วย vh และตำแหน่งเมนูลอยที่คำนวณจาก getBoundingClientRect เพี้ยน
+   * หน้าคลังความรู้ (.ip-body) ออกแบบแยกเป็น px ไม่ย่อตาม
+   */
+  /* --app-scale = ขนาดตัวอักษรที่ผู้ใช้เลือก (เล็ก/ปกติ/ใหญ่/ใหญ่มาก) คูณกับความหนาแน่นตามขนาดจอ */
+  html:not(:has(.ip-body)) { font-size: calc(100% * var(--app-scale, 1)); }
+  @media (min-width: 768px) { html:not(:has(.ip-body)) { font-size: calc(93.75% * var(--app-scale, 1)); } }
+  @media (min-width: 1024px) { html:not(:has(.ip-body)) { font-size: calc(87.5% * var(--app-scale, 1)); } }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums; /* ตัวเลขกว้างเท่ากันทุกหลัก ยอดเงิน/วันที่เรียงตรงกันทั้งเว็บ */
+    font-weight: var(--font-weight-normal, 400);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-semibold, 600);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-orange);
+    outline-offset: 2px;
+  }
+}
+
+/* ส่วนประกอบของฟอร์มที่ใช้ซ้ำทุกหน้า แบบมินิมอล: ช่องพื้นเทาอ่อนไม่มีเส้นขอบ โฟกัสแล้วเป็นพื้นขาวขอบส้ม */
+@layer components {
+  /* เมนูด้านข้าง: เว้นรางบนล่างกว้าง แถบเลื่อนจึงสั้นลงตามสัดส่วน (สีและรูปทรงใช้กติกาเดียวกับทั้งเว็บด้านล่างไฟล์) */
+  .tf-scroll::-webkit-scrollbar-track { margin: 48px 0; }
+  .tf-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 1rem;
+    background: var(--color-field);
+    color: var(--color-ink);
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
+  }
+  .tf-input::placeholder { color: #A1A1AA; }
+  .tf-input:hover:not(:disabled):not(:focus) { background: #EFECE9; }
+  .tf-input:focus { outline: none; background: var(--color-surface); border-color: var(--color-orange); box-shadow: 0 0 0 4px var(--color-orange-pale); }
+  .tf-input[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-soft); }
+  .tf-input[aria-invalid="true"]:focus { background: var(--color-surface); box-shadow: 0 0 0 4px var(--color-danger-soft); }
+  .tf-input:disabled { color: var(--color-ink-soft); cursor: not-allowed; opacity: .7; }
+  /* Edge วาดปุ่มรูปตา/กากบาทของตัวเองในช่องรหัสผ่าน ซ่อนทิ้งเพราะเรามีปุ่มของเราเองแล้ว (ไม่งั้นซ้อนกันสองอัน) */
+  .tf-input::-ms-reveal, .tf-input::-ms-clear { display: none; }
+
+  .tf-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--font-display); font-weight: 500; font-size: 1.03125rem; padding: 12px 22px; border-radius: 12px;
+    border: 1.5px solid transparent; cursor: pointer; white-space: nowrap;
+    transition: transform .2s var(--ease-pop), box-shadow .2s, background-color .2s, border-color .2s, opacity .2s;
+  }
+  /* ปุ่มเต็มความกว้างไม่มีที่ให้ย้าย ยอมตัดบรรทัดดีกว่าล้นจอ */
+  .tf-btn.w-full { white-space: normal; text-wrap: balance; }
+  .tf-btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .tf-btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
+  .tf-btn:disabled { opacity: .6; cursor: progress; }
+  .tf-btn-solid { background: var(--color-orange); color: #fff; box-shadow: var(--shadow-brand); }
+  .tf-btn-solid:hover:not(:disabled) { background: var(--color-orange-deep); }
+  .tf-btn-ghost { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-line); }
+  /* ปุ่มแคปซูลสีดำ / เทาอ่อน ของหน้าแดชบอร์ด */
+  .tf-btn-dark { background: var(--color-ink); color: #fff; border-radius: 999px; box-shadow: 0 10px 24px -14px rgba(24,24,27,.7); }
+  .tf-btn-dark:hover:not(:disabled) { background: #000; }
+  .tf-btn-soft { background: var(--color-tile); color: var(--color-ink); border-radius: 999px; }
+  .tf-btn-soft:hover:not(:disabled) { background: #EBEAE8; }
+  .tf-btn-ghost:hover:not(:disabled) { border-color: var(--color-ink); }
+  /* ปุ่มบนแผงสีส้ม */
+  .tf-btn-outline-light { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .85); padding-inline: 34px; }
+  .tf-btn-outline-light:hover:not(:disabled) { background: #fff; color: var(--color-orange-deep); }
+
+  /* ตัวเลือกแบบปุ่มเรียงกัน (radio) */
+  /* ข้อความไม่ตัดบรรทัดกลางคำ (ภาษาไทยตัดตรงพยางค์ได้ เช่น "ฟรีแลน|ซ์") ที่ไม่พอให้ทั้งปุ่มลงบรรทัดใหม่ */
+  .tf-seg { position: relative; flex: 1 1 auto; min-width: 0; white-space: nowrap; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 12px 14px; border: 1.5px solid transparent; border-radius: 12px; background: var(--color-field); cursor: pointer;
+    font-size: 0.96875rem; font-weight: 500; transition: border-color .2s, background-color .2s, color .2s; }
+  .tf-seg:hover { background: #EFECE9; }
+  .tf-seg input { position: absolute; width: 0; height: 0; opacity: 0; }
+  .tf-seg::after { content: ""; width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid #D4D0CC; background: var(--color-surface); transition: background .2s, border-color .2s; }
+  .tf-seg:has(input:checked) { border-color: var(--color-orange); background: var(--color-orange-pale); color: var(--color-orange-deep); }
+  .tf-seg:has(input:checked)::after { border-color: var(--color-orange); background: radial-gradient(circle, #fff 0 3px, var(--color-orange) 3.5px); }
+  .tf-seg:has(input:focus-visible) { outline: 2px solid var(--color-orange); outline-offset: 2px; }
+
+  /* การ์ดเลือกบทบาท และรายการความยินยอม */
+  .tf-choice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1.5px solid var(--color-line);
+    border-radius: 14px; background: var(--color-surface); cursor: pointer; transition: border-color .2s, background-color .2s, transform .2s var(--ease-pop); }
+  .tf-choice:hover { border-color: var(--color-orange-soft); }
+  .tf-choice:active { transform: scale(.99); }
+  /*
+   * วาดวงกลม/กล่องติ๊กเอง ไม่ใช้หน้าตาเริ่มต้นของเบราว์เซอร์
+   * accent-color ทำให้ Chrome วาด radio ที่เลือกแล้วเป็นวงสีส้มพร้อม "ขอบเข้มรอบนอก"
+   * ซึ่งดูเหมือนวงดำแปลกปลอม และแต่ละเบราว์เซอร์/ระบบปฏิบัติการก็วาดไม่เหมือนกัน
+   * ใช้รูปทรงชุดเดียวกับ .tf-seg ด้านบน หน้าตาทั้งเว็บจะได้ตรงกัน
+   */
+  .tf-choice input {
+    appearance: none; -webkit-appearance: none;
+    margin-top: 2px; flex-shrink: 0; width: 18px; height: 18px;
+    border: 1.5px solid #D4D0CC; background: var(--color-surface); cursor: pointer;
+    transition: border-color .2s, background-color .2s;
+  }
+  .tf-choice input[type="radio"] { border-radius: 50%; }
+  .tf-choice input[type="checkbox"] { border-radius: 5px; }
+  .tf-choice input:checked { border-color: var(--color-orange); }
+  .tf-choice input[type="radio"]:checked { background: radial-gradient(circle, #fff 0 3px, var(--color-orange) 3.5px); }
+  .tf-choice input[type="checkbox"]:checked {
+    background-color: var(--color-orange);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center; background-size: 13px;
+  }
+  .tf-choice input:disabled { cursor: not-allowed; opacity: .55; }
+  .tf-choice:has(input:checked) { border-color: var(--color-orange); background: var(--color-orange-pale); }
+
+  /* ช่อง OTP แยกหลัก */
+  .tf-otp-cell {
+    width: 100%; aspect-ratio: 5 / 6; max-width: 56px; border-radius: 14px; border: 1.5px solid transparent;
+    background: var(--color-field); text-align: center; font-family: var(--font-mono); font-weight: 600; font-size: 1.5rem;
+    color: var(--color-ink); caret-color: var(--color-orange);
+    transition: border-color .2s, background-color .2s, box-shadow .2s, transform .2s var(--ease-pop);
+  }
+  .tf-otp-cell:focus { outline: none; background: var(--color-surface); border-color: var(--color-orange); box-shadow: 0 0 0 4px var(--color-orange-pale); transform: translateY(-2px); }
+  .tf-otp-cell[data-filled="true"] { background: var(--color-surface); border-color: var(--color-line); animation: tf-otp-pop .28s var(--ease-pop); }
+  .tf-otp-cell[data-filled="true"]:focus { border-color: var(--color-orange); }
+  .tf-otp[data-state="error"] .tf-otp-cell { border-color: var(--color-danger); background: var(--color-danger-soft); }
+  .tf-otp[data-state="error"] { animation: tf-shake .42s ease; }
+  .tf-otp[data-state="success"] .tf-otp-cell { border-color: var(--color-ok); background: var(--color-ok-soft); color: var(--color-ok); }
+}
+
+/* ลายเส้นทแยง ใช้กับแท่งกราฟและแถบความคืบหน้า */
+.tf-hatch { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 3px, transparent 3px 7px); }
+.tf-hatch-muted { background-image: repeating-linear-gradient(135deg, #E4E2DF 0 2px, transparent 2px 7px); }
+
+/* ---------- อนิเมชัน ---------- */
+@keyframes tf-step-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.tf-step-in { animation: tf-step-in .4s var(--ease-slide) both; }
+@keyframes tf-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.tf-reveal { animation: tf-reveal .25s ease both; }
+@keyframes tf-pop { from { opacity: 0; transform: translateY(12px) scale(.94); } to { opacity: 1; transform: none; } }
+.tf-pop { animation: tf-pop .36s var(--ease-pop) both; }
+@keyframes tf-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.tf-fade-up { animation: tf-fade-up .55s var(--ease-slide) both; }
+.tf-fade-up-late { animation: tf-fade-up .55s .18s var(--ease-slide) both; }
+@keyframes tf-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-12px) rotate(1deg); } }
+.tf-float { animation: tf-float 5s ease-in-out infinite; }
+@keyframes tf-otp-pop { 0% { transform: scale(.85); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes tf-shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-7px); } 40%, 60% { transform: translateX(7px); } }
+@keyframes tf-success-in { 0% { opacity: 0; transform: scale(.6) translateY(20px); } 60% { opacity: 1; transform: scale(1.05) translateY(-4px); } 100% { transform: none; } }
+.tf-success-in { animation: tf-success-in .7s var(--ease-pop) both; }
+@keyframes tf-ring { from { transform: scale(.6); opacity: .55; } to { transform: scale(1.5); opacity: 0; } }
+.tf-ring { animation: tf-ring 1.6s ease-out infinite; }
+@keyframes tf-drawer { from { transform: translateX(-100%); } to { transform: none; } }
+.tf-drawer-in { animation: tf-drawer .35s var(--ease-slide) both; }
+@keyframes tf-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes tf-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes tf-check-draw { to { stroke-dashoffset: 0; } }
+/* แถบขั้นตอน: วงแสงรอบขั้นปัจจุบัน และเครื่องหมายถูกของขั้นที่ผ่านแล้ววาดเส้นเอง */
+@keyframes tf-step-pulse { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.75); opacity: 0; } }
+.tf-step-now::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--color-orange); animation: tf-step-pulse 1.8s ease-out infinite; }
+.tf-check-draw { stroke-dasharray: 16; stroke-dashoffset: 16; animation: tf-check-draw .45s .25s ease-out forwards; }
+@keyframes tf-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/*
+ * การ์ด/แถวที่มี "สีประจำประเภทเอกสาร" ส่งสีเข้ามาทาง --tone (inline style)
+ * ชี้เมาส์แล้วยกตัวขึ้น เงาเป็นสีของเอกสารฉบับนั้น ขอบเรืองสีเดียวกัน แถบซ้ายกว้างขึ้น และไอคอนเด้งเล็กน้อย
+ */
+.tf-tone { --tone: #78716C; transition: transform .24s var(--ease-pop), box-shadow .24s ease, background-color .24s ease; }
+.tf-tone:hover { transform: translateY(-2px); box-shadow: 0 20px 38px -22px var(--tone), inset 0 0 0 1.5px var(--tone); }
+.tf-tone:active { transform: translateY(0) scale(.994); }
+.tf-tone[data-active="true"] { background: color-mix(in srgb, var(--tone) 9%, var(--color-surface)); box-shadow: inset 0 0 0 2px var(--tone), 0 16px 34px -20px var(--tone); }
+.tf-tone[data-active="true"]:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 2px var(--tone), 0 22px 42px -20px var(--tone); }
+.tf-tone-bar { background: var(--tone); transition: width .24s var(--ease-pop); }
+.tf-tone:hover .tf-tone-bar, .tf-tone[data-active="true"] .tf-tone-bar { width: 6px; }
+.tf-tone-ico { color: var(--tone-ink, var(--tone)); transition: transform .24s var(--ease-pop); }
+.tf-tone:hover .tf-tone-ico { transform: scale(1.14) rotate(-3deg); }
+/* แถวในตาราง: ใช้เส้นสีซ้ายกับพื้นอ่อนแทนการยกตัว (แถวตารางยกตัวแล้วเส้นตารางเพี้ยน) */
+.tf-tone-tr { --tone: #78716C; box-shadow: inset 3px 0 0 -3px var(--tone); transition: background-color .2s ease, box-shadow .24s var(--ease-pop); }
+.tf-tone-tr:hover { background: color-mix(in srgb, var(--tone) 7%, var(--color-surface)); box-shadow: inset 4px 0 0 0 var(--tone); }
+.tf-tone-tr .tf-tone-ico { transition: transform .24s var(--ease-pop); }
+.tf-tone-tr:hover .tf-tone-ico { transform: scale(1.14) rotate(-3deg); }
+
+/* ---------------------------------------------------------------------------
+ * Animated State Icons: ไอคอนเคลื่อนไหวตามสถานะ (ดู Icon.jsx)
+ * เล่นเมื่อแม่ที่มี .tf-anim-host ถูกชี้ / โฟกัสด้วยคีย์บอร์ด / เป็นหน้าปัจจุบัน (aria-current=page เล่นครั้งเดียวตอนเข้า)
+ * แต่ละไอคอนมีท่าของตัวเองตามความหมาย และขยับเฉพาะส่วนที่สื่อความหมาย (เช่น ลูกศรของปุ่มออกจากระบบ)
+ * --------------------------------------------------------------------------- */
+.tf-ico > * { transform-box: fill-box; transform-origin: center; }
+
+@keyframes tf-ico-pop { 0%, 100% { transform: scale(1); } 45% { transform: scale(.72); } 75% { transform: scale(1.12); } }
+@keyframes tf-ico-bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-2.5px); } 70% { transform: translateY(1px); } }
+@keyframes tf-ico-swing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(3deg); } }
+@keyframes tf-ico-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-9deg); } 50% { transform: rotate(7deg); } 75% { transform: rotate(-3deg); } }
+@keyframes tf-ico-spin90 { from { transform: rotate(0); } to { transform: rotate(90deg); } }
+@keyframes tf-ico-draw { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+@keyframes tf-ico-nudge-l { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(-3px); } }
+@keyframes tf-ico-nudge-r { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(3px); } }
+@keyframes tf-ico-nudge-d { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(2.5px); } }
+@keyframes tf-ico-nudge-ur { 0%, 100% { transform: translate(0, 0); } 45% { transform: translate(2px, -2px); } }
+@keyframes tf-ico-flap { 0%, 100% { transform: scaleY(1); } 40% { transform: scaleY(-.6); } }
+@keyframes tf-ico-hand { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+/* กระดิ่งมีแจ้งเตือนใหม่: สั่นเป็นระยะทุก 4 วินาที (ช่วงท้ายของรอบนิ่ง) */
+@keyframes tf-ico-alert { 0%, 72%, 100% { transform: rotate(0); } 76% { transform: rotate(16deg); } 80% { transform: rotate(-14deg); } 84% { transform: rotate(10deg); } 88% { transform: rotate(-6deg); } 92% { transform: rotate(3deg); } }
+
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="grid"] > * { animation: tf-ico-pop .55s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="grid"] > :nth-child(2) { animation-delay: .06s; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="grid"] > :nth-child(3) { animation-delay: .12s; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="grid"] > :nth-child(4) { animation-delay: .18s; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="calendar"] { animation: tf-ico-bob .5s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="calendar"] > :nth-child(4) { stroke-dasharray: 40; animation: tf-ico-draw .6s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="trend"] > :nth-child(2) { stroke-dasharray: 40; animation: tf-ico-draw .8s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="plus"] { animation: tf-ico-spin90 .4s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="inbox"] > :nth-child(2) { transform-origin: top; animation: tf-ico-flap .5s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="file"] > :nth-child(n+3) { stroke-dasharray: 40; animation: tf-ico-draw .6s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="book"] { animation: tf-ico-wiggle .5s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="shield"] { animation: tf-ico-pop .5s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="shield"] > :nth-child(2) { stroke-dasharray: 40; animation: tf-ico-draw .5s .15s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico:is([data-icon="users"], [data-icon="user"]) { animation: tf-ico-bob .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico:is([data-icon="receipt"], [data-icon="search"]) { animation: tf-ico-wiggle .5s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="download"] > :nth-child(n+2) { animation: tf-ico-nudge-d .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="external"] > :nth-child(n+2) { animation: tf-ico-nudge-ur .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="logout"] > :nth-child(n+2) { animation: tf-ico-nudge-r .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="sidebar"] > :nth-child(3) { animation: tf-ico-nudge-l .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="collapse"] > * { animation: tf-ico-nudge-l .5s ease both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="collapse"] > :nth-child(2) { animation-delay: .07s; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico:is([data-icon="arrow"], [data-icon="chevron"]) { animation: tf-ico-nudge-r .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico[data-icon="clock"] > :nth-child(2) { transform-box: view-box; transform-origin: 12px 12px; animation: tf-ico-hand .7s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-ico:is([data-icon="info"], [data-icon="wallet"], [data-icon="table"], [data-icon="menu"]) { animation: tf-ico-bob .45s ease both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="sun"] { animation: tf-ico-hand 1s ease both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="moon"] { animation: tf-ico-wiggle .6s ease both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="calc"] > :nth-child(n+2) { animation: tf-ico-pop .45s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="calc"] > :nth-child(3) { animation-delay: .07s; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="calc"] > :nth-child(4) { animation-delay: .14s; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="calc"] > :nth-child(5) { animation-delay: .21s; }
+/* เครื่องคิดเลขแบบมีสีสัน: กรอบส้มพื้นส้มอ่อน เครื่องหมายแต่ละตัวคนละสี (+ ส้ม · − ฟ้า · × เขียว · = ม่วง) */
+.tf-ico-colorful[data-icon="calc"] > :nth-child(1) { fill: var(--color-orange-pale); stroke: var(--color-orange); }
+.tf-ico-colorful[data-icon="calc"] > :nth-child(2) { stroke: #FF6A00; }
+.tf-ico-colorful[data-icon="calc"] > :nth-child(3) { stroke: #2A78D6; }
+.tf-ico-colorful[data-icon="calc"] > :nth-child(4) { stroke: #1BAF7A; }
+.tf-ico-colorful[data-icon="calc"] > :nth-child(5) { stroke: #8B5CF6; }
+html[data-theme="dark"] .tf-ico-colorful[data-icon="calc"] > :nth-child(3) { stroke: #6AA8F0; }
+html[data-theme="dark"] .tf-ico-colorful[data-icon="calc"] > :nth-child(5) { stroke: #A78BFA; }
+/* ไอคอนเครื่องคิดเลขแบบแอป (CalcAppIcon): ชี้แล้วปุ่มถูกกดทีละปุ่ม + → − → × → = แล้ว = เรืองแสง */
+.tf-calc-key { transform-box: fill-box; transform-origin: center; }
+@keyframes tf-calc-press { 0%, 100% { transform: scale(1); filter: brightness(1); } 40% { transform: scale(.78); filter: brightness(.85); } 70% { transform: scale(1.06); } }
+@keyframes tf-calc-glow { 0%, 100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 149, 0, 0)); } 50% { filter: brightness(1.15) drop-shadow(0 0 3px rgba(255, 149, 0, .9)); } }
+.tf-anim-host:is(:hover, :focus-visible) .tf-calc-key { animation: tf-calc-press .32s var(--ease-pop) both; animation-delay: calc(var(--i) * .09s); }
+.tf-anim-host:is(:hover, :focus-visible) .tf-calc-eq { animation: tf-calc-press .32s var(--ease-pop) both, tf-calc-glow .6s ease .55s both; animation-delay: .27s, .55s; }
+/* ป้ายจำนวนแจ้งเตือน: เด้งเข้า + วงกระเพื่อมทุก 2.4 วินาที */
+@keyframes tf-badge-pop { 0% { transform: scale(0); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes tf-badge-ping { 0% { transform: scale(1); opacity: .55; } 70%, 100% { transform: scale(2); opacity: 0; } }
+.tf-badge-pop { animation: tf-badge-pop .45s var(--ease-pop) both; }
+.tf-badge-ping { animation: tf-badge-ping 2.4s cubic-bezier(0, 0, .2, 1) .5s infinite; }
+/* ไอคอนภาพประกอบเมนูหลัก (NavArt): สีเรียบ 2 โทน + การเคลื่อนไหวตามสถานะ */
+/* ไอคอนภาพประกอบเมนู: โทนส้ม-ขาวล้วน (เส้นส้มเข้ม ไม่มีสีดำ/เทา) */
+:root { --na-line: #E85A00; --na-paper: #FFFFFF; --na-accent: #FF8A3D; --na-soft: #FFDCC2; --na-mute: #FFE9D9; }
+.tf-na > *, .tf-na g > * { transform-box: fill-box; }
+.tf-na .na-bar { transform-origin: bottom; }
+.tf-na .na-day, .tf-na .na-dot { transform-origin: center; }
+.tf-na .na-flip { transform-box: fill-box; transform-origin: top; }
+@keyframes tf-na-grow { 0% { transform: scaleY(.15); } 70% { transform: scaleY(1.08); } 100% { transform: scaleY(1); } }
+@keyframes tf-na-donut { from { stroke-dasharray: 0 10; } to { stroke-dasharray: 6.5 10; } }
+@keyframes tf-na-draw { from { stroke-dasharray: 0 10; } to { stroke-dasharray: 10 10; } }
+@keyframes tf-na-flip { 0%, 100% { transform: perspective(40px) rotateX(0); } 45% { transform: perspective(40px) rotateX(-55deg); } }
+@keyframes tf-na-pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-bar { animation: tf-na-grow .5s var(--ease-pop) both; animation-delay: calc(var(--i) * .08s); }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-donut { animation: tf-na-donut .7s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-line { animation: tf-na-draw .7s ease .2s both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-dot { animation: tf-na-pop .4s var(--ease-pop) both; animation-delay: calc(.35s + var(--i) * .1s); }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-flip { animation: tf-na-flip .6s ease both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-day { animation: tf-na-pop .45s var(--ease-pop) .35s both; }
+/* กล่องรับเอกสาร (แฟ้มทรง FolderCard)
+   ชี้/โฟกัส/หน้าปัจจุบัน: แผ่นหน้าแฟ้มเลื่อนลง ปกขยาย เอกสารลอยขึ้นเอียงเล็กน้อย แล้วเด้งคืนแบบสปริง
+   มีงานรอ (ตัวเลขบนเมนู): เอกสารโผล่ขึ้นจากแฟ้มเป็นจังหวะเบา ๆ ทุก 3 วินาที บอกว่ามีของเข้ามา */
+.tf-na .na-cover { transform-origin: bottom; }
+.tf-na .na-doc { transform-origin: 50% 100%; }
+@keyframes tf-na-panel { 0% { transform: translateY(0); } 40% { transform: translateY(3px); } 70% { transform: translateY(-.6px); } 100% { transform: translateY(0); } }
+@keyframes tf-na-cover { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes tf-na-rise { 0% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-3.5px) rotate(-7deg); } 70% { transform: translateY(.5px) rotate(2deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes tf-na-peek { 0%, 62%, 100% { transform: translateY(0) rotate(0); } 72% { transform: translateY(-2.6px) rotate(-5deg); } 82% { transform: translateY(.3px) rotate(1deg); } 90% { transform: translateY(0) rotate(0); } }
+.tf-na.na-alert .na-doc { animation: tf-na-peek 3s ease-in-out infinite; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-panel { animation: tf-na-panel .75s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-cover { animation: tf-na-cover .75s var(--ease-pop) both; }
+.tf-anim-host:is(:hover, :focus-visible, [aria-current="page"]) .tf-na .na-doc { animation: tf-na-rise .75s var(--ease-pop) .05s both; }
+/* กรอบไอคอนภาพประกอบตอนเป็นเมนูที่เลือก: ใช้พื้นส้มอ่อนแทนส้มทึบ (ภาพมีสีของตัวเองอยู่แล้ว) */
+.tf-nav[aria-current="page"] .tf-nav-tile:has(.tf-na) { background-color: var(--color-orange-pale) !important; border-color: var(--color-orange) !important; }
+/* ไอคอนปึกเอกสาร (DocArt): ชี้แล้วแผ่นหน้ายกเอียง แผ่นหลังเลื่อนออก บรรทัดเขียนใหม่ ป้ายเด้ง */
+:root { --da-line: #E85A00; }
+.tf-da .da-front, .tf-da .da-back, .tf-da .da-badge { transform-box: fill-box; transform-origin: center; transition: transform .35s var(--ease-pop); }
+.tf-da .da-front { transform-origin: 30% 100%; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-da .da-front { transform: translate(1.5px, -2.5px) rotate(4deg); }
+.tf-anim-host:is(:hover, :focus-visible) .tf-da .da-back { transform: translate(-1.5px, 1px) rotate(-5deg); }
+@keyframes tf-da-write { from { stroke-dasharray: 0 10; } to { stroke-dasharray: 10 10; } }
+.tf-anim-host:is(:hover, :focus-visible) .tf-da .da-line path:last-child { animation: tf-da-write .4s ease both; animation-delay: calc(.12s + var(--i) * .08s); }
+.tf-anim-host:is(:hover, :focus-visible) .tf-da .da-badge { animation: tf-na-pop .4s var(--ease-pop) .1s both; }
+/* กระดิ่ง: แกว่งจากจุดแขวนด้านบน */
+.tf-ico[data-icon="bell"] { transform-origin: 50% 12%; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico[data-icon="bell"] { animation: tf-ico-swing .7s ease both; }
+.tf-ico-alert[data-icon="bell"] { animation: tf-ico-alert 4s ease-in-out infinite; }
+.tf-anim-host:is(:hover, :focus-visible) .tf-ico-alert[data-icon="bell"] { animation: tf-ico-swing .7s ease both; }
+
+/* เมนูข้าง: ปฏิกิริยาตอนเลือก · แถบส้มด้านซ้ายยืดเข้า · กรอบไอคอนเด้ง + วงกระเพื่อมสีส้มหนึ่งครั้ง */
+.tf-nav[aria-current="page"]::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--color-orange); animation: tf-nav-bar .35s var(--ease-pop) both;
+}
+.tf-nav[aria-current="page"] .tf-nav-tile { animation: tf-nav-pop .45s var(--ease-pop) both, tf-nav-ripple .7s ease-out both; }
+@keyframes tf-nav-bar { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes tf-nav-pop { 0% { transform: scale(.82); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes tf-nav-ripple { 0% { box-shadow: 0 0 0 0 rgba(255, 106, 0, .45); } 100% { box-shadow: 0 0 0 10px rgba(255, 106, 0, 0); } }
+
+/* ป้ายตอนชี้เมาส์ทั้งเว็บใช้หน้าตาเดียวกัน: พื้นเข้มมุมมน ตัวอักษร 13px หัวลูกศร ค่อย ๆ ปรากฏ · โหมดกลางคืนกลับสี
+   .tf-tip     = ป้ายจาก title (TooltipLayer.jsx) วางแบบ fixed เหนือ/ใต้ element
+   .tf-tip-box = ป้ายข้อมูลในกราฟ (วางเองด้วย absolute) หัวลูกศรชี้ลงตรงกลาง เลื่อนได้ด้วย --arrow-x หรือ --arrow-left */
+.tf-tip, .tf-tip-box {
+  padding: 6px 11px; border-radius: 10px; background: #1F1C1A; color: #fff;
+  font-size: .8125rem; font-weight: 500; line-height: 1.45; pointer-events: none;
+  box-shadow: 0 12px 28px -12px rgba(24, 24, 27, .55);
+}
+.tf-tip::after, .tf-tip-box::after {
+  content: ''; position: absolute; left: var(--arrow-left, calc(50% + var(--arrow-x, 0px))); top: 100%; width: 9px; height: 9px;
+  background: inherit; border-radius: 2px; transform: translate(-50%, -55%) rotate(45deg);
+}
+.tf-tip {
+  position: fixed; z-index: 600; transform: translate(-50%, -100%); max-width: min(320px, calc(100vw - 16px));
+  text-align: center; white-space: pre-line; animation: tf-tip-in .16s ease-out both;
+}
+.tf-tip-box { padding: 8px 12px; text-align: left; white-space: nowrap; animation: tf-tip-fade .16s ease-out both; }
+.tf-tip-box .tf-tip-muted { color: rgba(255, 255, 255, .6); }
+.tf-tip-below { transform: translate(-50%, 0); animation-name: tf-tip-in-below; }
+.tf-tip-below::after { top: 0; transform: translate(-50%, -45%) rotate(45deg); }
+.tf-tip-right { transform: translate(0, -50%); text-align: left; white-space: nowrap; animation-name: tf-tip-in-right; }
+.tf-tip-right::after { left: 0; top: 50%; transform: translate(-45%, -50%) rotate(45deg); }
+/* ป้ายต้องมองเห็นตั้งแต่เฟรมแรกเสมอ (ไม่เริ่มจากโปร่งใส) แม้เบราว์เซอร์จะหยุด/ปิดอนิเมชันไว้ · เคลื่อนแค่ตำแหน่งเล็กน้อย */
+@keyframes tf-tip-in-right { from { transform: translate(-4px, -50%) scale(.96); } to { transform: translate(0, -50%) scale(1); } }
+html[data-theme="dark"] :is(.tf-tip, .tf-tip-box) { background: #F3F1EF; color: #1C1A19; box-shadow: 0 12px 28px -12px rgba(0, 0, 0, .8); }
+html[data-theme="dark"] .tf-tip-box .tf-tip-muted { color: rgba(28, 26, 25, .6); }
+@keyframes tf-tip-fade { from { transform: translateY(2px); } to { transform: translateY(0); } }
+@keyframes tf-tip-in { from { transform: translate(-50%, calc(-100% + 4px)) scale(.96); } to { transform: translate(-50%, -100%) scale(1); } }
+@keyframes tf-tip-in-below { from { transform: translate(-50%, -4px) scale(.96); } to { transform: translate(-50%, 0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-step-in, .tf-reveal, .tf-pop, .tf-fade-up, .tf-fade-up-late, .tf-float, .tf-success-in, .tf-ring,
+  .tf-drawer-in, .tf-otp[data-state="error"], .tf-otp-cell[data-filled="true"] { animation: none !important; }
+  .tf-ico, .tf-ico > *, .tf-nav::before, .tf-nav .tf-nav-tile, .tf-calc-key, .tf-badge-pop, .tf-badge-ping, .tf-na *, .tf-tip, .tf-tip-box, .tf-da * { animation: none !important; transition: none !important; }
+  .tf-btn, .tf-btn:hover:not(:disabled), .tf-otp-cell:focus { transform: none; transition: none; }
+  .tf-tone, .tf-tone:hover, .tf-tone:active, .tf-tone[data-active="true"]:hover,
+  .tf-tone:hover .tf-tone-ico, .tf-tone-tr:hover .tf-tone-ico { transform: none; }
+  .tf-tone, .tf-tone-bar, .tf-tone-ico, .tf-tone-tr { transition: none; }
+  .tf-auth-slide { transition: none !important; }
+  .tf-step-now::before { animation: none; opacity: 0; }
+  .tf-check-draw { animation: none; stroke-dashoffset: 0; }
+}
+
+
+/* ลายจุดตกแต่งการ์ด (แบบการ์ดสถิติ) ค่อย ๆ จางไปทางซ้าย ไม่รบกวนตัวเลข · .tf-dots-light ใช้บนพื้นสีเข้ม */
+.tf-dots, .tf-dots-light {
+  position: absolute; inset: 0; pointer-events: none;
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(100deg, transparent 30%, #000 90%);
+  mask-image: linear-gradient(100deg, transparent 30%, #000 90%);
+}
+.tf-dots { background-image: radial-gradient(circle, rgba(24, 24, 27, 0.075) 1.5px, transparent 1.7px); }
+.tf-dots-light { background-image: radial-gradient(circle, rgba(255, 255, 255, 0.16) 1.5px, transparent 1.7px); }
+
+/* แถบเลื่อนแบบมินิมอล ใช้เหมือนกันทุกจุดทั้งเว็บ: บาง สีเทาอ่อน ปลายมน รางโปร่งใส
+   Chrome/Edge/Safari ใช้ ::-webkit-scrollbar · Firefox ใช้ scrollbar-width/color
+   ห้ามใส่ scrollbar-width/scrollbar-color ให้ Chrome เพราะ Chrome 121+ จะเลิกใช้ ::-webkit-scrollbar ทันที
+   (จุดที่ตั้งใจซ่อนแถบเลื่อนใช้ [scrollbar-width:none] ได้ตามเดิม) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: #D6D3D1; border: 2px solid transparent; border-radius: 999px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: #A8A29E; }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: #D6D3D1 transparent; }
+}
