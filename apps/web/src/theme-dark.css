@@ -38,6 +38,8 @@ html[data-theme="dark"] .bg-ink.text-white, html[data-theme="dark"] .tf-btn-dark
 /* คลาสพื้นขาวแบบบังคับ (!bg-white) เช่น ช่องค้นหาบนแถบบน ต้องบังคับกลับด้วย !important */
 /* !important ในเลเยอร์ชนะ !important นอกเลเยอร์ จึงต้องประกาศไว้ใน layer utilities เดียวกับ Tailwind */
 @layer utilities { html[data-theme="dark"] .\!bg-white { background-color: var(--color-surface) !important; } }
+/* กระดาษลายเซ็น (ช่องวาดลายเซ็นและรูปลายเซ็น) ต้องเป็นพื้นขาวเสมอ เส้นหมึกสีดำจึงมองเห็นในโหมดกลางคืน */
+@layer utilities { html[data-theme="dark"] .tf-sign-paper { background-color: #FFFFFF !important; border-color: #6E6863; } }
 
 /* ส่วนประกอบใน index.css ที่ใช้สีตายตัว */
 html[data-theme="dark"] .tf-input:hover:not(:disabled):not(:focus),

@@ -490,7 +490,7 @@ function InfoTab({ d, onStatus, onDelete, onDuplicate, onGoSend, onNextDoc }) {
           {d.signature && (
             <Field label="ลายเซ็นผู้ออกเอกสาร" icon={ICON.pen} className="sm:col-span-2">
               <span className="flex items-center gap-3">
-                {d.signature.image && <img src={d.signature.image} alt="" className="h-12 w-auto rounded-lg bg-tile px-3 py-1" />}
+                {d.signature.image && <img src={d.signature.image} alt="" className="tf-sign-paper h-12 w-auto rounded-lg bg-tile px-3 py-1" />}
                 <span>{d.signature.signerName}<span className="mt-0.5 block text-[0.875rem] font-normal text-ink-soft">ลงนามเมื่อ {thDateTime(d.signature.signedAt)}</span></span>
               </span>
             </Field>
@@ -662,7 +662,7 @@ function SignTab({ d, onChanged, setOtp, setConfirm }) {
             <small className="block text-[0.875rem] text-ink-soft">มาตรฐาน {d.signatureStandard || 'จำลอง'}</small>
           </div>
         </div>
-        {d.signature.image && <img src={d.signature.image} alt="ลายเซ็น" className="mb-3 max-h-28 w-auto rounded-xl border border-line bg-white p-2" />}
+        {d.signature.image && <img src={d.signature.image} alt="ลายเซ็น" className="tf-sign-paper mb-3 max-h-28 w-auto rounded-xl border border-line bg-white p-2" />}
         <Row label="ผู้ลงนาม">{d.signature.signerName}</Row>
         <Row label="วันและเวลาที่ลงนาม">{thDateTime(d.signature.signedAt)}</Row>
       </>

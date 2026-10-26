@@ -12,13 +12,14 @@ import GoogleButton from '../features/auth/GoogleButton.jsx';
 import { authApi } from '../features/auth/authApi.js';
 import { clearGoogleSignup, loadGoogleSignup } from '../features/auth/googleSignup.js';
 import { saveOtpSession } from '../features/auth/otpSession.js';
+import { clearRegisterDraft, loadRegisterDraft, saveRegisterDraft } from '../features/auth/registerDraft.js';
 import { useMe } from '../features/auth/useMe.js';
 import {
   EMPTY_REGISTER_FORM, SERVER_FIELD, buildRegisterBody, checkRegisterField, digitsOnly, isJuristic,
   STEP2_KEYS, missingRequiredConsent, normalizeEmail, passwordErrors, passwordRules, passwordStrength, step2Errors,
 } from '../features/auth/validation.js';
 import { ROLE_LABEL } from '../lib/home.js';
-import { Alert, Button, SegGroup, SelectField, Spinner, StepBar, TextField, cx } from '../components/ui.jsx';
+import { Alert, BackButton, Button, SegGroup, SelectField, Spinner, StepBar, TextField, cx } from '../components/ui.jsx';
 import { AddressCascade } from '../features/address/AddressFields.jsx';
 import BankField from '../components/BankField.jsx';
 
@@ -74,8 +75,10 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const me = useMe();
   const meta = useQuery({ queryKey: ['meta', 'profile-options'], queryFn: authApi.profileOptions, staleTime: Infinity });
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState(() => ({ ...EMPTY_REGISTER_FORM }));
+  // ข้อมูลที่เคยกรอกไว้ในเครื่องนี้ (ยกเว้นรหัสผ่าน) กลับมาแล้วกรอกต่อจากขั้นเดิมได้เลย
+  const [restored, setRestored] = useState(() => loadRegisterDraft());
+  const [step, setStep] = useState(() => (restored ? Math.min(Math.max(Number(restored.step) || 1, 1), 3) : 1));
+  const [form, setForm] = useState(() => ({ ...EMPTY_REGISTER_FORM, ...(restored ? restored.form : {}) }));
   const [errs, setErrs] = useState({});
   const [avail, setAvail] = useState({}); // { email: { v, taken }, taxId: { v, taken } }
   const [formError, setFormError] = useState('');
@@ -103,6 +106,17 @@ export default function RegisterPage() {
       companyType: f.companyType || meta.data.companyTypes[0] || '',
     }));
   }, [meta.data]);
+
+  useEffect(() => { saveRegisterDraft(form, step); }, [form, step]);
+
+  function startOver() {
+    clearRegisterDraft();
+    setRestored(null);
+    setForm({ ...EMPTY_REGISTER_FORM, consent: meta.data ? meta.data.consentPurposes.filter((p) => p.required).map((p) => p.key) : null, companyType: meta.data ? meta.data.companyTypes[0] || '' : '' });
+    setErrs({});
+    setAvail({});
+    setStep(1);
+  }
 
   // ช่องที่เคยฟ้องแล้ว ตรวจซ้ำทุกครั้งที่ข้อมูลเปลี่ยน ข้อความจึงหายทันทีที่แก้ถูก (หน้าเดิมทำตอนพิมพ์)
   useEffect(() => {
@@ -262,9 +276,16 @@ export default function RegisterPage() {
 
   return (
     <>
+      {step > 1 && <div className="mb-3"><BackButton onClick={() => goto(step - 1)} disabled={pending}>ย้อนกลับ: ขั้นตอนที่ {step - 1}</BackButton></div>}
       <h1 className="mb-1.5 text-[1.875rem]">สมัครสมาชิก</h1>
       <p className="mb-6 text-[1rem] text-ink-soft">{STEP_SUB[step]}</p>
       <StepBar label="ขั้นตอนการสมัคร" steps={STEPS} current={step} />
+      {restored && (
+        <div className="tf-reveal mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-orange-pale px-4 py-3 text-[0.9375rem]">
+          <span className="min-w-[200px] flex-1">ดึงข้อมูลที่เคยกรอกไว้ในเครื่องนี้มาให้แล้ว (ยกเว้นรหัสผ่าน ต้องตั้งใหม่ตอนกดสมัคร)</span>
+          <button type="button" onClick={startOver} className="cursor-pointer font-semibold text-orange-deep underline-offset-2 hover:underline">เริ่มกรอกใหม่</button>
+        </div>
+      )}
       <Alert>{formError}</Alert>
       {meta.isError && (
         <Alert>
@@ -415,7 +436,6 @@ export default function RegisterPage() {
           {text('bankAcc', { label: 'ชื่อบัญชี', placeholder: 'ต้องตรงกับชื่อผู้ลงทะเบียน', hint: 'แสดงแบบปิดบางส่วนในหน้าจอทั่วไป', maxLength: 150 })}
 
           <div className="mt-1 flex gap-2">
-            <Button variant="ghost" onClick={() => goto(1)}>ย้อนกลับ</Button>
             <Button type="submit" className="flex-1">ถัดไป</Button>
           </div>
         </form>
@@ -527,7 +547,6 @@ export default function RegisterPage() {
           )}
 
           <div className="mt-4 flex gap-2">
-            <Button variant="ghost" onClick={() => goto(2)} disabled={pending}>ย้อนกลับ</Button>
             <Button type="submit" className="flex-1" loading={pending} disabled={!meta.data}>
               {pending ? 'กำลังสร้างบัญชี' : 'สร้างบัญชี'}
             </Button>

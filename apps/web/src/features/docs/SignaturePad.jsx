@@ -103,7 +103,7 @@ export default function SignaturePad({ savedItems, loadingSaved, onUseSaved, onD
           <div className="grid gap-3 sm:grid-cols-2">
             {savedItems.map((x) => (
               <div key={x.id} className="rounded-xl border border-line p-3 text-center">
-                <img src={x.image} alt={x.name} className="mx-auto h-16 w-auto" />
+                <img src={x.image} alt={x.name} className="tf-sign-paper mx-auto h-16 w-auto rounded-lg bg-white px-2" />
                 <p className="my-1.5 truncate text-[0.875rem] font-semibold">{x.name}</p>
                 <div className="flex justify-center gap-2">
                   <Button className="px-3 py-1.5 text-[0.875rem]" onClick={() => onUseSaved(x)}>ใช้ลงนาม</Button>
@@ -125,7 +125,7 @@ export default function SignaturePad({ savedItems, loadingSaved, onUseSaved, onD
             onPointerMove={move}
             onPointerUp={end}
             onPointerLeave={end}
-            className="w-full touch-none rounded-xl border-[1.5px] border-dashed border-line bg-white"
+            className="tf-sign-paper w-full touch-none rounded-xl border-[1.5px] border-dashed border-line bg-white"
             aria-label="พื้นที่วาดลายเซ็น"
           />
           <div className="mt-3 flex flex-wrap gap-2">
@@ -156,7 +156,7 @@ export default function SignaturePad({ savedItems, loadingSaved, onUseSaved, onD
           </div>
           {upload && (
             <div className="tf-reveal mt-3">
-              <img src={upload} alt="ตัวอย่างลายเซ็น" className="max-h-28 w-auto rounded-xl border border-line bg-white p-2" />
+              <img src={upload} alt="ตัวอย่างลายเซ็น" className="tf-sign-paper max-h-28 w-auto rounded-xl border border-line bg-white p-2" />
               <Button className="mt-3 px-4 py-2 text-[0.90625rem]" onClick={() => onSign(upload, '', keep)}>ลงลายมือชื่อดิจิทัลด้วยรูปนี้</Button>
             </div>
           )}

@@ -12,11 +12,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../features/auth/authApi.js';
 import OtpInput from '../features/auth/OtpInput.jsx';
 import { clearOtpSession, loadOtpSession, saveOtpSession } from '../features/auth/otpSession.js';
+import { clearRegisterDraft } from '../features/auth/registerDraft.js';
 import { ME_KEY } from '../features/auth/useMe.js';
 import { useCountdown } from '../features/auth/useCountdown.js';
 import { otpError } from '../features/auth/validation.js';
 import { homeUrl } from '../lib/home.js';
-import { Alert, Button } from '../components/ui.jsx';
+import { Alert, BackButton, Button } from '../components/ui.jsx';
 
 export const RESEND_COOLDOWN_SEC = 45;
 
@@ -57,6 +58,7 @@ export default function OtpPage() {
     try {
       const data = await authApi.verify(mode, ctx.otpId, value);
       clearOtpSession();
+      if (mode === 'register') clearRegisterDraft();
       queryClient.setQueryData(ME_KEY, { user: data.user });
       setDone({ user: data.user, isNew: mode === 'register' });
     } catch (err) {
@@ -91,9 +93,19 @@ export default function OtpPage() {
     clearOtpSession();
     void navigate('/login', { replace: true });
   }
+  // สมัครสมาชิกแต่ยังไม่พร้อมกรอก OTP: กลับไปหน้าสมัคร ข้อมูลที่กรอกไว้ยังอยู่ (registerDraft.js) กดสมัครใหม่ได้
+  function backToRegister() {
+    clearOtpSession();
+    void navigate('/register', { replace: true });
+  }
 
   return (
     <>
+      <div className="mb-4">
+        {mode === 'register'
+          ? <BackButton onClick={backToRegister}>กลับไปแก้ไขข้อมูลสมัคร</BackButton>
+          : <BackButton onClick={backToLogin}>กลับไปหน้าเข้าสู่ระบบ</BackButton>}
+      </div>
       <div className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-orange-pale text-orange">
         <svg aria-hidden="true" viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           {mode === 'totp' ? (
@@ -151,12 +163,6 @@ export default function OtpPage() {
           )}
         </p>
       )}
-      <Button variant="ghost" block onClick={backToLogin} className="mt-4">
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12.5 4.5 7 10l5.5 5.5" />
-        </svg>
-        กลับไปหน้าเข้าสู่ระบบ
-      </Button>
     </>
   );
 }

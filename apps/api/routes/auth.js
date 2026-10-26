@@ -21,14 +21,23 @@ api.post('/api/auth/check-available', async (req, res) => {
   const out = {};
   if (b.email !== undefined) {
     const email = String(b.email || '').trim().toLowerCase();
-    out.email = DS.FORMAT.email.re.test(email) ? { taken: !!(await store.whereOne('users', { email })) } : { invalid: true };
+    // บัญชีที่สมัครค้างไว้แต่ยังไม่ยืนยันอีเมล (ด้วยรหัสผ่าน) สมัครทับได้ จึงไม่นับว่าอีเมลถูกใช้แล้ว
+    out.email = DS.FORMAT.email.re.test(email) ? { taken: !reRegistrable(await store.whereOne('users', { email })) } : { invalid: true };
   }
   if (b.taxId !== undefined) {
     const taxId = thaiid.digitsOnly(b.taxId);
-    out.taxId = thaiid.isValidTaxId(taxId) ? { taken: !!(await store.findOne('users', (u) => u.taxId && u.taxId === taxId && !u.deleted)) } : { invalid: true };
+    out.taxId = thaiid.isValidTaxId(taxId) ? { taken: !!(await store.findOne('users', (u) => u.taxId && u.taxId === taxId && !u.deleted && !reRegistrable(u))) } : { invalid: true };
   }
   sendJson(res, 200, out);
 });
+
+/**
+ * บัญชีที่กรอกสมัครครบแล้วแต่ยังไม่ได้ยืนยัน OTP (สมัครด้วยรหัสผ่าน) ให้สมัครซ้ำด้วยอีเมลเดิมได้
+ * ผู้ใช้ที่ออกจากหน้า OTP ไปก่อนจะกลับมาแก้ข้อมูลแล้วกดสมัครใหม่ได้ ไม่ติด "อีเมลนี้ถูกใช้แล้ว"
+ * ปลอดภัยเพราะบัญชียังเปิดใช้ไม่ได้จนกว่าเจ้าของอีเมลตัวจริงจะกรอกรหัสที่ส่งไปทางอีเมล
+ * null (ไม่มีบัญชี) = ว่าง
+ */
+const reRegistrable = (u) => !u || (!u.emailVerified && !u.googleSub && !u.deleted);
 
 api.post('/api/auth/register', async (req, res) => {
   // ข้อ: ไม่มี rate limit ที่ register จำกัดจำนวนบัญชีที่สมัครได้ต่อ IP ต่อชั่วโมง
@@ -53,7 +62,8 @@ api.post('/api/auth/register', async (req, res) => {
     if (!/[A-Za-z]/.test(b.password) || !/\d/.test(b.password)) return sendJson(res, 400, { error: 'รหัสผ่านต้องมีทั้งตัวอักษรภาษาอังกฤษและตัวเลข', field: 'password' });
     if (b.passwordConfirm !== undefined && b.passwordConfirm !== b.password) return sendJson(res, 400, { error: 'รหัสผ่านทั้งสองช่องไม่ตรงกัน', field: 'password2' });
   }
-  if (await store.whereOne('users', { email })) return sendJson(res, 409, { error: 'อีเมลนี้ถูกใช้สมัครแล้ว กรุณาเข้าสู่ระบบ หรือใช้อีเมลอื่น', field: 'email' });
+  const existing = await store.whereOne('users', { email });
+  if (existing && (gs || !reRegistrable(existing))) return sendJson(res, 409, { error: 'อีเมลนี้ถูกใช้สมัครแล้ว กรุณาเข้าสู่ระบบ หรือใช้อีเมลอื่น', field: 'email' });
 
   // ห้ามสมัครเป็นผู้ดูแลระบบผ่านหน้าลงทะเบียน
   const role = ['agency', 'corporate', 'creator'].includes(b.role) ? b.role : 'creator';
@@ -70,18 +80,20 @@ api.post('/api/auth/register', async (req, res) => {
   const name = patch.entityType === 'juristic' ? patch.companyName : patch.displayName;
   if (!name) return sendJson(res, 400, { error: patch.entityType === 'juristic' ? 'กรุณากรอกชื่อนิติบุคคล' : 'กรุณากรอกชื่อ-นามสกุล' });
   if (!patch.taxId) return sendJson(res, 400, { error: 'กรุณากรอกเลขประจำตัวผู้เสียภาษี 13 หลัก' });
-  if (await store.findOne('users', (u) => u.taxId && u.taxId === patch.taxId)) {
+  if (await store.findOne('users', (u) => u.taxId && u.taxId === patch.taxId && !(existing && u.id === existing.id))) {
     return sendJson(res, 409, { error: 'เลขประจำตัวผู้เสียภาษีนี้ถูกใช้ลงทะเบียนแล้ว (1 เลขต่อ 1 บัญชี)', field: 'taxId' });
   }
 
   const consentRecord = pdpa.makeConsentRecord(consentCheck.purposes);
-  const user = await store.insert('users', {
+  const record = {
     ...draft, ...patch,
     passwordHash: gs ? null : auth.hashPassword(b.password),
     ...(gs ? { googleSub: gs.sub } : {}),
     emailVerified: false,
     consent: consentRecord,
-  });
+  };
+  // สมัครทับบัญชีที่ยังไม่ยืนยันของอีเมลเดิม: ใช้แถวเดิม แทนที่ข้อมูลทั้งหมดด้วยค่าที่กรอกล่าสุด
+  const user = existing ? await store.update('users', existing.id, record) : await store.insert('users', record);
   await store.insert('consents', {
     userId: user.id, version: consentRecord.version, purposes: consentRecord.purposes,
     action: 'register', at: consentRecord.at,

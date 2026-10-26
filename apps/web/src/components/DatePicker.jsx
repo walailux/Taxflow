@@ -1,6 +1,6 @@
 /**
  * DatePicker.jsx ช่องเลือกวันที่แบบกำหนดหน้าตาเอง ใช้แทน <input type="date"> ของเบราว์เซอร์ทั้งเว็บ
- * หน้าตาแบบปฏิทินของ Apple: หัวเดือน/ปีกดเปิดตารางเลือกเดือนและปี · ลูกศรเลื่อนเดือน · วันเป็นปุ่มกลม
+ * หน้าตาแบบปฏิทินของ Apple: หัวแผงเลือกเดือน (รายการ) กับปี พ.ศ. (พิมพ์ได้) แยกกัน · ลูกศรเลื่อนเดือน · วันเป็นปุ่มกลม
  * - value / onChange ใช้รูปแบบ 'YYYY-MM-DD' เหมือน input type="date" เดิม และ onChange ได้ { target: { value, name, id } }
  *   โค้ดเดิมที่อ่าน e.target.value ใช้ต่อได้ทันที
  * - แสดงผลเป็นวันที่ไทย ปี พ.ศ. (17 ต.ค. 2569) แต่ค่าที่เก็บยังเป็น ค.ศ. ตามที่ API ต้องการ
@@ -24,6 +24,16 @@ function parse(v) {
   return m ? { y: +m[1], m: +m[2] - 1, d: +m[3] } : null;
 }
 const todayParts = () => { const t = new Date(); return { y: t.getFullYear(), m: t.getMonth(), d: t.getDate() }; };
+/**
+ * ปีที่ผู้ใช้พิมพ์ -> ค.ศ. · รับ พ.ศ. (2400–2799) เป็นหลัก ถ้าพิมพ์ ค.ศ. (1900–2299) มาก็รับให้
+ * คืน null ถ้าไม่ใช่ปีที่ใช้ได้
+ */
+export function yearFromInput(text) {
+  const n = Number(String(text || '').replace(/\D/g, ''));
+  if (n >= 2400 && n <= 2799) return n - 543;
+  if (n >= 1900 && n <= 2299) return n;
+  return null;
+}
 const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
 /** 17 ต.ค. 2569 */
 export const thaiShort = (v) => { const p = parse(v); return p ? `${p.d} ${MONTHS_SHORT[p.m]} ${p.y + 543}` : ''; };
@@ -47,7 +57,7 @@ export default function DatePicker({
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(() => (sel ? { y: sel.y, m: sel.m } : (({ y, m }) => ({ y, m }))(todayParts())));
   const [focusDay, setFocusDay] = useState(1);
-  const [picker, setPicker] = useState(false); // ตารางเลือกเดือน/ปี
+  const [yearText, setYearText] = useState('');
   const [pos, setPos] = useState(null);
   const btn = useRef(null);
   const panel = useRef(null);
@@ -69,7 +79,7 @@ export default function DatePicker({
     const base = sel || today;
     setView({ y: base.y, m: base.m });
     setFocusDay(base.d);
-    setPicker(false);
+    setYearText(String(base.y + 543));
     setOpen(true);
   }
 
@@ -89,11 +99,29 @@ export default function DatePicker({
     close();
   }
 
+  function goView(y, m) {
+    setView({ y, m });
+    setYearText(String(y + 543));
+    setFocusDay((d) => Math.min(d, daysIn(y, m)));
+  }
+
   function shiftMonth(delta) {
-    setView((v) => {
-      const t = new Date(v.y, v.m + delta, 1);
-      return { y: t.getFullYear(), m: t.getMonth() };
-    });
+    const t = new Date(view.y, view.m + delta, 1);
+    goView(t.getFullYear(), t.getMonth());
+  }
+
+  /** ช่องปี: พิมพ์ครบ 4 หลักแล้วเปลี่ยนปีทันที · ออกจากช่องหรือกด Enter ถ้าปีไม่ถูกต้องคืนค่าเดิม */
+  function typeYear(text) {
+    const digits = String(text).replace(/\D/g, '').slice(0, 4);
+    setYearText(digits);
+    const y = digits.length === 4 ? yearFromInput(digits) : null;
+    if (y) {
+      setView((v) => ({ ...v, y }));
+      setFocusDay((d) => Math.min(d, daysIn(y, view.m)));
+    }
+  }
+  function commitYear() {
+    goView(yearFromInput(yearText) || view.y, view.m);
   }
 
   // วัดตำแหน่งซ้ำอีกครั้งในเฟรมถัดไป: ตอนเปิดทันทีหลังหน้าโหลด เลย์เอาต์บางส่วน (ฟอนต์/แอนิเมชันเข้า) อาจยังไม่นิ่ง
@@ -118,10 +146,13 @@ export default function DatePicker({
     };
   }, [open, onBlur]);
 
-  // โฟกัสวันที่กำลังเลือกด้วยคีย์บอร์ด (ปุ่มวันมี data-day)
+  // โฟกัสวันที่กำลังเลือกด้วยคีย์บอร์ด (ปุ่มวันมี data-day) · ไม่แย่งโฟกัสตอนผู้ใช้กำลังเลือกเดือนหรือพิมพ์ปี
   useEffect(() => {
-    if (open && !picker) panel.current?.querySelector(`[data-day="${focusDay}"]`)?.focus();
-  }, [open, picker, focusDay, view]);
+    if (!open) return;
+    const active = document.activeElement;
+    if (active && active.dataset && active.dataset.ym) return;
+    panel.current?.querySelector(`[data-day="${focusDay}"]`)?.focus();
+  }, [open, focusDay, view]);
 
   function onGridKey(e) {
     const dim = daysIn(view.y, view.m);
@@ -130,12 +161,12 @@ export default function DatePicker({
       e.preventDefault();
       const t = new Date(view.y, view.m, focusDay + move);
       setView({ y: t.getFullYear(), m: t.getMonth() });
+      setYearText(String(t.getFullYear() + 543));
       setFocusDay(t.getDate());
     } else if (e.key === 'PageUp' || e.key === 'PageDown') {
       e.preventDefault();
       const t = new Date(view.y, view.m + (e.key === 'PageUp' ? -1 : 1), 1);
-      setView({ y: t.getFullYear(), m: t.getMonth() });
-      setFocusDay(Math.min(focusDay, daysIn(t.getFullYear(), t.getMonth())));
+      goView(t.getFullYear(), t.getMonth());
     } else if (e.key === 'Home') { e.preventDefault(); setFocusDay(1); }
     else if (e.key === 'End') { e.preventDefault(); setFocusDay(dim); }
   }
@@ -182,20 +213,37 @@ export default function DatePicker({
           style={{ ...pos, width: PANEL_W }}
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } }}
         >
-          {/* หัวแผง: เดือน ปี (กดเปิดตารางเดือน/ปี) · ลูกศรเลื่อนเดือน */}
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setPicker((v) => !v)}
-              aria-expanded={picker}
-              className="flex cursor-pointer items-center gap-1 rounded-lg px-1.5 py-0.5 text-[1.0625rem] font-semibold text-ink transition-colors hover:text-orange-deep"
+          {/* หัวแผง: เลือกเดือน · พิมพ์ปี พ.ศ. · ลูกศรเลื่อนเดือน */}
+          <div className="mb-3 flex items-center gap-1.5">
+            <select
+              data-ym="month"
+              aria-label="เดือน"
+              value={view.m}
+              onChange={(e) => goView(view.y, Number(e.target.value))}
+              className="h-9 min-w-0 flex-1 cursor-pointer rounded-xl border border-line bg-white px-2 text-[0.96875rem] font-semibold text-ink focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30"
             >
-              {MONTHS[view.m]} {view.y + 543}
-              <svg viewBox="0 0 24 24" className={cx('size-3 text-orange transition-transform duration-200', picker && 'rotate-180')} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-            </button>
-            <div className="flex items-center gap-0.5">
-              <button type="button" aria-label="เดือนก่อนหน้า" onClick={() => (picker ? setView((v) => ({ ...v, y: v.y - 1 })) : shiftMonth(-1))} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-orange transition-colors hover:bg-orange-pale"><Chevron dir="left" /></button>
-              <button type="button" aria-label="เดือนถัดไป" onClick={() => (picker ? setView((v) => ({ ...v, y: v.y + 1 })) : shiftMonth(1))} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-orange transition-colors hover:bg-orange-pale"><Chevron dir="right" /></button>
+              {MONTHS.map((m, idx) => <option key={m} value={idx}>{m}</option>)}
+            </select>
+            <input
+              data-ym="year"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              aria-label="ปี พ.ศ. (พิมพ์ได้)"
+              title="พิมพ์ปี พ.ศ. เช่น 2569"
+              value={yearText}
+              onChange={(e) => typeYear(e.target.value)}
+              onBlur={commitYear}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); commitYear(); }
+                else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); goView(view.y + (e.key === 'ArrowUp' ? 1 : -1), view.m); }
+              }}
+              className="h-9 w-[4.5rem] shrink-0 rounded-xl border border-line bg-white px-2 text-center font-mono text-[0.96875rem] font-semibold text-ink focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30"
+            />
+            <div className="flex shrink-0 items-center">
+              <button type="button" aria-label="เดือนก่อนหน้า" onClick={() => shiftMonth(-1)} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-orange transition-colors hover:bg-orange-pale"><Chevron dir="left" /></button>
+              <button type="button" aria-label="เดือนถัดไป" onClick={() => shiftMonth(1)} className="flex size-8 cursor-pointer items-center justify-center rounded-full text-orange transition-colors hover:bg-orange-pale"><Chevron dir="right" /></button>
             </div>
           </div>
 
@@ -248,25 +296,6 @@ export default function DatePicker({
               })}
             </div>
 
-            {/* ตารางเลือกเดือน (ปีเลื่อนด้วยลูกศรด้านบน) ทับบนตารางวัน */}
-            {picker && (
-              <div className="tf-reveal absolute inset-0 z-20 flex flex-col rounded-2xl bg-white/95 backdrop-blur-sm">
-                <p className="mb-2 text-center text-[0.9375rem] font-semibold text-ink">พ.ศ. {view.y + 543}</p>
-                <div className="grid flex-1 grid-cols-3 gap-1.5">
-                  {MONTHS_SHORT.map((m, idx) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => { setView((v) => ({ ...v, m: idx })); setFocusDay((d) => Math.min(d, daysIn(view.y, idx))); setPicker(false); }}
-                      className={cx('cursor-pointer rounded-xl text-[0.875rem] font-semibold transition-all',
-                        idx === view.m ? 'bg-orange text-white shadow-sm' : 'text-ink hover:bg-orange-pale hover:text-orange-deep')}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="mt-3 flex items-center justify-between border-t border-line pt-3">

@@ -52,15 +52,30 @@ const DOC_TYPE_LABEL = {
   ETAX_RECEIPT: 'ใบรับอิเล็กทรอนิกส์', CREDIT_NOTE: 'ใบลดหนี้', DEBIT_NOTE: 'ใบเพิ่มหนี้', CONTRACT_INF: 'สัญญาจ้าง', CONTRACT_BRAND: 'สัญญากับแบรนด์',
   POA: 'หนังสือมอบอำนาจ', PND3: 'ภ.ง.ด.3', PND53: 'ภ.ง.ด.53',
 };
+// ช่วงเวลาที่ผู้ใช้กำหนดเอง ยาวได้ไม่เกิน 5 ปี (60 เดือน) กันกราฟแน่นจนอ่านไม่ออกและคำนวณหนักเกิน
+const CUSTOM_MAX_MONTHS = 60;
+const YM_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 api.get('/api/dashboard/analytics', requireAuth(async (req, res) => {
   const p = new URL(req.url, 'http://localhost').searchParams;
-  const range = ['6m', '12m', 'ytd'].includes(p.get('range')) ? p.get('range') : '12m';
+  let range = ['6m', '12m', 'ytd', 'custom'].includes(p.get('range')) ? p.get('range') : '12m';
   const basis = p.get('basis') === 'effective' ? 'effective' : 'approved';
   const todayYM = bangkokDateStr().slice(0, 7);
   const [cy, cm] = todayYM.split('-').map(Number);
-  const count = range === '6m' ? 6 : range === 'ytd' ? cm : 12;
   const months = [];
-  { let y = cy, m = cm; for (let i = 0; i < count; i++) { months.unshift(`${y}-${String(m).padStart(2, '0')}`); m--; if (m === 0) { m = 12; y--; } } }
+  if (range === 'custom' && YM_RE.test(p.get('from') || '') && YM_RE.test(p.get('to') || '')) {
+    // ?range=custom&from=YYYY-MM&to=YYYY-MM (ค.ศ.) สลับให้เองถ้าใส่กลับด้าน
+    const [from, to] = [p.get('from'), p.get('to')].sort();
+    let [y, m] = from.split('-').map(Number);
+    while (`${y}-${String(m).padStart(2, '0')}` <= to && months.length < CUSTOM_MAX_MONTHS) {
+      months.push(`${y}-${String(m).padStart(2, '0')}`);
+      m++; if (m === 13) { m = 1; y++; }
+    }
+  } else {
+    if (range === 'custom') range = '12m';
+    const count = range === '6m' ? 6 : range === 'ytd' ? cm : 12;
+    let y = cy, m = cm;
+    for (let i = 0; i < count; i++) { months.unshift(`${y}-${String(m).padStart(2, '0')}`); m--; if (m === 0) { m = 12; y--; } }
+  }
   const inRange = new Set(months);
 
   const all = await store.all('documents', (d) => d.userId === req.user.id);
@@ -137,23 +152,36 @@ api.get('/api/creator/summary', requireAuth(async (req, res) => {
     status: statusCounts(allWht),
   });
 }));
+// เอกสารรับเงิน (นับเป็นรายรับ) และเอกสารเรียกเก็บเงิน ทั้งแบบกระดาษและ e-Tax
+// (เดิมนับเฉพาะ RECEIPT/ETAX จึงไม่นับใบรับอิเล็กทรอนิกส์ ETAX_RECEIPT บริษัทและเอเจนซี่ที่ออก e-Tax เห็นรายรับปีนี้เป็นศูนย์)
+const RECEIPT_TYPES = ['RECEIPT', 'ETAX', 'ETAX_RECEIPT'];
+const BILL_TYPES = ['INVOICE', 'ETAX_INVOICE'];
+const VAT_INVOICE_TYPES = ['ETAX', 'ETAX_INVOICE'];
 api.get('/api/agency/summary', requireAuth(async (req, res) => {
+  const p = new URL(req.url, 'http://localhost').searchParams;
+  const qYear = p.get('year') || '';
+  const year = /^\d{4}$/.test(qYear) ? qYear : bangkokDateStr().slice(0, 4);
   const docs = await store.all('documents', (d) => d.userId === req.user.id);
-  const eff = docs.filter(isEffectiveDoc);
-  // รายได้ = ใบเสร็จรับเงินที่ออกแล้ว · ค่าใช้จ่าย = ใบสำคัญจ่าย · ภาษีหัก ณ ที่จ่าย = 50 ทวิ ที่ออก (หรือใบสำคัญจ่ายที่ยังไม่ได้ออก 50 ทวิ)
-  const receipts = eff.filter((d) => d.type === 'RECEIPT' || d.type === 'ETAX');
-  const invoices = eff.filter((d) => d.type === 'INVOICE');
+  // ยอดเงินบนแดชบอร์ดเป็น "ปีนี้" (ตามวันที่ออกเอกสาร เวลาไทย) ส่วนจำนวนตามสถานะยังนับทุกฉบับ
+  const inYear = (d) => String(d.issueDate || bangkokDateStr(new Date(d.createdAt || Date.now()))).slice(0, 4) === year;
+  const eff = docs.filter((d) => isEffectiveDoc(d) && d.status !== 'draft' && inYear(d));
+  // รายได้ = เอกสารรับเงินที่ออกแล้ว · ค่าใช้จ่าย = ใบสำคัญจ่าย · ภาษีหัก ณ ที่จ่าย = 50 ทวิ ที่ออก (หรือใบสำคัญจ่ายที่ยังไม่ได้ออก 50 ทวิ)
+  const receipts = eff.filter((d) => RECEIPT_TYPES.includes(d.type));
+  const invoices = eff.filter((d) => BILL_TYPES.includes(d.type));
   const payments = eff.filter((d) => d.type === 'PAYMENT');
   const certs = eff.filter((d) => d.type === 'EWHT');
   const linked = new Set(certs.map((c) => c.refDocId).filter(Boolean));
   const whtTotal = certs.reduce((s2, d) => s2 + (+d.wht || 0), 0) + payments.filter((p) => !linked.has(p.id)).reduce((s2, d) => s2 + (+d.wht || 0), 0);
+  const taxInvoices = eff.filter((d) => VAT_INVOICE_TYPES.includes(d.type));
   sendJson(res, 200, {
+    year: Number(year),
     counts: { total: docs.length, invoices: invoices.length, receipts: receipts.length, payments: payments.length, whtCertificates: certs.length,
-      eTaxInvoice: receipts.length, eWithholding: certs.length },
+      eTaxInvoice: taxInvoices.length, eWithholding: certs.length },
     totals: {
       revenue: round2(receipts.reduce((s2, d) => s2 + (+d.total || 0), 0)),
       billed: round2(invoices.reduce((s2, d) => s2 + (+d.total || 0), 0)),
-      vat: round2(receipts.reduce((s2, d) => s2 + (+d.vat || 0), 0)),
+      // ภาษีขายตามใบกำกับภาษีที่ออกในปี (ใบรับ/ใบเสร็จไม่มี VAT แยก จึงนับจากใบกำกับ)
+      vat: round2(taxInvoices.reduce((s2, d) => s2 + (+d.vat || 0), 0)),
       expense: round2(payments.reduce((s2, d) => s2 + (+d.base || 0), 0) + certs.filter((c) => !c.refDocId).reduce((s2, d) => s2 + (+d.subtotal || +d.base || 0), 0)),
       withholding: round2(whtTotal),
     },

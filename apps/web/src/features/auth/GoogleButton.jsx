@@ -149,20 +149,21 @@ export default function GoogleButton({ mode = 'signin', divider = 'หรือ'
     <div className="mb-5">
       <div className="relative flex min-h-[44px] items-center justify-center">
         {remember ? (
-          <div ref={box} className={pending ? 'pointer-events-none w-full opacity-40' : 'w-full'} />
+          // ปุ่มของ Google วาดข้อความเองซ้อนทับไม่ได้ ระหว่างตรวจสอบจึงซ่อนปุ่มทั้งก้อนแล้วแสดงสถานะแทนที่เดิม
+          <div ref={box} aria-hidden={pending} className={pending ? 'invisible w-full' : 'w-full'} />
         ) : (
           <button
             type="button"
             onClick={chooseAccount}
             disabled={pending}
-            className="flex h-[44px] w-full max-w-[400px] items-center justify-center gap-2.5 rounded-full border border-[#dadce0] bg-white px-4 text-[0.96875rem] font-medium text-[#3c4043] transition hover:bg-[#f8faff] disabled:opacity-40"
+            aria-busy={pending}
+            className="flex h-[44px] w-full max-w-[400px] items-center justify-center gap-2.5 rounded-full border border-[#dadce0] bg-white px-4 text-[0.96875rem] font-medium text-[#3c4043] transition hover:bg-[#f8faff] disabled:cursor-wait"
           >
-            <GoogleLogo />
-            {mode === 'signup' ? 'สมัครด้วย Google' : 'ลงชื่อเข้าใช้ด้วย Google'}
+            {pending ? <><Spinner /> กำลังตรวจสอบกับ Google</> : <><GoogleLogo />{mode === 'signup' ? 'สมัครด้วย Google' : 'ลงชื่อเข้าใช้ด้วย Google'}</>}
           </button>
         )}
-        {pending && (
-          <span className="absolute inset-0 flex items-center justify-center gap-2 text-[0.90625rem] text-ink-soft">
+        {pending && remember && (
+          <span role="status" className="absolute inset-0 mx-auto flex h-[44px] max-w-[400px] items-center justify-center gap-2 rounded-full border border-[#dadce0] bg-white text-[0.96875rem] font-medium text-[#3c4043]">
             <Spinner /> กำลังตรวจสอบกับ Google
           </span>
         )}

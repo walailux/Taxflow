@@ -5,13 +5,14 @@
  * - สัดส่วนตามประเภทเอกสาร (โดนัท / แท่งเคียงกันรายเดือนมีแกน x เดือน · y มูลค่าหรือจำนวน) · สถานะเอกสาร · คู่ค้าที่มียอดสูงสุด
  * กราฟทุกแบบชี้แล้วเห็นค่า และมีป้าย/ตารางกำกับ ไม่ต้องแยกด้วยสีอย่างเดียว
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { STATUS_LABEL, thb } from '../lib/format.js';
 import Icon from '../components/Icon.jsx';
 import { PageHeader, Skeleton, cx } from '../components/ui.jsx';
 import { CAT, Donut, HBars, StackBar, GroupedColumns, TimeChart } from '../components/charts.jsx';
+import { yearFromInput } from '../components/DatePicker.jsx';
 
 const TH_MONTH = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const monthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return `${TH_MONTH[m]} ${String(y + 543).slice(2)}`; };
@@ -43,6 +44,40 @@ function Seg({ value, onChange, options, label, small }) {
           {o.icon && <Icon name={o.icon} className="size-4" />}{o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+const MONTH_NAMES = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const ymNow = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`; };
+const ymShift = (ym, delta) => { const [y, m] = ym.split('-').map(Number); const t = new Date(y, m - 1 + delta, 1); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`; };
+
+/** เลือกเดือน (รายการ) + พิมพ์ปี พ.ศ. แยกกัน ค่าเป็น 'YYYY-MM' (ค.ศ.) */
+function MonthYearField({ label, value, onChange }) {
+  const [y, m] = value.split('-').map(Number);
+  const [yearText, setYearText] = useState(String(y + 543));
+  useEffect(() => { setYearText(String(y + 543)); }, [y]);
+  const setYear = (ce) => onChange(`${ce}-${String(m).padStart(2, '0')}`);
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[0.84375rem] text-ink-soft">{label}</span>
+      <select aria-label={`${label}: เดือน`} value={m} onChange={(e) => onChange(`${y}-${String(Number(e.target.value)).padStart(2, '0')}`)}
+        className="h-9 cursor-pointer rounded-full border border-line bg-white px-3 text-[0.90625rem] font-medium text-ink focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30">
+        {MONTH_NAMES.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
+      </select>
+      <input
+        type="text" inputMode="numeric" maxLength={4} aria-label={`${label}: ปี พ.ศ.`} title="พิมพ์ปี พ.ศ. เช่น 2568"
+        value={yearText}
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+          setYearText(digits);
+          const ce = digits.length === 4 ? yearFromInput(digits) : null;
+          if (ce) setYear(ce);
+        }}
+        onBlur={() => setYearText(String(y + 543))}
+        className="h-9 w-[4.5rem] rounded-full border border-line bg-white px-2 text-center font-mono text-[0.90625rem] font-semibold text-ink focus:border-orange focus:outline-none focus:ring-2 focus:ring-orange/30"
+      />
     </div>
   );
 }
@@ -173,6 +208,9 @@ function PartnerRank({ items }) {
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState('12m');
+  // ช่วงเวลากำหนดเอง (เดือนเริ่ม–เดือนสุดท้าย) ค่าเริ่มต้น 12 เดือนล่าสุด
+  const [from, setFrom] = useState(() => ymShift(ymNow(), -11));
+  const [to, setTo] = useState(ymNow);
   const [basis, setBasis] = useState('approved');
   const [metric, setMetric] = useState('income');
   const [chart, setChart] = useState('bar');
@@ -182,8 +220,8 @@ export default function AnalyticsPage() {
   const [hoverStatus, setHoverStatus] = useState(null);
 
   const q = useQuery({
-    queryKey: ['analytics', range, basis],
-    queryFn: () => api.get(`/api/dashboard/analytics?range=${range}&basis=${basis}`),
+    queryKey: ['analytics', range, basis, range === 'custom' ? `${from}_${to}` : ''],
+    queryFn: () => api.get(`/api/dashboard/analytics?range=${range}&basis=${basis}${range === 'custom' ? `&from=${from}&to=${to}` : ''}`),
     placeholderData: (prev) => prev,
   });
   const d = q.data;
@@ -207,14 +245,24 @@ export default function AnalyticsPage() {
   const statusRows = d ? d.byStatus.map((s) => ({ key: s.status, label: STATUS_LABEL[s.status] || s.status, value: s.count, color: STATUS_COLOR[s.status] || '#A8A29E' })) : [];
   const statusTotal = statusRows.reduce((s, x) => s + x.value, 0);
   const avg = d && d.totals.count ? d.totals.income / d.totals.count : 0;
-  const rangeText = { '6m': '6 เดือนล่าสุด', '12m': '12 เดือนล่าสุด', ytd: 'ต้นปีถึงเดือนนี้' }[range];
+  const ymText = (ym) => { const [y, mo] = ym.split('-').map(Number); return `${MONTH_NAMES[mo - 1]} ${y + 543}`; };
+  const customText = d && d.months.length ? `${ymText(d.months[0])} – ${ymText(d.months.at(-1))}` : 'ช่วงที่เลือก';
+  const rangeText = { '6m': '6 เดือนล่าสุด', '12m': '12 เดือนล่าสุด', ytd: 'ต้นปีถึงเดือนนี้', custom: customText }[range];
 
   return (
     <>
       <PageHeader title="วิเคราะห์ข้อมูลเอกสาร" subtitle="ดูแนวโน้มและสัดส่วนของเอกสารในหลายรูปแบบ ชี้ที่กราฟเพื่อดูตัวเลขของแต่ละจุด" />
 
       <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <Control label="ช่วงเวลา"><Seg label="ช่วงเวลา" value={range} onChange={setRange} options={[{ value: '6m', label: '6 เดือน' }, { value: '12m', label: '12 เดือน' }, { value: 'ytd', label: 'ปีนี้' }]} /></Control>
+        <Control label="ช่วงเวลา"><Seg label="ช่วงเวลา" value={range} onChange={setRange} options={[{ value: '6m', label: '6 เดือน' }, { value: '12m', label: '12 เดือน' }, { value: 'ytd', label: 'ปีนี้' }, { value: 'custom', label: 'กำหนดเอง' }]} /></Control>
+        {range === 'custom' && (
+          <div className="tf-reveal flex flex-wrap items-center gap-x-3 gap-y-2">
+            <MonthYearField label="ตั้งแต่" value={from} onChange={setFrom} />
+            <MonthYearField label="ถึง" value={to} onChange={setTo} />
+            {from > to && <span className="text-[0.84375rem] text-ink-soft">เดือนเริ่มอยู่หลังเดือนสุดท้าย ระบบสลับให้อัตโนมัติ</span>}
+            <span className="text-[0.84375rem] text-ink-soft">(สูงสุด 60 เดือน)</span>
+          </div>
+        )}
         <Control label="นับเอกสาร"><Seg label="นับเอกสาร" value={basis} onChange={setBasis} options={[{ value: 'approved', label: 'อนุมัติ/เก็บถาวร' }, { value: 'effective', label: 'ทุกฉบับที่มีผล' }]} /></Control>
         {q.isFetching && <span className="text-[0.84375rem] text-ink-soft">กำลังโหลด...</span>}
       </div>

@@ -72,7 +72,7 @@ export default function App() {
           <Route path="calendar" element={<Only roles={USERS}><CalendarPage /></Only>} />
           <Route path="analytics" element={<Only roles={USERS}><AnalyticsPage /></Only>} />
           <Route path="tax" element={<Only roles={['creator']}><TaxPage /></Only>} />
-          <Route path="contacts" element={<Only roles={['agency', 'corporate']}><ContactsPage /></Only>} />
+          <Route path="contacts" element={<Only roles={USERS}><ContactsPage /></Only>} />
           <Route path="library" element={<Only roles={USERS}><LibraryPage /></Only>} />
           <Route path="profile" element={<Only roles={USERS}><ProfilePage /></Only>} />
           <Route path="admin" element={<Only roles={['admin']}><AdminPage /></Only>} />

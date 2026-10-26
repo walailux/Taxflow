@@ -24,7 +24,7 @@ import { baht, thb } from '../lib/format.js';
 import { useSubmit } from '../lib/useSubmit.js';
 import { useToast } from '../components/Toast.jsx';
 import Icon from '../components/Icon.jsx';
-import { Alert, Button, Card, Field, PageHeader, SelectField, Skeleton, StepBar, TextField, cx } from '../components/ui.jsx';
+import { Alert, BackButton, Button, Card, Field, PageHeader, SelectField, Skeleton, StepBar, TextField, cx } from '../components/ui.jsx';
 import { docsApi } from '../features/docs/docsApi.js';
 import { AddressFields } from '../features/address/AddressFields.jsx';
 import {
@@ -226,7 +226,8 @@ function SchemaField({ def, value, error, docs, suggest, onChange, onBlur, onRef
     );
   }
   const type = def.type === 'date' ? 'date' : (def.type === 'number' || def.type === 'money') ? 'number' : 'text';
-  const extra = def.type === 'money' ? { step: '0.01', min: '0', placeholder: def.placeholder || '0.00' }
+  // เงินบาทเพิ่ม/ลดทีละ 0.25 (25 สตางค์ หน่วยเงินที่เล็กที่สุดที่ใช้จริง) · พิมพ์ทศนิยม 2 ตำแหน่งเองได้
+  const extra = def.type === 'money' ? { step: '0.25', min: '0', inputMode: 'decimal', placeholder: def.placeholder || '0.00' }
     : def.type === 'number' ? { step: '1', min: '0' }
       : (def.type === 'taxid' || def.type === 'citizenid') ? { inputMode: 'numeric', maxLength: 17 } : {};
   return (
@@ -247,6 +248,7 @@ function SchemaField({ def, value, error, docs, suggest, onChange, onBlur, onRef
  * คอลัมน์กว้างพอ วางคู่กันในแถวเดียว ปุ่มหลักยืดเต็มที่เหลือ
  */
 function StepActions({ back, next }) {
+  if (!back) return <div className="[&>*]:w-full">{next}</div>;
   return (
     <div className="@container">
       <div className="flex flex-col-reverse gap-2 @[340px]:flex-row [&>*]:w-full [&>*]:whitespace-nowrap @[340px]:[&>*:first-child]:w-auto @[340px]:[&>*:last-child]:flex-1">
@@ -616,6 +618,7 @@ export default function CreatePage() {
       <>
         <PageHeader
           title={step === 1 ? 'สร้างเอกสาร' : 'เลือกประเภทเอกสาร'}
+          back={step === 2 ? <BackButton onClick={() => setStep(1)}>ย้อนกลับ: เลือกจุดประสงค์</BackButton> : null}
           subtitle={step === 1 ? 'เอกสารที่คุณเป็นผู้ออกให้คู่ค้า ระบบออกเลขที่อัตโนมัติ เลือกจุดประสงค์ก่อนเพื่อให้ระบบแนะนำขั้นตอนได้ถูกต้อง' : `จุดประสงค์: ${PURPOSE_LABEL[purpose]}`}
         />
         <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={step} /></Card>
@@ -720,7 +723,6 @@ export default function CreatePage() {
                 </section>
               );
             })}
-            <div><Button variant="soft" onClick={() => setStep(1)}>← ย้อนกลับ</Button></div>
           </div>
         )}
       </>
@@ -771,7 +773,7 @@ export default function CreatePage() {
     ));
     return (
       <>
-        <PageHeader title={title} subtitle="ตรวจสอบข้อมูลก่อนยืนยัน" />
+        <PageHeader title={title} subtitle="ตรวจสอบข้อมูลก่อนยืนยัน" back={<BackButton onClick={() => setStep(3)}>กลับไปแก้ไข</BackButton>} />
         <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={4} /></Card>
         {summary.length > 0 && <Alert><b className="font-medium">ยังบันทึกไม่ได้</b><ul className="mt-1 list-disc pl-5">{summary.map((m) => <li key={m}>{m}</li>)}</ul></Alert>}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
@@ -833,13 +835,23 @@ export default function CreatePage() {
       value: row[c] == null ? '' : row[c],
       onChange: (e) => setItem(i, c, e.target.value),
     };
+    // หน่วยนับ: เลือกจากรายการที่ใช้บ่อย หรือพิมพ์เองได้ แต่ตัดตัวเลขทิ้งทันที (หน่วยต้องเป็นคำ)
+    if (c === 'unit') {
+      return (
+        <>
+          <input {...common} type="text" list="cr-unit-presets" autoComplete="off" maxLength={30}
+            onChange={(e) => setItem(i, c, e.target.value.replace(/[0-9๐-๙]/g, ''))} />
+          {err && <span className="mt-1 block text-[0.84375rem] font-medium text-danger">{err.msg.replace(/^"[^"]+" /, '')}</span>}
+        </>
+      );
+    }
     return (
       <>
         {cdef.type === 'select' && !locked
           ? <Select aria-label={common['aria-label']} aria-invalid={common['aria-invalid']} size="sm" className="!px-2.5" value={common.value} options={cdef.options} onChange={common.onChange} />
           : cdef.type === 'date'
             ? <DatePicker aria-label={common['aria-label']} aria-invalid={common['aria-invalid']} size="sm" readOnly={locked} className={cx(locked && 'opacity-70')} value={common.value} onChange={common.onChange} />
-            : <input {...common} type={(cdef.type === 'number' || cdef.type === 'money') ? 'number' : 'text'} step={cdef.type === 'money' ? '0.01' : cdef.type === 'number' ? 'any' : undefined} min={cdef.type === 'money' || cdef.type === 'number' ? '0' : undefined} />}
+            : <input {...common} type={(cdef.type === 'number' || cdef.type === 'money') ? 'number' : 'text'} step={cdef.type === 'money' ? '0.25' : cdef.type === 'number' ? 'any' : undefined} inputMode={cdef.type === 'money' ? 'decimal' : undefined} min={cdef.type === 'money' || cdef.type === 'number' ? '0' : undefined} />}
         {err && <span className="mt-1 block text-[0.84375rem] font-medium text-danger">{err.msg.replace(/^"[^"]+" /, '')}</span>}
       </>
     );
@@ -995,7 +1007,7 @@ export default function CreatePage() {
               id="cr-billDiscount"
               type="number"
               min="0"
-              step="0.01"
+              step="0.25"
               inputMode="decimal"
               placeholder="0.00"
               value={fields.billDiscount == null ? '' : fields.billDiscount}
@@ -1035,6 +1047,18 @@ export default function CreatePage() {
         )}
         {def.items.vat === 'issuer' && !user.vatRegistered && <span className="text-[0.90625rem] text-ink-soft">บัญชีนี้ยังไม่ได้จดทะเบียน VAT จึงไม่คิดภาษีมูลค่าเพิ่ม</span>}
       </div>
+      {def.items.billDiscount && (() => {
+        // เตือนทันทีที่พิมพ์ ไม่ต้องรอกดตรวจสอบ: ส่วนลดท้ายบิลต้องน้อยกว่ายอดหลังหักส่วนลดรายการ (กติกาเดียวกับ docschema.validateDoc)
+        const afterLine = Math.round(items.reduce((s, r) => s + lineAmount(r), 0) * 100) / 100;
+        const bd = Number(fields.billDiscount) || 0;
+        const msg = bd > 0 && bd >= afterLine
+          ? `"ส่วนลดท้ายบิล" ต้องน้อยกว่ายอดรวมหลังหักส่วนลดรายการ (${afterLine.toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท)`
+          : errs.fields.billDiscount;
+        return msg ? <p role="alert" className="mt-2 text-[0.90625rem] font-medium text-danger">{msg}</p> : null;
+      })()}
+      {def.items.cols.includes('unit') && (
+        <datalist id="cr-unit-presets">{docschema.UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
+      )}
     </>
   );
 
@@ -1043,6 +1067,9 @@ export default function CreatePage() {
       <PageHeader
         title={title}
         subtitle={editing ? `เลขที่ ${editing.docNo || 'ฉบับร่าง'} · การแก้ไขเอกสารที่ลงนามแล้วจะล้างลายเซ็นเดิม` : 'เลขที่เอกสารออกอัตโนมัติเมื่อส่งหรือบันทึกเสร็จสิ้น'}
+        back={editing
+          ? <BackButton onClick={() => navigate(`/app/documents?doc=${Number(editing.id)}`)}>ยกเลิกการแก้ไข</BackButton>
+          : <BackButton onClick={() => { clearDraft(); setStep(2); }}>ย้อนกลับ: เลือกประเภทเอกสาร</BackButton>}
       />
       <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={3} /></Card>
       {def.hint && <Alert kind="info">{textOf(def.hint, role)}</Alert>}
@@ -1139,7 +1166,7 @@ export default function CreatePage() {
           <StepActions
             back={editing
               ? <Button variant="soft" onClick={() => navigate(`/app/documents?doc=${Number(editing.id)}`)}>ยกเลิกการแก้ไข</Button>
-              : <Button variant="soft" onClick={() => { clearDraft(); setStep(2); }}>← ย้อนกลับ</Button>}
+              : null}
             next={<Button variant="dark" onClick={toReview}>ถัดไป: ตรวจสอบ →</Button>}
           />
         </div>

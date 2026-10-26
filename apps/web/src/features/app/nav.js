@@ -67,7 +67,8 @@ export function navFor(role) {
     ] },
     { label: creator ? 'ภาษีและบัญชี' : 'ข้อมูลธุรกิจ', items: [
       ...(creator ? [{ key: 'pit', label: 'คำนวณภาษี', icon: 'calc', view: 'pit' }] : []),
-      ...(creator ? [] : [{ key: 'contacts', label: 'สมุดคู่ค้า', icon: 'users', view: 'contacts' }]),
+      // ทุกบทบาทมีคู่ค้า (ครีเอเตอร์มีแบรนด์/เอเจนซี่/ร้านที่จ้างงาน) และค้นหาคู่ค้าจากแถบบนได้ จึงต้องเข้าสมุดคู่ค้าได้ทุกบทบาท
+      { key: 'contacts', label: 'สมุดคู่ค้า', icon: 'users', view: 'contacts' },
       { key: 'profile', label: creator ? 'โปรไฟล์' : 'ข้อมูลบริษัท', icon: 'user', view: 'profile' },
     ] },
     { label: 'ช่วยเหลือ', items: HELP_ITEMS },

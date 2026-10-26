@@ -225,10 +225,29 @@ export function StepBar({ steps, current, size = 'md', label = 'ขั้นต�
 /* ---------- ส่วนประกอบของหน้าหลังเข้าสู่ระบบ ---------- */
 
 /** หัวหน้า: ชื่อหน้า + คำอธิบาย + ปุ่มด้านขวา (ถ้ามี) */
-export function PageHeader({ title, subtitle, actions, children }) {
+/**
+ * ปุ่มย้อนกลับไว้บนสุดของหน้าหรือขั้นตอน กดถึงได้ทันทีโดยไม่ต้องเลื่อนลงท้ายฟอร์มยาว ๆ บนมือถือ
+ * สูงอย่างน้อย 44px ตามขนาดเป้านิ้วที่แนะนำ
+ */
+export function BackButton({ onClick, children = 'ย้อนกลับ', disabled, className }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cx('tf-anim-host group inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full bg-white py-2 pl-3 pr-4 text-[0.96875rem] font-medium text-ink shadow-[0_1px_2px_rgba(24,24,27,0.05)] ring-1 ring-line transition-colors hover:bg-orange-pale hover:text-orange-deep hover:ring-orange/30 disabled:cursor-not-allowed disabled:opacity-50', className)}
+    >
+      <Icon name="arrow" className="size-[1.125rem] rotate-180 transition-transform group-hover:-translate-x-0.5" />
+      {children}
+    </button>
+  );
+}
+
+export function PageHeader({ title, subtitle, actions, back, children }) {
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
+        {back && <div className="mb-3">{back}</div>}
         <h1 className="text-[1.875rem] font-medium leading-[1.15] sm:text-[2.375rem]">{title}</h1>
         {subtitle && <p className="mt-1.5 max-w-[70ch] text-[1.03125rem] leading-snug text-ink-soft">{subtitle}</p>}
         {children}

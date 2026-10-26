@@ -625,7 +625,7 @@
   const ITEM_COLS = {
     name: { label: 'รายละเอียด', type: 'text', required: true, width: 'wide', maxLen: 500 },
     qty: { label: 'จำนวน', type: 'number', def: 1, gt0: true, max: 1e6 },
-    unit: { label: 'หน่วย', type: 'text', def: 'งาน', maxLen: 30 },
+    unit: { label: 'หน่วย', type: 'text', def: 'งาน', maxLen: 30, noDigits: true },
     price: { label: 'ราคาต่อหน่วย', type: 'money', max: 1e10 },
     discount: { label: 'ส่วนลด', type: 'money', max: 1e10 },
     amount: { label: 'จำนวนเงิน', type: 'money', max: 1e10 },
@@ -737,6 +737,20 @@
     return null;
   }
 
+  /**
+   * หน่วยนับที่ใช้บ่อยในใบเสนอราคา/ใบแจ้งหนี้/ใบกำกับภาษี (ให้เลือกจากรายการ หรือพิมพ์เองได้ แต่ห้ามเป็นตัวเลข)
+   * เรียงตามกลุ่ม: งานบริการ/คอนเทนต์ · เวลา · สินค้าทั่วไป · บรรจุภัณฑ์ · อาหารและเครื่องดื่ม · น้ำหนัก/ปริมาตร/ความยาว · อื่น ๆ
+   */
+  const UNIT_PRESETS = [
+    'งาน', 'รายการ', 'ครั้ง', 'แคมเปญ', 'แพ็กเกจ', 'โปรเจกต์', 'คลิป', 'วิดีโอ', 'โพสต์', 'สตอรี่', 'รีล', 'ไลฟ์', 'ภาพ', 'บทความ', 'งวด', 'สิทธิ์', 'บัญชี', 'ไลเซนส์',
+    'ชั่วโมง', 'วัน', 'สัปดาห์', 'เดือน', 'ไตรมาส', 'ปี', 'รอบ', 'เที่ยว',
+    'ชิ้น', 'อัน', 'ตัว', 'เครื่อง', 'ชุด', 'เซต', 'คู่', 'โหล', 'ใบ', 'แผ่น', 'เล่ม', 'ฉบับ', 'หน้า', 'ม้วน', 'แท่ง', 'ก้อน', 'เส้น', 'คัน', 'หลัง', 'ห้อง', 'ที่', 'คน', 'ท่าน',
+    'กล่อง', 'ลัง', 'แพ็ก', 'ห่อ', 'ถุง', 'ซอง', 'กระสอบ', 'ถัง', 'แกลลอน', 'ขวด', 'กระป๋อง', 'หลอด', 'ตลับ',
+    'แก้ว', 'ถ้วย', 'จาน', 'ชาม', 'ปอนด์', 'ลูก', 'ผล', 'หวี', 'ถาด', 'ปิ่นโต',
+    'กิโลกรัม', 'กรัม', 'ขีด', 'ตัน', 'ลิตร', 'มิลลิลิตร', 'เมตร', 'เซนติเมตร', 'ตารางเมตร', 'ตารางฟุต', 'ฟุต', 'หลา', 'นิ้ว',
+  ];
+  const HAS_DIGIT = /[0-9๐-๙]/;
+
   /** ตรวจทั้งฟอร์มของเอกสาร คืน { fieldErrors: {key: msg}, partyErrors: {key: msg}, itemErrors: [{row, col, msg}], errors: [msg] } */
   function validateDoc(type, data, opts = {}) {
     const d = FORMS[type];
@@ -779,6 +793,10 @@
           const m = checkField(def, it[c], { need: !!def.required, today });
           if (m) { out.itemErrors.push({ row: i, col: c, msg: m }); out.errors.push(`รายการที่ ${i + 1}: ${m}`); }
         }
+        if (d.items.cols.includes('unit') && HAS_DIGIT.test(String(it.unit || ''))) {
+          const m = '"หน่วย" ต้องเป็นคำ เช่น ชิ้น งาน กล่อง ห้ามใส่ตัวเลข';
+          if (!out.itemErrors.some((e) => e.row === i && e.col === 'unit')) { out.itemErrors.push({ row: i, col: 'unit', msg: m }); out.errors.push(`รายการที่ ${i + 1}: ${m}`); }
+        }
         if (d.mode === 'priced' && Number(it.discount) > (Number(it.qty) || 0) * (Number(it.price) || 0)) {
           const m = '"ส่วนลด" ต้องไม่มากกว่ามูลค่ารายการ (จำนวน × ราคาต่อหน่วย)';
           out.itemErrors.push({ row: i, col: 'discount', msg: m }); out.errors.push(`รายการที่ ${i + 1}: ${m}`);
@@ -800,6 +818,14 @@
           out.itemErrors.push({ row: i, col: 'publishDate', msg: m }); out.errors.push(`รายการที่ ${i + 1}: ${m}`);
         }
       });
+      // ส่วนลดท้ายบิลต้องน้อยกว่ายอดรวมหลังหักส่วนลดรายการ (เท่ากันหรือมากกว่า = ยอดเอกสารเป็นศูนย์หรือติดลบ)
+      if (d.items.billDiscount && Number(F.billDiscount) > 0 && !out.fieldErrors.billDiscount) {
+        const afterLine = rows.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0) - (Number(it.discount) || 0), 0);
+        if (round2(Number(F.billDiscount)) >= round2(afterLine)) {
+          const m = `"ส่วนลดท้ายบิล" ต้องน้อยกว่ายอดรวมหลังหักส่วนลดรายการ (${round2(afterLine).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท)`;
+          out.fieldErrors.billDiscount = m; out.errors.push(m);
+        }
+      }
       // งวดที่วันครบกำหนดต้องเรียงตามลำดับ
       if (d.items.installments) {
         for (let i = 1; i < rows.length; i++) {
@@ -949,7 +975,7 @@
 
   return {
     VAT_RATE, WHT_RATES, INCOME_TYPES, INCOME_LABEL, WHT_PRESETS, WHT_CONDITIONS, PND_FORMS, THAI_MONTHS, THAI_MONTHS_SHORT,
-    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, DEFAULT_TERMS,
+    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, DEFAULT_TERMS,
     allFields, matchCond, rolesFor, isJuristicParty, autoPndForm, calcWht, compute, thaiDate, round2,
     FORMAT, checkField, validateDoc, isValidThaiId,
   };
