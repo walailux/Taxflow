@@ -35,6 +35,7 @@ export const DOC_LABEL = {
   PO: 'ใบสั่งซื้อ (PO)', DELIVERY: 'ใบส่งมอบงาน', PAYMENT: 'ใบสำคัญจ่าย',
   CONTRACT_INF: 'สัญญาจ้าง Influencer', CONTRACT_BRAND: 'สัญญากับ Brand', POA: 'หนังสือมอบอำนาจ',
   CREDIT_NOTE: 'ใบลดหนี้', DEBIT_NOTE: 'ใบเพิ่มหนี้',
+  ETAX_INVOICE: 'ใบกำกับภาษีอิเล็กทรอนิกส์', ETAX_RECEIPT: 'ใบรับอิเล็กทรอนิกส์',
 };
 
 /**
@@ -48,6 +49,7 @@ export const TYPE_TONE = {
   PO: '#CA8A04', DELIVERY: '#06B6D4', PAYMENT: '#2563EB',
   EWHT: '#0D9488', WHT: '#14B8A6', PND3: '#0369A1', PND53: '#0284C7',
   CREDIT_NOTE: '#DC2626', DEBIT_NOTE: '#EA580C',
+  ETAX_INVOICE: '#FB923C', ETAX_RECEIPT: '#16A34A',
 };
 /** สีของประเภทเอกสาร (ประเภทที่ไม่รู้จักใช้เทาอุ่นกลาง ๆ) */
 export const toneOfType = (type) => TYPE_TONE[type] || '#78716C';

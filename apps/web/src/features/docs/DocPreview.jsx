@@ -20,7 +20,9 @@ export function loadPdfjs() {
       import('pdfjs-dist'),
       import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
     ]).then(([lib, worker]) => {
-      lib.GlobalWorkerOptions.workerSrc = worker.default;
+      // ?v=… บังคับให้เบราว์เซอร์โหลด worker ใหม่: ไฟล์เดิมเคยถูกส่งเป็น application/octet-stream และ cache แบบ immutable 1 ปี
+      // เบราว์เซอร์ที่เก็บไว้แล้วจะใช้ของเก่าต่อ (โหลด module ไม่ได้ ตัวอย่างเอกสารไม่ขึ้น) แม้ nginx จะแก้ชนิดไฟล์แล้ว
+      lib.GlobalWorkerOptions.workerSrc = `${worker.default}?v=js-mime`;
       return lib;
     }).catch((err) => { pdfjsLoading = null; throw err; });
   }

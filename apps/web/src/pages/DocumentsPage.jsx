@@ -304,16 +304,21 @@ export default function DocumentsPage() {
                     style={{ animationDelay: `${Math.min(i, 10) * 30}ms`, '--tone': 'var(--color-orange)', '--tone-ink': inkOfType(d.type) }}
                   >
                     {/* ตัวอย่างเฉพาะครึ่งบนของหน้าแรก (หัวเอกสาร) การ์ดจึงเตี้ยลงจนเห็นข้อมูลและปุ่มด้านล่างในจอเดียว */}
-                    <DocPreview doc={d} aspect="aspect-[4/3]" className="transition-transform group-hover:scale-[1.01]" />
-                    <div className="mt-2.5 flex items-start justify-between gap-2 px-1">
-                      <span className="flex min-w-0 items-start gap-2.5">
-                        <TypeMark type={d.type} size="md" />
-                        <span className="min-w-0">
-                          <b className="block truncate text-[1rem] font-medium">{DOC_LABEL[d.type] || d.type}</b>
-                          <small className="block truncate font-mono text-[0.84375rem] text-ink-soft">{d.docNo || 'แบบร่าง'}</small>
+                    {/* ป้ายสถานะอยู่มุมขวาบนของภาพตัวอย่าง ชื่อประเภทและเลขที่เอกสารด้านล่างจึงแสดงได้เต็มความกว้าง */}
+                    <div className="relative">
+                      <DocPreview doc={d} aspect="aspect-[4/3]" className="transition-transform group-hover:scale-[1.01]" />
+                      {view.cols.status && (
+                        <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-white/95 shadow-[0_2px_8px_-3px_rgba(24,24,27,0.35)]">
+                          <StatusPill status={d.status} size="sm" />
                         </span>
+                      )}
+                    </div>
+                    <div className="mt-2.5 flex min-w-0 items-start gap-2.5 px-1">
+                      <TypeMark type={d.type} size="md" />
+                      <span className="min-w-0 flex-1">
+                        <b className="block text-[1rem] font-medium leading-snug [overflow-wrap:anywhere]" title={DOC_LABEL[d.type] || d.type}>{DOC_LABEL[d.type] || d.type}</b>
+                        <small className="block truncate font-mono text-[0.84375rem] text-ink-soft" title={d.docNo || 'แบบร่าง'}>{d.docNo || 'แบบร่าง'}</small>
                       </span>
-                      {view.cols.status && <StatusPill status={d.status} size="sm" />}
                     </div>
                     <p className="mt-1 truncate px-1 text-[0.875rem] text-ink-soft">{partyOf(d)}</p>
                     <dl className="mt-2 space-y-0.5 rounded-xl bg-tile px-3 py-2 text-[0.84375rem]">
