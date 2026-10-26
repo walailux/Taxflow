@@ -146,7 +146,70 @@ function ThemeToggle() {
   );
 }
 
-export default function TopBar({ role, user, onMenu, sideHidden }) {
+/**
+ * ป้ายชื่อมุมขวาบน: กดแล้วเปิดเมนู "แก้ไขโปรไฟล์" กับ "ออกจากระบบ"
+ * (ปุ่มออกจากระบบในแถบเมนูซ้ายยังอยู่เหมือนเดิม) ปิดเมนูด้วย Esc หรือคลิกนอกกล่อง
+ */
+function ProfileMenu({ user, role, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const box = useRef(null);
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(box, close, open);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  async function logout() {
+    setBusy(true);
+    try { await onLogout(); } finally { setBusy(false); }
+  }
+
+  const name = user.companyName || user.displayName || '-';
+  const item = 'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[0.96875rem] font-medium transition-colors';
+  return (
+    <div ref={box} className="relative ml-1 hidden sm:block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="โปรไฟล์ของฉัน"
+        className="flex cursor-pointer items-center gap-2.5 rounded-full bg-white py-1 pl-1 pr-3 text-left shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-shadow hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]"
+      >
+        <Avatar user={user} className="size-9 rounded-full" textClass="text-[0.9375rem]" />
+        <span className="min-w-0 max-w-[180px] leading-tight">
+          <b className="block truncate text-[0.90625rem] font-semibold">{name}</b>
+          <small className="block truncate text-[0.78125rem] text-ink-soft">{ROLE_TAG[role]}</small>
+        </span>
+        <Icon name="chevron" className={cx('size-4 shrink-0 text-ink-soft transition-transform duration-200', open ? '-rotate-90' : 'rotate-90')} />
+      </button>
+      {open && (
+        <div role="menu" aria-label="เมนูบัญชี" className="tf-pop absolute right-0 top-[calc(100%+8px)] z-40 w-[260px] rounded-2xl border border-line bg-white p-2 shadow-[0_24px_60px_-24px_rgba(24,24,27,0.35)]">
+          <div className="border-b border-line px-3 pb-2.5 pt-1.5">
+            <b className="block truncate text-[0.96875rem] font-semibold">{name}</b>
+            <small className="block truncate text-[0.84375rem] text-ink-soft">{user.email}</small>
+          </div>
+          <div className="pt-1.5">
+            {role !== 'admin' && (
+              <Link to="/app/profile" role="menuitem" onClick={close} className={cx(item, 'text-ink hover:bg-field')}>
+                <Icon name="user" className="size-[1.125rem] text-orange-deep" />แก้ไขโปรไฟล์
+              </Link>
+            )}
+            <button type="button" role="menuitem" onClick={logout} disabled={busy} className={cx(item, 'text-danger hover:bg-danger-soft disabled:cursor-wait disabled:opacity-60')}>
+              {busy ? <Spinner /> : <Icon name="logout" className="size-[1.125rem]" />}ออกจากระบบ
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function TopBar({ role, user, onMenu, sideHidden, onLogout }) {
   const [calc, setCalc] = useState(false);
   const closeCalc = useCallback(() => setCalc(false), []);
   const isAdmin = role === 'admin';
@@ -168,15 +231,7 @@ export default function TopBar({ role, user, onMenu, sideHidden }) {
           <AppearanceMenu />
           <ThemeToggle />
           <NotificationBell role={role} />
-          {user && (
-            <Link to={isAdmin ? '/app' : '/app/profile'} className="ml-1 hidden items-center gap-2.5 rounded-full bg-white py-1 pl-1 pr-4 shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-shadow hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)] sm:flex" title="โปรไฟล์ของฉัน">
-              <Avatar user={user} className="size-9 rounded-full" textClass="text-[0.9375rem]" />
-              <span className="min-w-0 max-w-[180px] leading-tight">
-                <b className="block truncate text-[0.90625rem] font-semibold">{user.companyName || user.displayName || '-'}</b>
-                <small className="block truncate text-[0.78125rem] text-ink-soft">{ROLE_TAG[role]}</small>
-              </span>
-            </Link>
-          )}
+          {user && <ProfileMenu user={user} role={role} onLogout={onLogout} />}
         </div>
       </div>
       {calc && <TaxCalcDialog onClose={closeCalc} />}

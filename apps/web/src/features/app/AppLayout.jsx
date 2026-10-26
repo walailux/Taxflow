@@ -270,7 +270,7 @@ export default function AppLayout({ roles }) {
       )}
 
       <div className="min-w-0 flex-1">
-        <TopBar role={role} user={user} onMenu={toggleMenu} sideHidden={sideHidden} />
+        <TopBar role={role} user={user} onMenu={toggleMenu} sideHidden={sideHidden} onLogout={logout} />
         <main className="mx-auto w-full max-w-[1200px] px-4 pb-28 pt-2 sm:px-6 lg:px-10 lg:pb-12">
           <div key={pathname} className="tf-fade-up">
             <Suspense fallback={<div className="flex justify-center py-20"><Spinner /></div>}>
