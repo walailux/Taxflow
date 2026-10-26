@@ -80,7 +80,14 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          # ssh-keyscan หมดเวลาได้เป็นครั้งคราวจากเครือข่ายของ GitHub ลองซ้ำก่อนจะถือว่าล้มเหลว
+          for i in 1 2 3 4 5; do
+            if ssh-keyscan -T 15 -H "$VPS_HOST" > /tmp/hostkeys 2>/dev/null && [ -s /tmp/hostkeys ]; then
+              cat /tmp/hostkeys >> ~/.ssh/known_hosts; exit 0
+            fi
+            echo "ssh-keyscan รอบที่ $i ไม่สำเร็จ ลองใหม่ใน 10 วินาที"; sleep 10
+          done
+          echo "เชื่อมต่อ VPS ($VPS_HOST) ไม่ได้" >&2; exit 1
       - name: pull + up บน VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
