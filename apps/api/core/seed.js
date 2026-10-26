@@ -56,6 +56,9 @@ const SEED_CONTACTS = {
 };
 
 async function seedUsers() {
+  // ระบบจริง (image ตั้ง NODE_ENV=production) ห้ามสร้างบัญชีทดลองเอง แม้ตาราง users จะว่างชั่วขณะ
+  // (เคยเกิดตอนรีสตาร์ตระหว่างนำเข้าข้อมูลใหม่ บัญชี @taxflow.test โผล่กลับมาในฐานข้อมูลจริง) ตั้ง SEED_DEMO=1 ถ้าต้องการจริง ๆ
+  if (process.env.NODE_ENV === 'production' && process.env.SEED_DEMO !== '1') return [];
   if (await store.count('users') > 0) return [];
   const created = [];
   for (const u of SEED_USERS) {
