@@ -123,7 +123,7 @@ export function SegGroup({ name, legend, hint, value, onChange, options }) {
 }
 
 const ALERT_STYLE = {
-  error: 'bg-danger-soft text-danger',
+  error: 'border-[1.5px] border-danger bg-[var(--color-danger-field)] text-danger shadow-[var(--shadow-danger)]',
   info: 'bg-info-soft text-info',
   ok: 'bg-ok-soft text-ok',
   dev: 'border-[1.5px] border-[#F0D98A] bg-dev-soft text-dev',

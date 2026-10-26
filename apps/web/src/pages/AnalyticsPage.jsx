@@ -37,6 +37,7 @@ function Seg({ value, onChange, options, label, small }) {
           type="button"
           role="radio"
           aria-checked={value === o.value}
+          title={o.tip}
           onClick={() => onChange(o.value)}
           className={cx('flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-medium transition-all', small ? 'h-8 px-3 text-[0.84375rem]' : 'h-9 px-4 text-[0.90625rem]',
             value === o.value ? 'bg-white text-ink shadow-[0_2px_8px_-3px_rgba(24,24,27,0.3)]' : 'text-[#78716C] hover:text-ink')}
@@ -263,7 +264,10 @@ export default function AnalyticsPage() {
             <span className="text-[0.84375rem] text-ink-soft">(สูงสุด 60 เดือน)</span>
           </div>
         )}
-        <Control label="นับเอกสาร"><Seg label="นับเอกสาร" value={basis} onChange={setBasis} options={[{ value: 'approved', label: 'อนุมัติ/เก็บถาวร' }, { value: 'effective', label: 'ทุกฉบับที่มีผล' }]} /></Control>
+        <Control label="นับเอกสาร"><Seg label="นับเอกสาร" value={basis} onChange={setBasis} options={[
+          { value: 'approved', label: 'อนุมัติ/เก็บถาวร', tip: 'นับเฉพาะเอกสารที่อนุมัติแล้วหรือเก็บถาวร เป็นยอดที่เกิดขึ้นจริงแน่นอน (ไม่รวมเอกสารที่รอคู่ค้าตอบกลับ)' },
+          { value: 'effective', label: 'ทุกฉบับที่มีผล', tip: 'นับทุกฉบับที่ออกเลขที่แล้วและยังมีผล รวมเอกสารที่รอคู่ค้าตรวจสอบ/ลงนาม ไม่รวมแบบร่าง ยกเลิก และไม่อนุมัติ' },
+        ]} /></Control>
         {q.isFetching && <span className="text-[0.84375rem] text-ink-soft">กำลังโหลด...</span>}
       </div>
 

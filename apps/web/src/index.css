@@ -20,6 +20,9 @@
   --color-ok-soft: #E8F7EE;
   --color-danger: #DC2626;
   --color-danger-soft: #FEF0F0;
+  /* พื้นช่องที่กรอกผิด: อ่อนกว่าพื้นป้ายเตือน ให้ตัวอักษรที่กรอกยังอ่านง่าย · กรอบแดง + เงาเทาทำให้เห็นชัดว่าช่องไหนผิด */
+  --color-danger-field: #FFF8F8;
+  --shadow-danger: 0 2px 10px -3px rgba(24, 24, 27, 0.22);
   --color-info: #1D5E93;
   --color-info-soft: #EDF5FC;
   --color-dev: #7A5B00;
@@ -90,8 +93,9 @@
   .tf-input::placeholder { color: #A1A1AA; }
   .tf-input:hover:not(:disabled):not(:focus) { background: #EFECE9; }
   .tf-input:focus { outline: none; background: var(--color-surface); border-color: var(--color-orange); box-shadow: 0 0 0 4px var(--color-orange-pale); }
-  .tf-input[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-soft); }
-  .tf-input[aria-invalid="true"]:focus { background: var(--color-surface); box-shadow: 0 0 0 4px var(--color-danger-soft); }
+  .tf-input[aria-invalid="true"] { border-color: var(--color-danger); background: var(--color-danger-field); box-shadow: var(--shadow-danger); }
+  .tf-input[aria-invalid="true"]:hover:not(:disabled):not(:focus) { background: var(--color-danger-field); }
+  .tf-input[aria-invalid="true"]:focus { background: var(--color-surface); box-shadow: 0 0 0 4px var(--color-danger-soft), var(--shadow-danger); }
   .tf-input:disabled { color: var(--color-ink-soft); cursor: not-allowed; opacity: .7; }
   /* Edge วาดปุ่มรูปตา/กากบาทของตัวเองในช่องรหัสผ่าน ซ่อนทิ้งเพราะเรามีปุ่มของเราเองแล้ว (ไม่งั้นซ้อนกันสองอัน) */
   .tf-input::-ms-reveal, .tf-input::-ms-clear { display: none; }

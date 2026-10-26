@@ -3,13 +3,14 @@
  * อัปโหลดแบบลากวาง แสดงตัวอย่างก่อนบันทึก จัดหมวดตามบทบาท และค้นหา
  */
 import Select from '../components/Select.jsx';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { API_URL } from '../lib/env.js';
 import { libCategoryLabel, libraryGroups } from '../features/app/library.js';
 import { readDataUrl } from '../features/docs/docsApi.js';
+import { pdfFirstPage } from '../features/docs/DocPreview.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useSubmit } from '../lib/useSubmit.js';
 import { useToast } from '../components/Toast.jsx';
@@ -18,6 +19,11 @@ import Icon from '../components/Icon.jsx';
 
 const OK_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
 const MAX = 10 * 1024 * 1024;
+// ปีของเอกสาร (พ.ศ.) ให้เลือกจากรายการ: ปีหน้า ปีนี้ ย้อนหลังไป 20 ปี
+const YEAR_OPTIONS = (() => {
+  const now = new Date().getFullYear() + 543;
+  return [{ value: '', label: 'ไม่ระบุปี' }, ...Array.from({ length: 22 }, (_, i) => String(now + 1 - i)).map((y) => ({ value: y, label: `พ.ศ. ${y}` }))];
+})();
 
 export default function LibraryPage() {
   const { role } = useOutletContext();
@@ -27,6 +33,9 @@ export default function LibraryPage() {
   const [form, setForm] = useState({ category: groups[0].items[0].id, title: '', year: '', note: '' });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
+  const [previewState, setPreviewState] = useState('idle'); // idle | loading | done | error
+  const [fileUrl, setFileUrl] = useState(''); // blob URL ของไฟล์ที่เลือก ใช้เปิดดูไฟล์เต็มก่อนบันทึก
+  useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl); }, [fileUrl]);
   const [drag, setDrag] = useState(false);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('');
@@ -45,8 +54,17 @@ export default function LibraryPage() {
     if (!OK_TYPES.includes(f.type)) { toast('รองรับเฉพาะ PDF, PNG, JPG, WEBP', 'err'); return; }
     if (f.size > MAX) { toast('ไฟล์เกิน 10 MB', 'err'); return; }
     setFile(f);
-    setPreview(f.type.startsWith('image/') ? await readDataUrl(f) : '');
+    setFileUrl(URL.createObjectURL(f));
     setForm((x) => ({ ...x, title: x.title || f.name.replace(/\.[^.]+$/, '') }));
+    setPreview('');
+    setPreviewState('loading');
+    try {
+      // รูปแสดงตรง ๆ · PDF วาดหน้าแรกด้วย pdf.js ให้เห็นเนื้อหาก่อนกดบันทึก
+      setPreview(f.type.startsWith('image/') ? await readDataUrl(f) : await pdfFirstPage(new Uint8Array(await f.arrayBuffer()), 320));
+      setPreviewState('done');
+    } catch {
+      setPreviewState('error');
+    }
   }
 
   const [busy, save] = useSubmit(async () => {
@@ -55,7 +73,7 @@ export default function LibraryPage() {
       const dataUrl = await readDataUrl(file);
       await api.post('/api/library', { ...form, title: form.title.trim(), note: form.note.trim(), filename: file.name, mime: file.type, dataBase64: dataUrl.split(',')[1] });
       toast('บันทึกเข้าคลังเอกสารแล้ว');
-      setFile(null); setPreview('');
+      setFile(null); setPreview(''); setFileUrl(''); setPreviewState('idle');
       setForm({ category: form.category, title: '', year: '', note: '' });
       void qc.invalidateQueries({ queryKey: ['library'] });
     } catch (err) { toast(err.message, 'err'); }
@@ -104,12 +122,24 @@ export default function LibraryPage() {
           {file && (
             <div className="tf-reveal mt-3 rounded-2xl border border-line p-3">
               <p className="mb-2 text-[0.875rem] font-semibold text-ink-soft">ตัวอย่างก่อนบันทึก</p>
-              {preview ? <img src={preview} alt="" className="max-h-40 w-auto rounded-lg" /> : <p className="text-[0.90625rem]">PDF · {file.name}</p>}
+              {preview
+                ? <img src={preview} alt={`ตัวอย่าง ${file.name}`} className="tf-sign-paper mx-auto max-h-64 w-auto rounded-lg bg-white ring-1 ring-line" />
+                : <p className="text-[0.90625rem] text-ink-soft">{previewState === 'loading' ? 'กำลังสร้างตัวอย่าง…' : 'แสดงตัวอย่างไม่ได้ กดเปิดดูไฟล์เต็มแทน'}</p>}
+              <p className="mt-2 truncate text-[0.84375rem] text-ink-soft" title={file.name}>{file.name} · {Math.max(1, Math.round(file.size / 1024))} KB</p>
+              <div className="mt-2 flex gap-2">
+                <a href={fileUrl} target="_blank" rel="noreferrer" className="tf-btn tf-btn-soft flex-1 !py-2 text-center text-[0.90625rem]">เปิดดูไฟล์เต็ม</a>
+                <button type="button" onClick={() => { setFile(null); setPreview(''); setFileUrl(''); setPreviewState('idle'); if (input.current) input.current.value = ''; }}
+                  className="tf-btn tf-btn-ghost !py-2 text-[0.90625rem]">เปลี่ยนไฟล์</button>
+              </div>
             </div>
           )}
           <div className="mt-4">
             <TextField id="lib-title" label="ชื่อเอกสาร" placeholder="เช่น ภ.พ.20 ปี 2569" value={form.title} onChange={set('title')} />
-            <TextField id="lib-year" label="ปี (ถ้ามี)" inputMode="numeric" maxLength={4} placeholder="2569" value={form.year} onChange={set('year')} />
+            <div className="mb-4">
+              <label htmlFor="lib-year" className="mb-1.5 block text-[0.9375rem] font-medium">ปีของเอกสาร (ถ้ามี)</label>
+              <Select id="lib-year" value={form.year} onChange={set('year')} options={YEAR_OPTIONS} />
+              <p className="mt-1 text-[0.84375rem] text-ink-soft">เช่น ภ.ง.ด.90 ปีภาษี 2568 เลือก พ.ศ. 2568</p>
+            </div>
             <TextField id="lib-note" label="หมายเหตุ" placeholder="เช่น ฉบับจริงเก็บที่สำนักงาน" value={form.note} onChange={set('note')} />
           </div>
           <Button variant="dark" block onClick={save} loading={busy} disabled={!file}>บันทึกเข้าคลัง</Button>

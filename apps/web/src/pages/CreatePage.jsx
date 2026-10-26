@@ -264,6 +264,8 @@ function StepActions({ back, next }) {
  * ใช้ร่วมกับ table-fixed ตารางจึงพอดีการ์ด ไม่ล้นขอบเพราะช่องกรอกขยายตามความยาวเริ่มต้นของเบราว์เซอร์
  */
 const ITEM_COL_REM = { date: 9.5, money: 8, number: 5.5, select: 8.5, taxid: 10.5 };
+/** หน่วยนับให้เลือกในรายการ แบ่งหัวข้อตามกลุ่ม (พิมพ์หน่วยอื่นเองได้ แต่ห้ามเป็นตัวเลข) */
+const UNIT_SUGGESTIONS = docschema.UNIT_GROUPS.flatMap(([group, units]) => units.map((value) => ({ value, group })));
 const itemColRem = (cdef) => (cdef.width === 'wide' ? null : ITEM_COL_REM[cdef.type] || null);
 /** ความกว้างต่ำสุดของตาราง: คอลัมน์คงที่ + คอลัมน์ข้อความละ 9rem + เลขลำดับ/ปุ่มลบ · แคบกว่านี้ค่อยเลื่อนแนวนอน */
 function itemTableMinRem(cols, priced) {
@@ -824,13 +826,15 @@ export default function CreatePage() {
   const lineAmount = (row) => (Number(row.qty) || 0) * (Number(row.price) || 0) - (Number(row.discount) || 0);
   function itemCell(row, i, c) {
     const locked = !!row.sourceId;
-    const rowIndex = filledItems(items.slice(0, i + 1)).length - 1;
+    // ข้อผิดพลาดจากการตรวจผูกกับลำดับ "แถวที่กรอกแล้ว" · แถวใหม่ที่ยังว่างไม่ใช่แถวนั้น จึงต้องไม่รับข้อผิดพลาดของแถวก่อนหน้ามาแสดง
+    const rowIndex = filledItems([row]).length ? filledItems(items.slice(0, i + 1)).length - 1 : -1;
     const cdef = itemColDef(c);
     const err = (errs.items || []).find((x) => x.row === rowIndex && x.col === c);
     const common = {
       'aria-label': cdef.label,
       'aria-invalid': err ? 'true' : 'false',
       readOnly: locked,
+      placeholder: locked ? undefined : cdef.placeholder,
       className: cx('tf-input min-w-0 !px-2.5 !py-2 text-[0.9375rem]', locked && 'opacity-70'),
       value: row[c] == null ? '' : row[c],
       onChange: (e) => setItem(i, c, e.target.value),
@@ -839,8 +843,17 @@ export default function CreatePage() {
     if (c === 'unit') {
       return (
         <>
-          <input {...common} type="text" list="cr-unit-presets" autoComplete="off" maxLength={30}
-            onChange={(e) => setItem(i, c, e.target.value.replace(/[0-9๐-๙]/g, ''))} />
+          <Combobox
+            aria-label={common['aria-label']}
+            aria-invalid={common['aria-invalid']}
+            readOnly={locked}
+            className="!px-2.5 !py-2 text-[0.9375rem]"
+            value={common.value}
+            suggestions={UNIT_SUGGESTIONS}
+            placeholder="เลือกหรือพิมพ์ เช่น ชิ้น งาน"
+            emptyText="ไม่มีในรายการ พิมพ์หน่วยเองได้ (ห้ามเป็นตัวเลข)"
+            onChange={(e) => setItem(i, c, String(e.target.value).replace(/[0-9๐-๙]/g, '').slice(0, 30))}
+          />
           {err && <span className="mt-1 block text-[0.84375rem] font-medium text-danger">{err.msg.replace(/^"[^"]+" /, '')}</span>}
         </>
       );
@@ -1056,9 +1069,6 @@ export default function CreatePage() {
           : errs.fields.billDiscount;
         return msg ? <p role="alert" className="mt-2 text-[0.90625rem] font-medium text-danger">{msg}</p> : null;
       })()}
-      {def.items.cols.includes('unit') && (
-        <datalist id="cr-unit-presets">{docschema.UNIT_PRESETS.map((u) => <option key={u} value={u} />)}</datalist>
-      )}
     </>
   );
 

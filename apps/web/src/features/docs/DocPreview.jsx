@@ -35,7 +35,11 @@ async function renderFirstPage(id, width) {
   if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(`${API_URL}/api/documents/${Number(id)}/pdf`, { credentials: 'include', headers });
   if (!res.ok || !(res.headers.get('Content-Type') || '').includes('pdf')) throw new Error('load');
-  const data = new Uint8Array(await res.arrayBuffer());
+  return pdfFirstPage(new Uint8Array(await res.arrayBuffer()), width);
+}
+
+/** วาดหน้าแรกของ PDF (ไบต์) เป็นภาพ JPEG data URL กว้าง width px (ใช้ทั้งการ์ดเอกสารและตัวอย่างไฟล์ก่อนอัปโหลด) */
+export async function pdfFirstPage(data, width) {
   const pdfjs = await loadPdfjs();
   const task = pdfjs.getDocument({ data });
   const pdf = await task.promise;

@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 const cx = (...xs) => xs.filter(Boolean).join(' ');
 
 const norm = (o) => (typeof o === 'object' && o !== null ? { value: String(o.value), hint: o.hint, group: o.group } : { value: String(o) });
-const MAX_SHOWN = 60;
+const MAX_SHOWN = 120;
 
 export default function Combobox({
   id, name, value, onChange, onBlur, suggestions = [], placeholder, className, disabled, readOnly,

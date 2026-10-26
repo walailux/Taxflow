@@ -625,7 +625,7 @@
   const ITEM_COLS = {
     name: { label: 'รายละเอียด', type: 'text', required: true, width: 'wide', maxLen: 500 },
     qty: { label: 'จำนวน', type: 'number', def: 1, gt0: true, max: 1e6 },
-    unit: { label: 'หน่วย', type: 'text', def: 'งาน', maxLen: 30, noDigits: true },
+    unit: { label: 'หน่วย', type: 'text', def: '', maxLen: 30, noDigits: true },
     price: { label: 'ราคาต่อหน่วย', type: 'money', max: 1e10 },
     discount: { label: 'ส่วนลด', type: 'money', max: 1e10 },
     amount: { label: 'จำนวนเงิน', type: 'money', max: 1e10 },
@@ -741,15 +741,60 @@
    * หน่วยนับที่ใช้บ่อยในใบเสนอราคา/ใบแจ้งหนี้/ใบกำกับภาษี (ให้เลือกจากรายการ หรือพิมพ์เองได้ แต่ห้ามเป็นตัวเลข)
    * เรียงตามกลุ่ม: งานบริการ/คอนเทนต์ · เวลา · สินค้าทั่วไป · บรรจุภัณฑ์ · อาหารและเครื่องดื่ม · น้ำหนัก/ปริมาตร/ความยาว · อื่น ๆ
    */
-  const UNIT_PRESETS = [
-    'งาน', 'รายการ', 'ครั้ง', 'แคมเปญ', 'แพ็กเกจ', 'โปรเจกต์', 'คลิป', 'วิดีโอ', 'โพสต์', 'สตอรี่', 'รีล', 'ไลฟ์', 'ภาพ', 'บทความ', 'งวด', 'สิทธิ์', 'บัญชี', 'ไลเซนส์',
-    'ชั่วโมง', 'วัน', 'สัปดาห์', 'เดือน', 'ไตรมาส', 'ปี', 'รอบ', 'เที่ยว',
-    'ชิ้น', 'อัน', 'ตัว', 'เครื่อง', 'ชุด', 'เซต', 'คู่', 'โหล', 'ใบ', 'แผ่น', 'เล่ม', 'ฉบับ', 'หน้า', 'ม้วน', 'แท่ง', 'ก้อน', 'เส้น', 'คัน', 'หลัง', 'ห้อง', 'ที่', 'คน', 'ท่าน',
-    'กล่อง', 'ลัง', 'แพ็ก', 'ห่อ', 'ถุง', 'ซอง', 'กระสอบ', 'ถัง', 'แกลลอน', 'ขวด', 'กระป๋อง', 'หลอด', 'ตลับ',
-    'แก้ว', 'ถ้วย', 'จาน', 'ชาม', 'ปอนด์', 'ลูก', 'ผล', 'หวี', 'ถาด', 'ปิ่นโต',
-    'กิโลกรัม', 'กรัม', 'ขีด', 'ตัน', 'ลิตร', 'มิลลิลิตร', 'เมตร', 'เซนติเมตร', 'ตารางเมตร', 'ตารางฟุต', 'ฟุต', 'หลา', 'นิ้ว',
+  const UNIT_GROUPS = [
+    ['งานบริการ / คอนเทนต์', ['งาน', 'รายการ', 'ครั้ง', 'แคมเปญ', 'แพ็กเกจ', 'โปรเจกต์', 'คลิป', 'วิดีโอ', 'โพสต์', 'สตอรี่', 'รีล', 'ไลฟ์', 'ภาพ', 'บทความ', 'งวด', 'สิทธิ์', 'บัญชี', 'ไลเซนส์']],
+    ['เวลา', ['ชั่วโมง', 'วัน', 'สัปดาห์', 'เดือน', 'ไตรมาส', 'ปี', 'รอบ', 'เที่ยว']],
+    ['สินค้าทั่วไป', ['ชิ้น', 'อัน', 'ตัว', 'เครื่อง', 'ชุด', 'เซต', 'คู่', 'โหล', 'ใบ', 'แผ่น', 'เล่ม', 'ฉบับ', 'หน้า', 'ม้วน', 'แท่ง', 'ก้อน', 'เส้น', 'คัน', 'หลัง', 'ห้อง', 'ที่', 'คน', 'ท่าน']],
+    ['บรรจุภัณฑ์', ['กล่อง', 'ลัง', 'แพ็ก', 'ห่อ', 'ถุง', 'ซอง', 'กระสอบ', 'ถัง', 'แกลลอน', 'ขวด', 'กระป๋อง', 'หลอด', 'ตลับ']],
+    ['อาหารและเครื่องดื่ม', ['แก้ว', 'ถ้วย', 'จาน', 'ชาม', 'ปอนด์', 'ลูก', 'ผล', 'หวี', 'ถาด', 'ปิ่นโต']],
+    ['น้ำหนัก / ปริมาตร / ความยาว', ['กิโลกรัม', 'กรัม', 'ขีด', 'ตัน', 'ลิตร', 'มิลลิลิตร', 'เมตร', 'เซนติเมตร', 'ตารางเมตร', 'ตารางฟุต', 'ฟุต', 'หลา', 'นิ้ว']],
   ];
+  const UNIT_PRESETS = UNIT_GROUPS.flatMap(([, units]) => units);
   const HAS_DIGIT = /[0-9๐-๙]/;
+
+  /**
+   * ตัวอย่างการกรอก (placeholder) ของทุกช่องที่ยังไม่ได้กำหนดไว้ในนิยามฟอร์ม แนะนำรูปแบบที่ถูกต้องให้ผู้ใช้เห็นก่อนพิมพ์
+   * ช่องเลือก/วันที่/ติ๊ก มีคำแนะนำในตัวอยู่แล้วจึงไม่ใส่ · ช่องที่นิยามไว้แล้วใช้ของเดิม
+   */
+  const EXAMPLE = {
+    refNo: 'เช่น PR-2569-0012', note: 'เช่น ราคานี้รวมค่าเดินทางในกรุงเทพมหานครแล้ว', poRef: 'เช่น PO-2026-00012',
+    bankName: 'เช่น ธนาคารกสิกรไทย', bankAccountName: 'เช่น บริษัท ตัวอย่าง จำกัด', bankAccountNo: 'เช่น 123-4-56789-0',
+    payMethodOther: 'เช่น บัตรเครดิต / PromptPay', transferRef: 'เช่น KBANK2610260001', payBank: 'เช่น ธนาคารไทยพาณิชย์',
+    campaignName: 'เช่น รีวิวเมนูใหม่ ต.ค. 2569', delivererName: 'เช่น วลัยลักษณ์ ศรีสวัสดิ์', receiverName: 'เช่น ฝ่ายการตลาด คุณแพรวา',
+    incomeDesc: 'เช่น ค่าจ้างทำของ (ผลิตคอนเทนต์)', payBankBranch: 'เช่น สาขาลาดพร้าว', chequeNo: 'เช่น 10234567',
+    preparedBy: 'เช่น สุดารัตน์ (ฝ่ายบัญชี)', approvedBy: 'เช่น กรรมการผู้จัดการ', paidBy: 'เช่น ฝ่ายการเงิน',
+    place: 'เช่น กรุงเทพมหานคร', objective: 'เช่น เพิ่มการรับรู้และยอดขายสินค้าใหม่ผ่าน Influencer',
+    influencerCount: 'เช่น 3', fee: 'เช่น 45000.00', revisionTerms: 'เช่น แก้ไขได้ไม่เกิน 2 ครั้งต่อชิ้นงาน',
+    cancelTerms: 'เช่น ยกเลิกหลังเริ่มงานคืนเงินมัดจำ 50%', confidentialTerms: 'เช่น ห้ามเปิดเผยข้อมูลแคมเปญก่อนวันเผยแพร่',
+    contentRights: 'เช่น ผู้ว่าจ้างนำไปใช้ซ้ำได้ 6 เดือน', breachTerms: 'เช่น ผิดสัญญาชดใช้ค่าเสียหายตามจริง',
+    sign1Name: 'เช่น สมชาย ใจดี', sign1Position: 'เช่น กรรมการผู้จัดการ', sign2Name: 'เช่น วลัยลักษณ์ ศรีสวัสดิ์', sign2Position: 'เช่น ผู้รับจ้าง',
+    witness1: 'เช่น สมหญิง ใจงาม', witness2: 'เช่น ประยุทธ มั่นคง', contentCount: 'เช่น 2',
+    brief: 'เช่น รีวิวเมนูใหม่ แสดงสินค้าใน 3 วินาทีแรก บอกโค้ดส่วนลด', installmentCount: 'เช่น 1', revisionRounds: 'เช่น 2',
+    publishDuration: 'เช่น ไม่น้อยกว่า 90 วันนับจากวันเผยแพร่', removalTerms: 'เช่น ห้ามลบภายใน 90 วัน',
+    grantorName: 'เช่น บริษัท ตัวอย่าง จำกัด', grantorIdNo: '13 หลัก เช่น 0105561234567', grantorAddress: 'เช่น 99/1 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110',
+    grantorAuthName: 'เช่น สมชาย ใจดี', grantorPosition: 'เช่น กรรมการผู้จัดการ', granteeName: 'เช่น สมหญิง ใจงาม',
+    granteeCitizenId: '13 หลัก เช่น 1101700123456', granteeAddress: 'เช่น 12/3 ถ.พหลโยธิน แขวงสามเสนใน เขตพญาไท กรุงเทพมหานคร 10400',
+    bookNo: 'เช่น 001', amount: 'เช่น 10000.00', seqInForm: 'เช่น 1', taxYear: 'เช่น 2569',
+    signerName: 'เช่น สมชาย ใจดี', signerPosition: 'เช่น กรรมการผู้จัดการ', taxYearBE: 'เช่น 2569', filingSeq: 'เช่น 1',
+    branchNo: 'เช่น 00000 (สำนักงานใหญ่)', surcharge: 'เช่น 0.00',
+    // คู่ค้า
+    name: 'เช่น บริษัท ตัวอย่าง จำกัด', channelName: 'เช่น วลัยพากิน', taxId: '13 หลัก เช่น 0105561234567',
+    address: 'เช่น 99/1 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110', contactPerson: 'เช่น คุณแพรวา (ฝ่ายการตลาด)',
+    authName: 'เช่น สมชาย ใจดี', authPosition: 'เช่น กรรมการผู้จัดการ', phone: 'เช่น 02-123-4567', email: 'เช่น name@company.co.th',
+    branch: 'เช่น สำนักงานใหญ่', socials: 'เช่น TikTok @walai.paakin',
+  };
+  const ITEM_EXAMPLE = {
+    name: 'เช่น คลิปรีวิวสินค้า 60 วินาที', qty: 'เช่น 1', unit: 'เลือกหรือพิมพ์ เช่น ชิ้น งาน', price: '0.00', discount: '0.00',
+    amount: '0.00', docNo: 'เช่น INV-2026-00012', influencer: 'เช่น วลัยพากิน', contentType: 'เช่น วิดีโอสั้น 60 วินาที', pieces: 'เช่น 1',
+    link: 'เช่น https://www.tiktok.com/@ชื่อช่อง/video/…', payeeName: 'เช่น วลัยลักษณ์ ศรีสวัสดิ์', payeeTaxId: '13 หลัก',
+    payeeBranch: 'เช่น 00000', payeeAddress: 'เช่น 88/15 ถ.ลาดพร้าว กรุงเทพมหานคร', incomeDesc: 'เช่น ค่าจ้างทำของ', rate: 'เช่น 3', wht: '0.00',
+  };
+  const NO_EXAMPLE = ['select', 'radio', 'checks', 'checkbox', 'date', 'docref'];
+  for (const type of Object.keys(FORMS)) {
+    for (const def of allFields(type)) if (!def.placeholder && !NO_EXAMPLE.includes(def.type) && EXAMPLE[def.key]) def.placeholder = EXAMPLE[def.key];
+  }
+  for (const [k, def] of Object.entries(PARTY_FIELDS)) if (!def.placeholder && !NO_EXAMPLE.includes(def.type) && EXAMPLE[k]) def.placeholder = EXAMPLE[k];
+  for (const [k, def] of Object.entries(ITEM_COLS)) if (!def.placeholder && !NO_EXAMPLE.includes(def.type) && ITEM_EXAMPLE[k]) def.placeholder = ITEM_EXAMPLE[k];
 
   /** ตรวจทั้งฟอร์มของเอกสาร คืน { fieldErrors: {key: msg}, partyErrors: {key: msg}, itemErrors: [{row, col, msg}], errors: [msg] } */
   function validateDoc(type, data, opts = {}) {
@@ -975,7 +1020,7 @@
 
   return {
     VAT_RATE, WHT_RATES, INCOME_TYPES, INCOME_LABEL, WHT_PRESETS, WHT_CONDITIONS, PND_FORMS, THAI_MONTHS, THAI_MONTHS_SHORT,
-    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, DEFAULT_TERMS,
+    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, UNIT_GROUPS, DEFAULT_TERMS,
     allFields, matchCond, rolesFor, isJuristicParty, autoPndForm, calcWht, compute, thaiDate, round2,
     FORMAT, checkField, validateDoc, isValidThaiId,
   };
