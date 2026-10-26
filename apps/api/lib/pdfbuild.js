@@ -59,10 +59,12 @@ const FONTS = {
  * ชุดฟอนต์ที่เลือกใช้ในเอกสารได้ (doc.docFont) · Sarabun เป็นค่าเริ่มต้นและต้องมีเสมอ
  * Google Sans (OFL, รองรับภาษาไทย) ไม่มีไฟล์ = ใช้ Sarabun แทน เอกสารยังออกได้
  */
-const FONT_SETS = {
-  sarabun: FONTS,
-  googlesans: { regular: path.join(FONT_DIR, 'GoogleSans-Regular.ttf'), bold: path.join(FONT_DIR, 'GoogleSans-Bold.ttf') },
-};
+const FONT_SETS = Object.fromEntries(require('../../../packages/shared/docschema.js').DOC_FONTS.map((f) => [f.value,
+  f.value === 'sarabun' ? FONTS : { regular: path.join(FONT_DIR, `${f.file}-Regular.ttf`), bold: path.join(FONT_DIR, `${f.file}-Bold.ttf`) }]));
+/** ฟอนต์ที่มีไฟล์ครบ (ตัวปกติ + ตัวหนา) พร้อมใช้ใน PDF */
+function availableFonts() {
+  return Object.entries(FONT_SETS).filter(([, s]) => fs.existsSync(s.regular) && fs.existsSync(s.bold)).map(([k]) => k);
+}
 function fontSetFor(name) {
   const set = FONT_SETS[name];
   return set && fs.existsSync(set.regular) && fs.existsSync(set.bold) ? set : FONTS;
@@ -882,7 +884,7 @@ async function buildDocument(doc, opt = {}) {
   return { pdf, xml, xmlName, pdfa: true, digitallySigned: !!sign };
 }
 
-module.exports = {
+module.exports = { availableFonts,
   buildDocument, render, toPdfA3,
   fontStatus, requireFonts, FONT_DIR, FONTS,
   columnWidths, // ส่งออกเพื่อให้ชุดทดสอบตรวจการคำนวณความกว้างคอลัมน์ได้

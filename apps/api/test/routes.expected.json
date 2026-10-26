@@ -46,6 +46,7 @@
   "GET /api/kyc/:id/file",
   "GET /api/library",
   "GET /api/library/:id/file",
+  "GET /api/meta/doc-fonts",
   "GET /api/meta/profile-options",
   "GET /api/notifications",
   "GET /api/pdpa/my-data",

@@ -31,6 +31,13 @@ api.get('/api/health', (req, res) => {
 // ข้อมูลประกอบสำหรับสร้างฟอร์ม (รายการจังหวัด ธนาคาร ประเภทนิติบุคคล ฯลฯ)
 
 
+// ฟอนต์เอกสารที่ใช้ได้จริงบนเซิร์ฟเวอร์นี้ (มีไฟล์ .ttf ครบ) หน้าเว็บแสดงเฉพาะตัวที่อยู่ในรายการนี้
+api.get('/api/meta/doc-fonts', (req, res) => {
+  let available = ['sarabun'];
+  try { available = require('../lib/pdfbuild').availableFonts(); } catch { /* ยังไม่ได้ติดตั้งไลบรารี PDF ใช้ค่าเริ่มต้น */ }
+  sendJson(res, 200, { available });
+});
+
 api.get('/api/meta/profile-options', (req, res) => sendJson(res, 200, {
   companyTypes: profile.COMPANY_TYPES,
   provinces: profile.PROVINCES,

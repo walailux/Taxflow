@@ -318,7 +318,7 @@ async function build(user, type, body, ctx = {}) {
     whtRate: calc.whtRate, wht: calc.wht, net: calc.net, income: calc.income,
     surcharge: calc.surcharge || 0,
     // ฟอนต์ของเอกสาร PDF เลือกได้สองแบบ (ค่าอื่น = Sarabun) · เก็บไว้กับเอกสาร ออกแล้วหน้าตาไม่เปลี่ยนตามการตั้งค่าภายหลัง
-    docFont: ['sarabun', 'googlesans'].includes(body && body.docFont) ? body.docFont : 'sarabun',
+    docFont: DS.DOC_FONTS.some((f) => f.value === (body && body.docFont)) ? body.docFont : 'sarabun',
   };
   if (type === 'EWHT') {
     // ฟิลด์ระดับบนสำหรับส่วนที่อ่านแบบเดิม (แดชบอร์ด/ส่งออก)

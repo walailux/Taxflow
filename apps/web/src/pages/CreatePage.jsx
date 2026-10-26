@@ -9,6 +9,7 @@ import DatePicker from '../components/DatePicker.jsx';
 import Combobox from '../components/Combobox.jsx';
 import BankField from '../components/BankField.jsx';
 import { DOC_FONTS, readAppearance } from '../lib/appearance.js';
+import { useDocFonts } from '../lib/docFonts.js';
 import BranchField from '../components/BranchField.jsx';
 import ContactLookup from '../features/contacts/ContactLookup.jsx';
 import DocArt from '../components/DocArt.jsx';
@@ -307,7 +308,8 @@ export default function CreatePage() {
   const [fields, setFields] = useState({});
   const [party, setParty] = useState({});
   const [items, setItems] = useState([]);
-  const [docFont, setDocFont] = useState(() => readAppearance().docFont); // ฟอนต์ PDF ของเอกสารฉบับนี้
+  const [docFont, setDocFont] = useState(() => readAppearance().docFont); // ฟอนต์ PDF ของเอกสาร
+  const docFonts = useDocFonts();ฉบับนี้
   const [errs, setErrs] = useState({ fields: {}, party: {}, items: [] });
   const [summary, setSummary] = useState([]);
   const [saveContact, setSaveContact] = useState(false);
@@ -371,7 +373,7 @@ export default function CreatePage() {
       docsApi.get(editId).then((d) => {
         if (!formOf(d.type) || d.schemaVersion !== 2) { toast('เอกสารนี้แก้ไขผ่านแบบฟอร์มไม่ได้', 'err'); void navigate(`/app/documents?doc=${Number(editId)}`); return; }
         setEditing(d);
-        setDocFont(d.docFont === 'googlesans' ? 'googlesans' : 'sarabun');
+        setDocFont(DOC_FONTS.some((f) => f.value === d.docFont) ? d.docFont : 'sarabun');
         setPurpose(d.docPurpose || 'self');
         setType(d.type);
         setFields({ ...initialFields(d.type, user), ...(d.fields || {}) });
@@ -794,11 +796,11 @@ export default function CreatePage() {
           </Card>
           <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
             {hasMoney ? <Card>{moneyLines}</Card> : null}
-            {/* ฟอนต์ของเอกสารฉบับนี้: Google Sans หรือ Sarabun (ค่าเริ่มต้นจากเมนู Aa) */}
+            {/* ฟอนต์ของเอกสารฉบับนี้ (ค่าเริ่มต้นจากเมนู Aa) แสดงเฉพาะฟอนต์ที่เซิร์ฟเวอร์มีไฟล์ */}
             <Card>
               <b className="mb-2 block text-[0.96875rem] font-semibold">ฟอนต์ในเอกสาร</b>
               <div role="radiogroup" aria-label="ฟอนต์ในเอกสาร" className="grid grid-cols-2 gap-2">
-                {DOC_FONTS.map((f) => (
+                {docFonts.map((f) => (
                   <button key={f.value} type="button" role="radio" aria-checked={docFont === f.value} onClick={() => setDocFont(f.value)}
                     className={cx('cursor-pointer rounded-2xl px-3 py-2.5 text-left ring-1 transition-colors', docFont === f.value ? 'bg-orange-pale ring-orange' : 'ring-line hover:bg-tile')}>
                     <b className="block text-[0.9375rem] font-semibold" style={{ fontFamily: f.stack }}>{f.label}</b>

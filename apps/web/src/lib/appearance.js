@@ -6,6 +6,7 @@
  * - เอกสาร: เลือกได้แค่ Google Sans หรือ Sarabun ส่งไปกับเอกสารตอนสร้าง (docFont) แล้วเก็บไว้กับเอกสารนั้น
  */
 import { useEffect, useState } from 'react';
+import { docschema } from './shared.js';
 
 const KEY = 'tf.appearance';
 
@@ -24,10 +25,8 @@ export const TEXT_SIZES = [
 // ความหนาตัวอักษร (ตัวเลขน้ำหนักของเนื้อหา 300–600) · ระดับอื่นเลื่อนตาม: กลาง +100 · กึ่งหนา +200 · หนา +300
 export const WEIGHT_RANGE = { min: 300, max: 600, step: 100 };
 const LEGACY_WEIGHT = { light: 300, normal: 400, bold: 500 }; // ค่าแบบเดิม (บาง/ปกติ/หนา) ที่อาจเก็บไว้แล้ว
-export const DOC_FONTS = [
-  { value: 'googlesans', label: 'Google Sans', stack: '"Google Sans", sans-serif' },
-  { value: 'sarabun', label: 'Sarabun', stack: '"Sarabun", sans-serif' },
-];
+/** ฟอนต์ใน PDF ทั้งหมด (นิยามเดียวกับฝั่งเซิร์ฟเวอร์) · หน้าจอแสดงเฉพาะตัวที่เซิร์ฟเวอร์มีไฟล์ (useDocFonts) */
+export const DOC_FONTS = docschema.DOC_FONTS.map((f) => ({ value: f.value, label: f.label, stack: f.web }));
 export const DEFAULTS = { font: 'googlesans', scale: 1, weight: 400, docFont: 'sarabun' };
 
 function normWeight(w) {

@@ -756,6 +756,20 @@
    * ตัวอย่างการกรอก (placeholder) ของทุกช่องที่ยังไม่ได้กำหนดไว้ในนิยามฟอร์ม แนะนำรูปแบบที่ถูกต้องให้ผู้ใช้เห็นก่อนพิมพ์
    * ช่องเลือก/วันที่/ติ๊ก มีคำแนะนำในตัวอยู่แล้วจึงไม่ใส่ · ช่องที่นิยามไว้แล้วใช้ของเดิม
    */
+  /**
+   * ฟอนต์ที่เลือกใช้ใน PDF ได้ (เก็บไว้กับเอกสารเป็น docFont) · file = ชื่อไฟล์ใน apps/api/assets/fonts (-Regular.ttf / -Bold.ttf)
+   * Niramit / K2D / Krub เป็นรุ่นปรับปรุงของ TH Niramit AS / TH K2D July8 / TH Krub (Cadson Demak, SIL OFL 1.1)
+   * ฟอนต์ที่ไม่มีไฟล์บนเซิร์ฟเวอร์จะไม่ขึ้นให้เลือก (ดู /api/meta/doc-fonts) และเอกสารเดิมที่อ้างถึงจะใช้ Sarabun แทน
+   */
+  const DOC_FONTS = [
+    { value: 'sarabun', label: 'Sarabun', file: 'Sarabun', web: '"Sarabun", sans-serif' },
+    { value: 'googlesans', label: 'Google Sans', file: 'GoogleSans', web: '"Google Sans", sans-serif' },
+    { value: 'niramit', label: 'TH Niramit (Niramit)', file: 'Niramit', web: '"Niramit", sans-serif' },
+    { value: 'k2d', label: 'TH K2D July8 (K2D)', file: 'K2D', web: '"K2D", sans-serif' },
+    { value: 'krub', label: 'TH Krub (Krub)', file: 'Krub', web: '"Krub", sans-serif' },
+    { value: 'chulabhorn', label: 'จุฬาภรณ์ลิขิต', file: 'ChulabhornLikit', web: '"Chulabhorn Likit", "ChulabhornLikitText", sans-serif' },
+  ];
+
   const EXAMPLE = {
     refNo: 'เช่น PR-2569-0012', note: 'เช่น ราคานี้รวมค่าเดินทางในกรุงเทพมหานครแล้ว', poRef: 'เช่น PO-2026-00012',
     bankName: 'เช่น ธนาคารกสิกรไทย', bankAccountName: 'เช่น บริษัท ตัวอย่าง จำกัด', bankAccountNo: 'เช่น 123-4-56789-0',
@@ -1020,7 +1034,7 @@
 
   return {
     VAT_RATE, WHT_RATES, INCOME_TYPES, INCOME_LABEL, WHT_PRESETS, WHT_CONDITIONS, PND_FORMS, THAI_MONTHS, THAI_MONTHS_SHORT,
-    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, UNIT_GROUPS, DEFAULT_TERMS,
+    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, UNIT_GROUPS, DOC_FONTS, DEFAULT_TERMS,
     allFields, matchCond, rolesFor, isJuristicParty, autoPndForm, calcWht, compute, thaiDate, round2,
     FORMAT, checkField, validateDoc, isValidThaiId,
   };
