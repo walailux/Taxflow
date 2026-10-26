@@ -62,7 +62,7 @@ export function navFor(role) {
       ...(creator ? [{ key: 'add', label: 'บันทึก 50 ทวิ (รับ)', icon: 'download', view: 'add' }] : []),
       { key: 'inbox', label: 'กล่องรับเอกสาร', icon: 'inbox', view: 'inbox', badge: 'inbox' },
       { key: 'docs', label: 'เอกสารทั้งหมด', icon: 'file', view: 'docs' },
-      { key: 'library', label: 'คลังเอกสาร', icon: 'book', view: 'library' },
+      { key: 'library', label: 'คลังเอกสารของฉัน', icon: 'book', view: 'library' },
       { key: 'verify', label: 'ตรวจสอบเอกสาร', icon: 'shield', external: '/verify-doc' },
     ] },
     { label: creator ? 'ภาษีและบัญชี' : 'ข้อมูลธุรกิจ', items: [

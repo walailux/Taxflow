@@ -67,8 +67,46 @@ api.get('/api/documents', requireAuth(async (req, res) => {
     const toU = users.get(last.toUserId);
     return { ...d, file: filePublic(d), sentTo: { email: last.toEmail, name: toU ? (toU.companyName || toU.displayName) : last.toEmail, status: last.status, dueDate: last.dueDate || '' } };
   });
-  sendJson(res, 200, { count: withReq.length, items: withReq });
+  // ?scope=mine (ค่าเริ่มต้น: เอกสารที่ฉันออกเอง หน้าอื่นที่เรียกเส้นนี้ใช้ค่านี้) | received (คู่ค้าส่งมาให้ฉัน) | all (ทั้งสองแบบ หน้า "เอกสารทั้งหมด")
+  const scope = ['all', 'received'].includes(p.get('scope')) ? p.get('scope') : 'mine';
+  const received = scope === 'mine' ? [] : await receivedDocs(req.user, { type, status, q, contact, from, to });
+  const items = scope === 'received' ? received : scope === 'mine' ? withReq
+    : [...withReq, ...received].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  sendJson(res, 200, { count: items.length, items });
 }));
+
+/**
+ * เอกสารที่คู่ค้าส่งมาถึงฉันผ่านกล่องรับเอกสาร (คำขอล่าสุดของแต่ละฉบับ ไม่รวมคำขอที่ผู้ส่งยกเลิก)
+ * ส่งเฉพาะข้อมูลที่หน้า "เอกสารทั้งหมด" แสดง ไม่ส่งข้อมูลภายในของผู้ส่ง เปิด PDF ผ่าน /api/requests/:id/pdf
+ */
+async function receivedDocs(user, f) {
+  const reqs = await store.all('requests', (r) => r.toUserId === user.id && r.status !== 'cancelled');
+  const latest = new Map();
+  for (const r of reqs) latest.set(r.docId, r);
+  if (!latest.size) return [];
+  const docs = await store.all('documents', (d) => latest.has(d.id));
+  const senderIds = new Set(docs.map((d) => d.userId));
+  const senders = new Map((await store.all('users', (u) => senderIds.has(u.id))).map((u) => [u.id, u]));
+  const dateOf = (d) => d.issueDate || (d.createdAt || '').slice(0, 10);
+  return docs.map((d) => {
+    const r = latest.get(d.id);
+    const s = senders.get(d.userId);
+    const fromName = s ? (s.companyName || s.displayName) : r.toEmail;
+    return {
+      id: d.id, type: d.type, docNo: d.docNo, status: d.status, issueDate: d.issueDate, createdAt: r.createdAt, updatedAt: d.updatedAt,
+      base: d.base, vat: d.vat, total: d.total, net: d.net, wht: d.wht, whtRate: d.whtRate, income: d.income,
+      party: fromName,
+      received: { reqId: r.id, fromName, fromEmail: s ? s.email : '', reqStatus: r.status, purpose: r.purpose, sentAt: r.createdAt },
+    };
+  }).filter((d) =>
+    (!f.type || d.type === f.type) &&
+    (!f.status || d.status === f.status) &&
+    (!f.q || `${d.docNo || ''} ${d.party}`.toLowerCase().includes(f.q)) &&
+    (!f.contact || d.party.toLowerCase().includes(f.contact)) &&
+    (!f.from || dateOf(d) >= f.from) &&
+    (!f.to || dateOf(d) <= f.to))
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))); // ล่าสุดก่อน เหมือนเอกสารของฉัน
+}
 
 // ข้อ: ต้องประกาศเส้นทางนี้ "ก่อน" /api/documents/:id เสมอ router (lib/router.js) จับคู่เส้นทางแบบ
 // ไล่ตามลำดับที่ประกาศ ไม่ได้เรียงตามความเจาะจงก่อน ถ้าสลับที่กัน /api/documents/export-zip จะถูก

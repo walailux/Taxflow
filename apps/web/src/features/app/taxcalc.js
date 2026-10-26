@@ -3,7 +3,7 @@
  * คืนรายการบรรทัด [{ label, value, total?, minus? }] และคำแนะนำ tip
  */
 export const CALC_MODES = [
-  { id: 'combo', label: 'ยอดโอนจริง (VAT + หัก ณ ที่จ่าย)', amountLabel: 'ราคาค่าบริการ (ก่อน VAT)', rate: true, vat: true },
+  { id: 'combo', label: 'ยอดจ่ายตามจริง (VAT + หัก ณ ที่จ่าย)', amountLabel: 'ราคาค่าบริการ (ก่อน VAT)', rate: true, vat: true },
   { id: 'vatadd', label: 'บวก VAT', amountLabel: 'ราคาก่อน VAT' },
   { id: 'vatout', label: 'ถอด VAT จากยอดรวม', amountLabel: 'ยอดรวมที่รวม VAT แล้ว' },
   { id: 'wht', label: 'หัก ณ ที่จ่าย', amountLabel: 'ยอดเงินก่อนหัก', rate: true },
@@ -61,7 +61,7 @@ export function taxCalc(mode, amount, rate = 3, vatOn = true) {
       line('ค่าบริการ (ฐานภาษี)', amt),
       ...(vatOn ? [line('VAT 7%', vat), line('ยอดตามใบกำกับภาษี', r2(amt + vat))] : []),
       line(`หัก ณ ที่จ่าย ${rate}% (คิดจากฐานก่อน VAT)`, -w, { minus: true }),
-      line('ยอดโอนเข้าบัญชีจริง', r2(amt + vat - w), { total: true }),
+      line('ยอดจ่ายตามจริง', r2(amt + vat - w), { total: true }),
     ],
     tip: 'ข้อผิดพลาดที่พบบ่อย: คิดหัก ณ ที่จ่ายจากยอดรวม VAT ที่ถูกต้องคือคิดจากค่าบริการก่อน VAT เท่านั้น',
   };

@@ -69,7 +69,7 @@ function GlobalSearch({ role }) {
   const groups = d ? [
     ['เอกสาร', d.documents.map((x) => ({ key: `d${x.id}`, title: x.docNo, sub: `${x.counterparty || 'ไม่ระบุคู่ค้า'} · ${STATUS_LABEL[x.status] || x.status}`, go: () => go('docs', { doc: x.id }) }))],
     ['คู่ค้า', d.contacts.map((x) => ({ key: `c${x.id}`, title: x.name, sub: x.taxId || 'ไม่มีเลขผู้เสียภาษี', go: () => go('contacts') }))],
-    ['คลังเอกสาร', d.library.map((x) => ({ key: `l${x.id}`, title: x.title || x.filename || 'เอกสาร', sub: x.category || '', go: () => go('library') }))],
+    ['คลังเอกสารของฉัน', d.library.map((x) => ({ key: `l${x.id}`, title: x.title || x.filename || 'เอกสาร', sub: x.category || '', go: () => go('library') }))],
   ].filter(([, items]) => items.length) : [];
 
   return (

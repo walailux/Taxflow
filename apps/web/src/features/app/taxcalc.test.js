@@ -4,10 +4,10 @@ import { taxCalc } from './taxcalc.js';
 const values = (r) => r.lines.map((l) => l.value);
 
 describe('เครื่องคิดเลขภาษี (ผลต้องเท่าหน้าเดิม)', () => {
-  it('ยอดโอนจริง: ค่าบริการ 10,000 จด VAT หัก 3%', () => {
+  it('ยอดจ่ายตามจริง: ค่าบริการ 10,000 จด VAT หัก 3%', () => {
     expect(values(taxCalc('combo', 10000, 3, true))).toEqual([10000, 700, 10700, -300, 10400]);
   });
-  it('ยอดโอนจริง ไม่จด VAT', () => {
+  it('ยอดจ่ายตามจริง ไม่จด VAT', () => {
     expect(values(taxCalc('combo', 10000, 3, false))).toEqual([10000, -300, 9700]);
   });
   it('บวก VAT และถอด VAT', () => {

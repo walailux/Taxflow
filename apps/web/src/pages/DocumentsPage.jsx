@@ -7,7 +7,7 @@
 import Select from '../components/Select.jsx';
 import DatePicker from '../components/DatePicker.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useOutletContext, useSearchParams } from 'react-router';
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { API_URL } from '../lib/env.js';
@@ -26,7 +26,15 @@ const DOT = {
 };
 const CHIPS = ['', 'draft', 'pending', 'approved', 'rejected', 'cancelled', 'archived'];
 const whtType = (t) => ['EWHT', 'PAYMENT', 'PND3', 'PND53', 'WHT'].includes(t);
-const partyOf = (d) => d.party || d.payer || d.buyer || d.payee || '-';
+const partyOf = (d) => (d.received ? `จาก ${d.received.fromName}` : d.party || d.payer || d.buyer || d.payee || '-');
+/** ที่มาของเอกสาร: ทั้งหมด / ที่ฉันสร้าง / คู่ค้าส่งมา (ผ่านกล่องรับเอกสาร) */
+const SOURCES = [
+  { value: 'all', label: 'ทั้งหมด', tip: 'เอกสารที่ฉันสร้าง และเอกสารที่คู่ค้าส่งมาให้' },
+  { value: 'mine', label: 'ที่ฉันสร้าง', tip: 'เอกสารที่ออกจากบัญชีนี้' },
+  { value: 'received', label: 'คู่ค้าส่งมา', tip: 'เอกสารที่คู่ค้าส่งมาให้ลงนามหรือตรวจสอบ (กดแล้วเปิดในกล่องรับเอกสาร)' },
+];
+/** ป้ายบอกว่าเป็นเอกสารที่คู่ค้าส่งมา */
+const ReceivedTag = () => <span className="inline-flex shrink-0 items-center rounded-full bg-orange-pale px-2 py-0.5 text-[0.75rem] font-semibold text-orange-deep">คู่ค้าส่งมา</span>;
 const EXPORT_BTN = 'flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[0.90625rem] font-medium text-ink transition-all hover:bg-white hover:shadow-[0_2px_8px_-4px_rgba(24,24,27,0.35)] disabled:cursor-not-allowed disabled:opacity-40';
 const amountsOf = (d) => ({
   tax: whtType(d.type) ? d.wht : d.vat,
@@ -174,6 +182,7 @@ function ColumnPicker({ cols, onChange }) {
 export default function DocumentsPage() {
   const { role, user } = useOutletContext();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
@@ -182,6 +191,8 @@ export default function DocumentsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const openId = params.get('doc');
+  const source = SOURCES.some((s) => s.value === params.get('source')) ? params.get('source') : 'all';
+  const setSource = (v) => setParams((p) => { const n = new URLSearchParams(p); if (v === 'all') n.delete('source'); else n.set('source', v); return n; }, { replace: true });
   const [view, setView] = useState(readView);
   useEffect(() => { try { localStorage.setItem(VIEW_KEY, JSON.stringify(view)); } catch { /* ไม่จำก็ได้ */ } }, [view]);
   const compact = view.size === 'sm';
@@ -192,8 +203,8 @@ export default function DocumentsPage() {
 
   useEffect(() => { const t = setTimeout(() => setQ(text.trim()), 250); return () => clearTimeout(t); }, [text]);
 
-  const all = useQuery({ queryKey: ['documents', 'all'], queryFn: () => api.get('/api/documents') });
-  const qs = new URLSearchParams(Object.entries({ q, status, type, from, to }).filter(([, v]) => v));
+  const all = useQuery({ queryKey: ['documents', 'all-sources', source], queryFn: () => api.get(`/api/documents?scope=${source}`) });
+  const qs = new URLSearchParams(Object.entries({ scope: source, q, status, type, from, to }).filter(([, v]) => v));
   const list = useQuery({ queryKey: ['documents', 'list', qs.toString()], queryFn: () => api.get(`/api/documents?${qs}`), placeholderData: (prev) => prev });
 
   const count = { '': 0 };
@@ -202,22 +213,38 @@ export default function DocumentsPage() {
   const types = [...new Set([...docschema.rolesFor(role, { vatRegistered: !!user.vatRegistered }), ...(all.data ? all.data.items.map((d) => d.type) : [])])];
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['documents'] });
+  // เอกสารที่คู่ค้าส่งมา เปิดในกล่องรับเอกสาร (ลงนาม/ตรวจสอบ/เก็บเข้าคลังได้ที่นั่น)
+  const openDoc = (d) => (d.received ? void navigate(`/app/inbox?req=${Number(d.received.reqId)}`) : open(d.id));
   const open = (id, extra = {}) => setParams((p) => { const n = new URLSearchParams(p); n.set('doc', String(id)); Object.entries(extra).forEach(([k, v]) => n.set(k, v)); return n; });
   const close = () => setParams((p) => { const n = new URLSearchParams(p); n.delete('doc'); n.delete('tab'); return n; });
 
   const exportQs = new URLSearchParams(Object.entries({ status, type }).filter(([, v]) => v)).toString();
   const exportZip = () => {
     if (!items.length) return;
-    window.location.href = `${API_URL}/api/documents/export-zip?ids=${items.map((d) => d.id).join(',')}`;
+    const mine = items.filter((d) => !d.received);
+    if (!mine.length) return;
+    window.location.href = `${API_URL}/api/documents/export-zip?ids=${mine.map((d) => d.id).join(',')}`;
   };
 
   return (
     <>
       <PageHeader
         title="เอกสารทั้งหมด"
-        subtitle="ค้นหา ดูรายละเอียด ลงนาม ส่ง และดาวน์โหลดเป็น PDF"
+        subtitle="รวมเอกสารที่คุณสร้างและเอกสารที่คู่ค้าส่งมา ค้นหา ดูรายละเอียด ลงนาม ส่ง และดาวน์โหลดเป็น PDF"
         actions={<Link to="/app/create" className="tf-btn tf-btn-dark"><Icon name="plus" className="size-[1.125rem]" />สร้างเอกสาร</Link>}
       />
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-[0.875rem] text-ink-soft">ที่มา</span>
+        <div role="radiogroup" aria-label="ที่มาของเอกสาร" className="flex rounded-full bg-white p-1 shadow-[0_1px_2px_rgba(24,24,27,0.05)]">
+          {SOURCES.map((s) => (
+            <button key={s.value} type="button" role="radio" aria-checked={source === s.value} title={s.tip} onClick={() => setSource(s.value)}
+              className={cx('h-9 rounded-full px-4 text-[0.90625rem] font-medium transition-all', source === s.value ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink')}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label="กรองตามสถานะ">
         {CHIPS.filter((k) => k === '' || count[k]).map((k) => (
@@ -298,7 +325,7 @@ export default function DocumentsPage() {
                 return (
                   <article
                     key={d.id}
-                    onClick={() => open(d.id)}
+                    onClick={() => openDoc(d)}
                     className="tf-fade-up tf-tone group flex cursor-pointer flex-col rounded-[18px] bg-white p-2.5 ring-1 ring-line"
                     // ขอบและเงาตอนชี้เป็นสีส้มของแบรนด์เหมือนกันทุกการ์ด (ไม่เปลี่ยนตามประเภทเอกสาร)
                     style={{ animationDelay: `${Math.min(i, 10) * 30}ms`, '--tone': 'var(--color-orange)', '--tone-ink': inkOfType(d.type) }}
@@ -317,7 +344,7 @@ export default function DocumentsPage() {
                       <TypeMark type={d.type} size="md" />
                       <span className="min-w-0 flex-1">
                         <b className="block text-[1rem] font-medium leading-snug [overflow-wrap:anywhere]" title={DOC_LABEL[d.type] || d.type}>{DOC_LABEL[d.type] || d.type}</b>
-                        <small className="block truncate font-mono text-[0.84375rem] text-ink-soft" title={d.docNo || 'แบบร่าง'}>{d.docNo || 'แบบร่าง'}</small>
+                        <small className="flex min-w-0 items-center gap-1.5 font-mono text-[0.84375rem] text-ink-soft" title={d.docNo || 'แบบร่าง'}><span className="truncate">{d.docNo || 'แบบร่าง'}</span>{d.received && <ReceivedTag />}</small>
                       </span>
                     </div>
                     <p className="mt-1 truncate px-1 text-[0.875rem] text-ink-soft">{partyOf(d)}</p>
@@ -369,13 +396,13 @@ export default function DocumentsPage() {
                 {items.map((d, i) => {
                   const { tax, total } = amountsOf(d);
                   return (
-                    <tr key={d.id} onClick={() => open(d.id)} className="tf-fade-up tf-tone-tr cursor-pointer border-t border-line bg-white align-middle" style={{ animationDelay: `${Math.min(i, 10) * 30}ms`, '--tone': toneOfType(d.type), '--tone-ink': inkOfType(d.type) }}>
+                    <tr key={d.id} onClick={() => openDoc(d)} className="tf-fade-up tf-tone-tr cursor-pointer border-t border-line bg-white align-middle" style={{ animationDelay: `${Math.min(i, 10) * 30}ms`, '--tone': toneOfType(d.type), '--tone-ink': inkOfType(d.type) }}>
                       <td className={cx(COL_CLS.no, 'truncate whitespace-nowrap font-mono', compact ? 'text-[0.875rem]' : 'text-[0.9375rem]', cellY)}>{d.docNo || 'แบบร่าง'}</td>
                       <td className={cx(COL_CLS.doc, cellY)}>
                         <span className="flex min-w-0 items-center gap-2.5">
                           <TypeMark type={d.type} size={compact ? 'sm' : 'md'} />
                           <span className="min-w-0">
-                            <b className="block truncate font-medium">{DOC_LABEL[d.type] || d.type}</b>
+                            <b className="flex min-w-0 items-center gap-1.5 font-medium"><span className="truncate">{DOC_LABEL[d.type] || d.type}</span>{d.received && <ReceivedTag />}</b>
                             {!compact && <small className="block truncate text-[0.875rem] text-ink-soft">{partyOf(d)}</small>}
                           </span>
                         </span>

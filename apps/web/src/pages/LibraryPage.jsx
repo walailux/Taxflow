@@ -11,6 +11,9 @@ import { API_URL } from '../lib/env.js';
 import { libCategoryLabel, libraryGroups } from '../features/app/library.js';
 import { readDataUrl } from '../features/docs/docsApi.js';
 import { pdfFirstPage } from '../features/docs/DocPreview.jsx';
+import DownloadMenu from '../features/docs/DownloadMenu.jsx';
+import { DOC_LABEL, STATUS_LABEL, baht, thDate } from '../lib/format.js';
+import { Link } from 'react-router';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useSubmit } from '../lib/useSubmit.js';
 import { useToast } from '../components/Toast.jsx';
@@ -40,7 +43,15 @@ export default function LibraryPage() {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('');
   const [confirm, setConfirm] = useState(null);
+  // แท็บของคลัง: ไฟล์ที่อัปโหลดเอง / เอกสารที่ฉันสร้างในระบบ (เอกสารที่คู่ค้าส่งมาดูได้ที่ "เอกสารทั้งหมด")
+  const [tab, setTab] = useState('files');
   const input = useRef(null);
+  const mine = useQuery({
+    queryKey: ['documents', 'library-mine', q],
+    queryFn: () => api.get(`/api/documents?scope=mine&q=${encodeURIComponent(q)}`),
+    enabled: tab === 'docs',
+  });
+  const myDocs = (mine.data && mine.data.items) || [];
 
   const list = useQuery({
     queryKey: ['library', { q, category: filter }],
@@ -100,7 +111,7 @@ export default function LibraryPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="คลังเอกสาร" subtitle="เก็บเอกสารสำคัญไว้ที่เดียว ไฟล์ทุกไฟล์ถูกเข้ารหัสก่อนจัดเก็บ เปิดดูได้เฉพาะบัญชีของคุณ" />
+      <PageHeader title="คลังเอกสารของฉัน" subtitle="เอกสารที่คุณสร้างในระบบและไฟล์ที่อัปโหลดเอง ไฟล์ทุกไฟล์ถูกเข้ารหัสก่อนจัดเก็บ เปิดดูได้เฉพาะบัญชีของคุณ (เอกสารที่คู่ค้าส่งมาอยู่ใน “เอกสารทั้งหมด”)" />
 
       <div className="grid items-start gap-5 lg:grid-cols-[360px_1fr]">
         <section className="tf-fade-up rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6 lg:sticky lg:top-24">
@@ -146,10 +157,47 @@ export default function LibraryPage() {
         </section>
 
         <section className="tf-fade-up rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6">
-          <div className="grid gap-x-3 sm:grid-cols-2">
-            <TextField id="lib-search" label="ค้นหา" placeholder="ชื่อเอกสาร / ชื่อไฟล์" value={q} onChange={(e) => setQ(e.target.value)} />
-            {catSelect(filter, (e) => setFilter(e.target.value), 'lib-filter', 'กรองตามหมวด', true)}
+          <div role="tablist" aria-label="ประเภทในคลัง" className="mb-4 flex w-fit rounded-full bg-tile p-1">
+            {[['files', 'ไฟล์ที่อัปโหลด'], ['docs', 'เอกสารที่ฉันสร้าง']].map(([k, label]) => (
+              <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+                className={cx('h-9 rounded-full px-4 text-[0.90625rem] font-medium transition-all', tab === k ? 'bg-white text-ink shadow-[0_2px_8px_-3px_rgba(24,24,27,0.3)]' : 'text-ink-soft hover:text-ink')}>
+                {label}
+              </button>
+            ))}
           </div>
+          <div className="grid gap-x-3 sm:grid-cols-2">
+            <TextField id="lib-search" label="ค้นหา" placeholder={tab === 'docs' ? 'เลขที่เอกสาร / คู่ค้า' : 'ชื่อเอกสาร / ชื่อไฟล์'} value={q} onChange={(e) => setQ(e.target.value)} />
+            {tab === 'files' && catSelect(filter, (e) => setFilter(e.target.value), 'lib-filter', 'กรองตามหมวด', true)}
+          </div>
+          {tab === 'docs' && (
+            <>
+              {mine.isLoading && <div className="grid gap-3 sm:grid-cols-2"><Skeleton className="h-36" /><Skeleton className="h-36" /></div>}
+              {!mine.isLoading && !myDocs.length && (
+                <EmptyState compact title="ยังไม่มีเอกสารที่สร้าง" text="เอกสารที่ออกจากบัญชีนี้จะแสดงที่นี่" action={<Link to="/app/create" className="tf-btn tf-btn-dark">สร้างเอกสาร</Link>} />
+              )}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {myDocs.slice(0, 120).map((d) => (
+                  <article key={d.id} className="tf-fade-up flex flex-col rounded-[20px] bg-tile p-4">
+                    <span className="mb-3 flex items-start justify-between gap-2">
+                      <span className="flex size-10 items-center justify-center rounded-xl bg-white text-orange"><Icon name="file" className="size-5" /></span>
+                      <span className="max-w-[70%] truncate rounded-full bg-white px-2.5 py-1 text-[0.84375rem] font-medium text-ink-soft">{STATUS_LABEL[d.status] || d.status}</span>
+                    </span>
+                    <b className="text-[1.03125rem] font-medium">{DOC_LABEL[d.type] || d.type}</b>
+                    <small className="mt-1 flex-1 text-[0.90625rem] leading-relaxed text-ink-soft">
+                      <span className="font-mono">{d.docNo || 'แบบร่าง'}</span> · {thDate(d.issueDate || d.createdAt)}<br />
+                      {d.party || d.payer || d.payee || '-'}{d.total != null ? ` · ${baht(d.total ?? d.base)}` : ''}
+                    </small>
+                    <div className="mt-3 flex gap-2">
+                      <div className="flex-1"><DownloadMenu doc={d} size="lg" /></div>
+                      <Link to={`/app/documents?doc=${Number(d.id)}`} className="tf-btn tf-btn-ghost !py-2 text-[0.9375rem]">รายละเอียด</Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {myDocs.length > 120 && <p className="mt-3 text-[0.875rem] text-ink-soft">แสดง 120 ฉบับล่าสุด ค้นหาเพื่อดูฉบับอื่น หรือดูทั้งหมดที่ <Link to="/app/documents?source=mine" className="font-medium text-orange-deep underline">เอกสารทั้งหมด</Link></p>}
+            </>
+          )}
+          {tab === 'files' && (<>
           {list.isError && <Alert>{list.error.message}</Alert>}
           {list.isLoading && <div className="grid gap-3 sm:grid-cols-2"><Skeleton className="h-36" /><Skeleton className="h-36" /></div>}
           {!list.isLoading && !items.length && (
@@ -174,6 +222,7 @@ export default function LibraryPage() {
               </article>
             ))}
           </div>
+          </>)}
         </section>
       </div>
       {confirm && <ConfirmDialog {...confirm} onCancel={() => setConfirm(null)} />}

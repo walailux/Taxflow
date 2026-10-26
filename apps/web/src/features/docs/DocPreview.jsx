@@ -29,11 +29,14 @@ export function loadPdfjs() {
   return pdfjsLoading;
 }
 
-async function renderFirstPage(id, width) {
+/** ที่อยู่ไฟล์ PDF ของเอกสาร: ของฉันเอง หรือฉบับที่คู่ค้าส่งมา (เปิดผ่านคำขอในกล่องรับเอกสาร) */
+export const pdfPathOf = (doc) => (doc.received ? `/api/requests/${Number(doc.received.reqId)}/pdf` : `/api/documents/${Number(doc.id)}/pdf`);
+
+async function renderFirstPage(path, width) {
   const headers = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${API_URL}/api/documents/${Number(id)}/pdf`, { credentials: 'include', headers });
+  const res = await fetch(`${API_URL}${path}`, { credentials: 'include', headers });
   if (!res.ok || !(res.headers.get('Content-Type') || '').includes('pdf')) throw new Error('load');
   return pdfFirstPage(new Uint8Array(await res.arrayBuffer()), width);
 }
@@ -61,7 +64,8 @@ export async function pdfFirstPage(data, width) {
 /** aspect: สัดส่วนกรอบ (ค่าเริ่มต้น A4 เต็มหน้า) การ์ดใช้แบบเตี้ยลงเพื่อเห็นแค่หัวเอกสาร (ภาพชิดบน) */
 export default function DocPreview({ doc, className, aspect = 'aspect-[210/297]' }) {
   // เปลี่ยนเนื้อหาเอกสาร (updatedAt) แล้วต้องวาดใหม่ ไม่ใช้ภาพเก่า
-  const key = `${doc.id}:${doc.updatedAt || doc.createdAt || ''}`;
+  const path = pdfPathOf(doc);
+  const key = `${path}:${doc.updatedAt || doc.createdAt || ''}`;
   const [src, setSrc] = useState(() => cache.get(key) || '');
   const [state, setState] = useState(src ? 'done' : 'idle');
   const box = useRef(null);
@@ -74,13 +78,13 @@ export default function DocPreview({ doc, className, aspect = 'aspect-[210/297]'
       io.disconnect();
       setState('loading');
       const width = box.current ? box.current.clientWidth : 320;
-      queue = queue.then(() => (cancelled ? null : renderFirstPage(doc.id, width)
+      queue = queue.then(() => (cancelled ? null : renderFirstPage(path, width)
         .then((url) => { cache.set(key, url); if (!cancelled) { setSrc(url); setState('done'); } })
         .catch(() => { if (!cancelled) setState('error'); })));
     }, { rootMargin: '200px' });
     io.observe(box.current);
     return () => { cancelled = true; io.disconnect(); };
-  }, [key, doc.id]);
+  }, [key, path]);
 
   return (
     <div ref={box} className={cx('relative overflow-hidden rounded-xl bg-tile ring-1 ring-line', aspect, className)}>

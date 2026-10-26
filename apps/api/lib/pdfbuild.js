@@ -292,11 +292,15 @@ function drawTotals(d, b, W) {
   for (const line of b.lines) {
     if (line.rule) { hr(d, d.y + 1); d.y += 4; }
     const y = d.y;
-    d.font(line.bold ? 'bold' : 'regular').fontSize(SIZE.body).fillColor(line.bold ? C.ink : C.muted)
+    d.font(line.bold ? 'bold' : 'regular').fontSize(SIZE.body);
+    // ป้ายยาว (เช่น "หัก ณ ที่จ่าย 3% · ค่าจ้างทำของ (รีวิวสินค้า)") ขึ้นบรรทัดใหม่ได้ ต้องวัดความสูงจริง
+    // เดิมเลื่อนลงคงที่ 16pt บรรทัดที่สองของป้ายจึงทับบรรทัดถัดไป (เช่น "คงเหลือจ่ายสุทธิ")
+    const labelH = d.heightOfString(line.label, { width: boxW - 90 });
+    d.fillColor(line.bold ? C.ink : C.muted)
       .text(line.label, x, y, { width: boxW - 90, align: 'left' });
     d.fillColor(C.ink)
       .text(line.value, x + boxW - 90, y, { width: 90, align: 'right' });
-    d.y = Math.max(d.y, y + 16 * DENSITY);
+    d.y = Math.max(d.y, y + labelH + 3, y + 16 * DENSITY);
   }
   d.x = d.page.margins.left;
   d.moveDown(0.5);

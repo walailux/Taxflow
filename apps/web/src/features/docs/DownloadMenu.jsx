@@ -25,6 +25,27 @@ function formatsFor(doc) {
 
 /** size: 'md' (ในตาราง) | 'lg' (ในการ์ดพรีวิว ปุ่มเต็มความกว้าง) */
 export default function DownloadMenu({ doc, size = 'md' }) {
+  // เอกสารที่คู่ค้าส่งมา: เปิด/ดาวน์โหลดได้เฉพาะ PDF ผ่านคำขอในกล่องรับเอกสาร (ข้อมูลดิบเป็นของผู้ส่ง)
+  if (doc.received) {
+    const href = `${API_URL}/api/requests/${Number(doc.received.reqId)}/pdf`;
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        title="เปิดไฟล์ PDF ที่คู่ค้าส่งมาในแท็บใหม่"
+        className={cx('inline-flex items-center justify-center gap-2 rounded-xl bg-orange font-display font-medium text-white shadow-[0_8px_18px_-10px_rgba(232,90,0,0.75)] transition-colors hover:bg-orange-deep',
+          size === 'lg' ? 'h-11 w-full text-[0.96875rem]' : 'h-9 px-3.5 text-[0.90625rem]')}
+      >
+        <Icon name="file" className="size-[1.0625rem]" />{size === 'lg' ? 'เปิด PDF' : 'PDF'}
+      </a>
+    );
+  }
+  return <OwnDownloadMenu doc={doc} size={size} />;
+}
+
+function OwnDownloadMenu({ doc, size }) {
   const [pos, setPos] = useState(null);
   const btn = useRef(null);
   const menu = useRef(null);
