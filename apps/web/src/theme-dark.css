@@ -156,8 +156,10 @@ html[data-theme="dark"] img { color-scheme: light; }
 /* สลับโหมด: สีพื้น ตัวอักษร เส้นขอบ และไอคอนค่อย ๆ จางเปลี่ยน · ยกเว้นปุ่มท้องฟ้าที่มีแอนิเมชันเลื่อนของตัวเอง */
 html.tf-theme-switching, html.tf-theme-switching *:not(.tf-sky-knob):not(.tf-sky-knob *), html.tf-theme-switching *::before, html.tf-theme-switching *::after {
   transition-property: background-color, color, border-color, outline-color, fill, stroke, box-shadow !important;
-  transition-duration: .8s !important; transition-timing-function: cubic-bezier(.65, 0, .35, 1) !important; transition-delay: 0s !important;
+  transition-duration: .45s !important; transition-timing-function: cubic-bezier(.4, 0, .2, 1) !important; transition-delay: 0s !important;
 }
+/* View Transitions: จางจากหน้าเดิมไปหน้าใหม่ทั้งหน้าพร้อมกัน (lib/theme.js) */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .45s; animation-timing-function: cubic-bezier(.4, 0, .2, 1); }
 @media (prefers-reduced-motion: reduce) { .tf-theme-icon { animation: none; } }
 
 

@@ -149,7 +149,7 @@ export default function LandingPage() {
         </section>
 
         <section className="ip-section" aria-labelledby="lp-steps">
-          <div className="ip-section-head reveal"><div><div className="ip-kicker">ขั้นตอนการใช้งาน</div><h2 id="lp-steps">จากสมัครสมาชิกถึงจัดเก็บเอกสาร 6 ขั้น</h2><p>ภาพจากหน้าจอจริงของระบบ ใช้ข้อมูลของบัญชีทดสอบ</p></div>
+          <div className="ip-section-head lp-steps-head reveal"><div><div className="ip-kicker">ขั้นตอนการใช้งาน</div><h2 id="lp-steps">จากสมัครสมาชิกถึงจัดเก็บเอกสาร 6 ขั้น</h2><p>ภาพจากหน้าจอจริงของระบบ ใช้ข้อมูลของบัญชีทดสอบ</p></div>
             <div className="lp-device-switch" role="radiogroup" aria-label="ดูภาพหน้าจอแบบ">
               {[['desktop', 'คอมพิวเตอร์'], ['mobile', 'มือถือ']].map(([v, label]) => (
                 <button key={v} type="button" role="radio" aria-checked={device === v} onClick={() => setDevice(v)} className={device === v ? 'on' : undefined}>

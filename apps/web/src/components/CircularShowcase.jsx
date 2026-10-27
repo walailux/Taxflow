@@ -3,6 +3,7 @@
  * ดัดแปลงจาก CircularTestimonials (21st.dev) ให้เข้ากับโปรเจกต์นี้: JSX + CSS ธรรมดา (ไม่ใช้ framer-motion / react-icons / styled-jsx)
  * - items: [{ src, alt, title, tag, text }] · autoplay เปลี่ยนเองทุก interval ms (หยุดเมื่อผู้ใช้กดลูกศร หรือตั้งลดการเคลื่อนไหว)
  * - ข้อความค่อย ๆ ชัดทีละคำแบบเบลอ→ชัด (CSS keyframes ct-word ใน landing.css) · ลูกศรซ้าย/ขวาบนคีย์บอร์ดใช้ได้เมื่อโฟกัสอยู่ในส่วนนี้
+ * - ลากหรือปัดภาพซ้าย/ขวาเพื่อเปลี่ยน (นิ้วหรือเมาส์) · แตะครึ่งซ้าย/ขวาของภาพ = ก่อนหน้า/ถัดไป
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
@@ -21,6 +22,7 @@ export default function CircularShowcase({ items, autoplay = true, interval = 50
   const [width, setWidth] = useState(480);
   const [playing, setPlaying] = useState(autoplay);
   const box = useRef(null);
+  const drag = useRef(null); // { x, y } จุดเริ่มลาก
   const n = items.length;
 
   useEffect(() => {
@@ -39,6 +41,21 @@ export default function CircularShowcase({ items, autoplay = true, interval = 50
 
   const next = useCallback(() => { setActive((i) => (i + 1) % n); setPlaying(false); }, [n]);
   const prev = useCallback(() => { setActive((i) => (i - 1 + n) % n); setPlaying(false); }, [n]);
+
+  // ลาก/ปัด: เลื่อนแนวนอนเกิน 40px = เปลี่ยนภาพ · ไม่ได้ลาก = แตะ ใช้ตำแหน่งที่แตะ (ครึ่งซ้าย/ขวา)
+  const onPointerDown = (e) => { drag.current = { x: e.clientX, y: e.clientY }; };
+  const onPointerUp = (e) => {
+    const start = drag.current;
+    drag.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) next(); else prev(); return; }
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+      const r = box.current.getBoundingClientRect();
+      if (e.clientX < r.left + r.width / 2) prev(); else next();
+    }
+  };
 
   function styleFor(i) {
     const gap = gapFor(width);
@@ -59,11 +76,10 @@ export default function CircularShowcase({ items, autoplay = true, interval = 50
       aria-label={label}
       onKeyDown={(e) => { if (e.key === 'ArrowLeft') prev(); if (e.key === 'ArrowRight') next(); }}
     >
-      <div className="ct-images" ref={box}>
+      <div className="ct-images" ref={box} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => { drag.current = null; }}>
         {items.map((it, i) => (
           <img key={it.src} src={it.src} alt={i === active ? it.alt : ''} aria-hidden={i === active ? undefined : 'true'}
-            width="1200" height="900" loading={i < 2 ? 'eager' : 'lazy'} decoding="async" className="ct-image" style={styleFor(i)}
-            onClick={() => { if (i !== active) { setActive(i); setPlaying(false); } }} />
+            width="1200" height="900" loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} className="ct-image" style={styleFor(i)} />
         ))}
       </div>
       <div className="ct-content">
@@ -79,8 +95,8 @@ export default function CircularShowcase({ items, autoplay = true, interval = 50
         </div>
         <div className="ct-nav">
           <button type="button" className="ct-arrow" onClick={prev} aria-label="ก่อนหน้า"><Icon name="arrow" className="size-5 rotate-180" /></button>
-          <button type="button" className="ct-arrow" onClick={next} aria-label="ถัดไป"><Icon name="arrow" className="size-5" /></button>
           <span className="ct-count" aria-hidden="true">{active + 1} / {n}</span>
+          <button type="button" className="ct-arrow" onClick={next} aria-label="ถัดไป"><Icon name="arrow" className="size-5" /></button>
         </div>
       </div>
     </div>

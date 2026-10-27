@@ -17,17 +17,29 @@ export function currentTheme() {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
-function apply(theme, animate) {
-  const root = document.documentElement;
-  if (animate) {
-    // สีทั้งหน้าค่อย ๆ จางเปลี่ยน 0.8 วินาที (ไม่แสบตา) ระยะเวลาตรงกับ .tf-theme-switching ใน theme-dark.css
-    root.classList.add('tf-theme-switching');
-    clearTimeout(apply.timer);
-    apply.timer = setTimeout(() => root.classList.remove('tf-theme-switching'), 900);
-  }
-  root.dataset.theme = theme;
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
   // แถบสีของเบราว์เซอร์บนมือถือให้ตรงกับพื้นหลัง
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#121110' : '#FF6A00');
+}
+
+/**
+ * เปลี่ยนโหมด: ทั้งหน้าค่อย ๆ จางเปลี่ยนพร้อมกันราว 0.45 วินาที (ไม่แสบตา)
+ * - เบราว์เซอร์ที่รองรับ View Transitions: ถ่ายภาพหน้าเดิมแล้วจางไปหน้าใหม่ทีเดียว ตัวอักษร พื้น ไล่สี และภาพเปลี่ยนไปด้วยกัน
+ * - เบราว์เซอร์อื่น: ใส่ .tf-theme-switching ให้สีพื้น/ตัวอักษร/เส้นขอบเปลี่ยนแบบ transition (theme-dark.css)
+ */
+function apply(theme, animate) {
+  const root = document.documentElement;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!animate || reduce) { setTheme(theme); return; }
+  if (typeof document.startViewTransition === 'function') {
+    document.startViewTransition(() => setTheme(theme));
+    return;
+  }
+  root.classList.add('tf-theme-switching');
+  clearTimeout(apply.timer);
+  apply.timer = setTimeout(() => root.classList.remove('tf-theme-switching'), 500);
+  setTheme(theme);
 }
 
 export function useTheme() {
