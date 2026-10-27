@@ -208,10 +208,10 @@ export default function CalendarPage() {
   const [y, m] = month.split('-').map(Number);
 
   const stats = [
-    { label: 'วันนี้', n: up.filter((e) => onDay(e, today) && !e.done).length, sub: 'กิจกรรมที่ยังไม่เสร็จ', tone: 'bg-[linear-gradient(160deg,#FF8A4C,#FF6A00_60%,#EF5A12)] text-white' },
-    { label: '7 วันข้างหน้า', n: up.filter((e) => e.date > today && e.date <= addDays(today, 7) && !e.done).length, sub: 'เตรียมตัวล่วงหน้า' },
-    { label: 'กำหนดภาษี', n: up.filter((e) => e.category === 'tax' && e.date >= today && e.date <= addDays(today, 30) && !e.done).length, sub: 'ภายใน 30 วัน' },
-    { label: 'เลยกำหนด', n: up.filter((e) => (e.endDate || e.date) < today && !e.done && (e.source === 'user' || e.docId || e.requestId)).length, sub: 'ยังไม่ได้ทำเครื่องหมายเสร็จ', late: true },
+    { label: 'งานที่ต้องทำวันนี้', n: up.filter((e) => onDay(e, today) && !e.done).length, tone: 'bg-[linear-gradient(160deg,#FF8A4C,#FF6A00_60%,#EF5A12)] text-white' },
+    { label: 'งานใน 7 วันข้างหน้า', n: up.filter((e) => e.date > today && e.date <= addDays(today, 7) && !e.done).length },
+    { label: 'งานภาษีใกล้ถึงกำหนด', n: up.filter((e) => e.category === 'tax' && e.date >= today && e.date <= addDays(today, 30) && !e.done).length, sub: 'ภายใน 30 วัน' },
+    { label: 'งานเลยกำหนด', n: up.filter((e) => (e.endDate || e.date) < today && !e.done && (e.source === 'user' || e.docId || e.requestId)).length, sub: 'ยังดำเนินการไม่เสร็จ', late: true },
   ];
 
   function go(day) {
@@ -261,13 +261,16 @@ export default function CalendarPage() {
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s, i) => (
-          // การ์ดสรุป: ตัวเลขใหญ่ตัวหนา หัวข้อชัด · การ์ดขาวมีขอบและเงาเบา ๆ ให้แยกจากพื้นหน้า
-          <div key={s.label} className={cx('tf-fade-up flex min-h-[7.5rem] items-center gap-4 rounded-[22px] px-5 py-5 sm:px-6',
+          // การ์ดสรุป: หัวข้อด้านบน · จำนวนตัวใหญ่ตามด้วยคำว่า "รายการ" · ข้อความรอง (ถ้ามี) · การ์ดขาวมีขอบและเงาเบา ๆ
+          <div key={s.label} className={cx('tf-fade-up flex min-h-[7.5rem] flex-col justify-between gap-2 rounded-[22px] p-4 sm:px-6 sm:py-5',
             s.tone ? `${s.tone} shadow-[0_18px_36px_-22px_rgba(255,106,0,0.9)]` : s.late && s.n ? 'bg-danger-soft ring-1 ring-danger/20' : 'bg-white shadow-[0_10px_28px_-24px_rgba(24,24,27,0.5)] ring-1 ring-line')} style={{ animationDelay: `${i * 50}ms` }}>
-            <b className={cx('font-display text-[2.75rem] font-semibold leading-none tracking-tight tabular-nums sm:text-[3.25rem]', s.late && s.n ? 'text-danger' : !s.tone && s.n ? 'text-orange-deep' : '')}>{s.n}</b>
+            <b className="block text-[1rem] font-semibold leading-snug sm:text-[1.125rem]">{s.label}</b>
             <span className="min-w-0">
-              <b className="block text-[1.0625rem] font-semibold leading-snug sm:text-[1.1875rem]">{s.label}</b>
-              <small className={cx('mt-0.5 block text-[0.9375rem]', s.tone ? 'text-white/85' : 'text-ink-soft')}>{s.sub}</small>
+              <span className="flex items-baseline gap-1.5">
+                <b className={cx('font-display text-[2.25rem] font-semibold leading-none tracking-tight tabular-nums sm:text-[2.75rem]', s.late && s.n ? 'text-danger' : !s.tone && s.n ? 'text-orange-deep' : '')}>{s.n}</b>
+                <span className={cx('text-[0.9375rem] font-medium', s.tone ? 'text-white/90' : 'text-ink-soft')}>รายการ</span>
+              </span>
+              {s.sub && <small className={cx('mt-1 block text-[0.875rem] leading-snug', s.tone ? 'text-white/85' : 'text-ink-soft')}>{s.sub}</small>}
             </span>
           </div>
         ))}

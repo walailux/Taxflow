@@ -670,7 +670,7 @@ export default function InboxPage() {
       </PageHeader>
       {/* เลื่อนด้วยแถบเลื่อนของหน้าเพียงชั้นเดียว: รายการยาวตามจริง แผงรายละเอียดค้างอยู่ข้างจอ (sticky)
           ทั้งสองฝั่งสูงอย่างน้อยเท่ากับจอ และเลื่อนถึงท้ายแล้วขอบล่างตรงกัน */}
-      <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+      <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
         {/* ฝั่งซ้าย: ค้นหา ตัวกรอง และรายการ */}
         <Card className={cx('flex flex-col lg:min-h-[calc(100vh-120px)]', SH)} bodyClassName="!p-0 flex flex-1 flex-col">
           <div className="z-20 rounded-t-[24px] bg-white lg:sticky lg:top-[84px]">

@@ -702,18 +702,56 @@ function SendTab({ d, onChanged, onGoSign }) {
   const week = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
   const [form, setForm] = useState({ toEmail: '', purpose: 'sign', dueDate: week, signAs: '', message: '' });
   const [busy, setBusy] = useState(false);
+  // ข้อผิดพลาดแสดงในหน้าต่างนี้เอง (ใต้ช่องที่ผิด + กล่องแจ้งเหนือปุ่มส่ง) ไม่พึ่ง toast อย่างเดียว
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState('');
   const reqs = useQuery({ queryKey: ['document', d.id, 'requests'], queryFn: () => docsApi.requests(d.id) });
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (e) => {
+    const v = e.target.value;
+    setForm((f) => ({ ...f, [k]: v }));
+    setFormError('');
+    if (errors[k]) setErrors((x) => ({ ...x, [k]: null }));
+  };
+
+  /** ตรวจก่อนส่ง: คืน { ช่อง: ข้อความ } ว่างถ้าผ่าน */
+  function validate() {
+    const e = {};
+    const email = form.toEmail.trim();
+    if (!email) e.toEmail = 'กรุณากรอกอีเมลบัญชี TaxFlow ของคู่ค้า';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.toEmail = 'รูปแบบอีเมลไม่ถูกต้อง เช่น name@example.com';
+    const today = new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10); // วันนี้ตามเวลาไทย
+    if (!form.dueDate) e.dueDate = 'กรุณาเลือกวันที่ต้องการให้ตอบกลับ';
+    else if (form.dueDate < today) e.dueDate = 'กำหนดตอบกลับต้องไม่ใช่วันที่ผ่านมาแล้ว';
+    return e;
+  }
 
   async function send() {
-    if (!form.toEmail.trim()) { toast('กรุณาระบุอีเมลผู้รับ', 'err'); return; }
+    if (busy) return;
+    setFormError('');
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length) {
+      document.getElementById(e.toEmail ? 'rq-email' : 'rq-due')?.focus();
+      return;
+    }
+    if (form.purpose === 'sign' && !d.signed) {
+      setFormError('ผู้ออกเอกสารต้องลงนามก่อนส่งขอลายเซ็นจากคู่ค้า กด "ลงนามตอนนี้" ด้านบน หรือเปลี่ยนวัตถุประสงค์เป็น "ขอตรวจสอบ"');
+      return;
+    }
     setBusy(true);
     try {
       await docsApi.sendRequest(d.id, { ...form, toEmail: form.toEmail.trim() });
       toast(`ส่งเอกสารถึง ${form.toEmail.trim()} แล้ว อีกฝ่ายจะเห็นในกล่องรับเอกสาร + กระดิ่งแจ้งเตือน`);
+      setForm((f) => ({ ...f, toEmail: '', message: '' }));
       void qc.invalidateQueries({ queryKey: ['document', d.id, 'requests'] });
       onChanged();
-    } catch (err) { toast(err.message, 'err'); } finally { setBusy(false); }
+    } catch (err) {
+      // ข้อผิดพลาดเรื่องผู้รับ (ไม่พบบัญชี / ส่งหาตัวเอง / อีเมล) ผูกกับช่องอีเมล ที่เหลือแสดงในกล่องแจ้งเหนือปุ่ม
+      if (/อีเมล|บัญชีผู้ใช้|ตัวเอง/.test(err.message)) {
+        setErrors((x) => ({ ...x, toEmail: err.message }));
+        document.getElementById('rq-email')?.focus();
+      } else setFormError(err.message);
+    } finally { setBusy(false); }
   }
 
   async function cancel(reqId) {
@@ -746,14 +784,15 @@ function SendTab({ d, onChanged, onGoSign }) {
         </div>
       )}
 
-      <TextField id="rq-email" label="ส่งถึง (อีเมลบัญชี TaxFlow ของคู่ค้า) *" type="email" placeholder="เช่น creator@taxflow.test" value={form.toEmail} onChange={set('toEmail')} />
+      <TextField id="rq-email" label="ส่งถึง (อีเมลบัญชี TaxFlow ของคู่ค้า) *" type="email" autoComplete="email" placeholder="เช่น creator@taxflow.test" value={form.toEmail} error={errors.toEmail} onChange={set('toEmail')} />
       <div className="grid gap-x-3 sm:grid-cols-2">
         <SelectField id="rq-purpose" label="วัตถุประสงค์" value={form.purpose} options={[{ value: 'sign', label: 'ขอลายเซ็น' }, { value: 'review', label: 'ขอตรวจสอบ' }]} onChange={set('purpose')} />
-        <TextField id="rq-due" label="กำหนดตอบกลับภายใน" type="date" value={form.dueDate} onChange={set('dueDate')} />
+        <TextField id="rq-due" label="กำหนดตอบกลับภายใน *" type="date" value={form.dueDate} error={errors.dueDate} onChange={set('dueDate')} />
       </div>
       <TextField id="rq-as" label="ลงนามในฐานะ" placeholder="เช่น ผู้รับจ้าง / ผู้มอบอำนาจ / ผู้รับเงิน (แสดงใต้ช่องลายเซ็น)" value={form.signAs} onChange={set('signAs')} />
       <TextField id="rq-msg" label="ข้อความถึงผู้รับ" placeholder="เช่น กรุณาตรวจสอบและลงนามภายในวันที่กำหนด" value={form.message} onChange={set('message')} />
-      <Button onClick={send} loading={busy} className="px-4 py-2 text-[0.90625rem]">ส่งเอกสาร</Button>
+      <Alert className="mb-3">{formError}</Alert>
+      <Button onClick={send} loading={busy} className="w-full px-4 py-2 text-[0.90625rem] sm:w-auto">ส่งเอกสาร</Button>
 
       <p className="mb-2 mt-6 text-[0.875rem] font-semibold text-ink-soft">ประวัติการส่ง</p>
       {reqs.isLoading && <p className="text-[0.90625rem] text-ink-soft">กำลังโหลด…</p>}

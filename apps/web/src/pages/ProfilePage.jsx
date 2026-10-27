@@ -324,7 +324,7 @@ export default function ProfilePage() {
       )}
 
       {/* จอใหญ่: คอลัมน์เนื้อหายืดเท่าความสูงเมนูซ้ายเป็นอย่างน้อย ขอบล่างของสองกล่องจึงตรงกัน (เมนูยังเกาะด้านบนตอนเลื่อน) */}
-      <div className="grid items-start gap-5 lg:grid-cols-[230px_minmax(0,1fr)] lg:items-stretch">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[230px_minmax(0,1fr)] lg:items-stretch">
         {/* ---------- เมนูหัวข้อ: แนวตั้งบนจอใหญ่ แถบเลื่อนแนวนอนบนมือถือ ---------- */}
         <nav aria-label="หัวข้อโปรไฟล์" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:sticky lg:top-24 lg:mx-0 lg:self-start lg:flex-col lg:overflow-visible lg:rounded-[24px] lg:bg-white lg:p-2.5 lg:shadow-[0_1px_2px_rgba(24,24,27,0.03)]">
           {tabs.map((t) => {

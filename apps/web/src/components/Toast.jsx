@@ -18,13 +18,13 @@ export function ToastProvider({ children }) {
   const toast = useCallback((message, kind = 'ok') => {
     const id = ++seq.current;
     setItems((xs) => [...xs.slice(-2), { id, message: String(message || ''), kind }]);
-    setTimeout(() => setItems((xs) => xs.filter((t) => t.id !== id)), 2800);
+    setTimeout(() => setItems((xs) => xs.filter((t) => t.id !== id)), kind === 'err' ? 5000 : 2800); // ข้อผิดพลาดค้างนานกว่าให้อ่านทัน
   }, []);
 
   return (
     <ToastCtx.Provider value={toast}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6" aria-live="polite" role="status">
+      <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[1000] flex flex-col items-center gap-2 px-4 lg:bottom-6" aria-live="polite" role="status">
         {items.map((t) => (
           <div
             key={t.id}

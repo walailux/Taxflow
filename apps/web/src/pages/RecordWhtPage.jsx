@@ -13,6 +13,7 @@ import { useSubmit } from '../lib/useSubmit.js';
 import { useToast } from '../components/Toast.jsx';
 import { Alert, Button, Card, PageHeader, SegGroup, SelectField, TextField } from '../components/ui.jsx';
 import WhtImport from '../features/wht/WhtImport.jsx';
+import { INCOME_TYPE_OPTIONS, IncomeTypeHelpButton } from '../features/wht/IncomeTypeHelp.jsx';
 
 const RATES = [1, 2, 3, 5, 10, 15].map((r) => ({ value: String(r), label: `${r}%` }));
 
@@ -68,7 +69,7 @@ export default function RecordWhtPage() {
         subtitle="หนังสือรับรองหัก ณ ที่จ่ายที่ผู้ว่าจ้างออกให้คุณ บันทึกเพื่อรวมยอดรายได้และเครดิตภาษี (ต่างจาก &quot;สร้างเอกสาร&quot; ซึ่งเป็นเอกสารที่คุณออกให้คู่ค้า)"
       />
       <WhtImport onApply={applyImport} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Card>
           {imported && (
             <Alert kind="info">
@@ -78,7 +79,8 @@ export default function RecordWhtPage() {
           <TextField id="w-payer" label={<>ผู้ว่าจ้าง / ผู้จ่ายเงิน{fromFile('payer')}</>} placeholder="เช่น บริษัท มีเดีย เอเจนซี่ จำกัด" value={f.payer} onChange={set('payer')} maxLength={150} />
           <TextField id="w-desc" label={<>รายละเอียดงาน{fromFile('description')}</>} value={f.description} onChange={set('description')} maxLength={150} />
           <SegGroup name="incomeType" legend={<>ประเภทเงินได้{fromFile('incomeType')}</>} value={f.incomeType} onChange={set('incomeType')}
-            options={[{ value: 'มาตรา 40(2)', label: 'มาตรา 40(2)' }, { value: 'มาตรา 40(8)', label: 'มาตรา 40(8)' }]} />
+            options={INCOME_TYPE_OPTIONS} />
+          <IncomeTypeHelpButton />
           <div className="grid gap-x-4 sm:grid-cols-[1fr_160px]">
             <TextField id="w-amount" label={<>ยอดเงินก่อนหัก (บาท){fromFile('amount')}</>} type="number" min="0" step="0.01" inputMode="decimal" placeholder="12000" inputClassName="font-mono text-[1.125rem]" value={f.amount} onChange={set('amount')} />
             <SelectField id="w-rate" label={<>อัตราภาษี{fromFile('rate')}</>} value={f.rate} onChange={set('rate')} options={RATES} />

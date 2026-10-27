@@ -113,7 +113,13 @@ export function SegGroup({ name, legend, hint, value, onChange, options }) {
         {options.map((o) => (
           <label key={o.value} className="tf-seg">
             <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
-            <span>{o.label}</span>
+            {o.desc ? (
+              // ตัวเลือกที่มีคำอธิบายสั้นใต้ชื่อ (เช่น ประเภทเงินได้ 40(2)/40(8))
+              <span className="min-w-0">
+                <span className="block">{o.label}</span>
+                <small className="tf-seg-desc">{o.desc}</small>
+              </span>
+            ) : <span>{o.label}</span>}
           </label>
         ))}
       </div>

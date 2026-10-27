@@ -41,12 +41,12 @@ export default function DocumentsPage() {
         actions={<Link to="/app/create" className="tf-btn tf-btn-dark"><Icon name="plus" className="size-[1.125rem]" />สร้างเอกสาร</Link>}
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-[0.875rem] text-ink-soft">ที่มา</span>
-        <div role="radiogroup" aria-label="ที่มาของเอกสาร" className="flex rounded-full bg-white p-1 shadow-[0_1px_2px_rgba(24,24,27,0.05)]">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="w-10 shrink-0 text-[0.875rem] text-ink-soft">ที่มา</span>
+        <div role="radiogroup" aria-label="ที่มาของเอกสาร" className="flex min-w-0 overflow-x-auto rounded-full bg-white p-1 [scrollbar-width:none] shadow-[0_1px_2px_rgba(24,24,27,0.05)]">
           {SOURCES.map((s) => (
             <button key={s.value} type="button" role="radio" aria-checked={source === s.value} title={s.tip} onClick={() => setSource(s.value)}
-              className={cx('h-9 rounded-full px-4 text-[0.90625rem] font-medium transition-all', source === s.value ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink')}>
+              className={cx('h-8 cursor-pointer whitespace-nowrap rounded-full px-3.5 text-[0.90625rem] font-medium transition-all sm:px-4', source === s.value ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink')}>
               {s.label}
             </button>
           ))}

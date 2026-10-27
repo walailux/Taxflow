@@ -47,7 +47,7 @@ export default function AppearanceMenu({ docFont = true }) {
   return (
     <div ref={box} className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-haspopup="dialog" aria-expanded={open} aria-label="ฟอนต์และขนาดตัวอักษร" title="ฟอนต์และขนาดตัวอักษร"
-        className={cx('flex size-11 cursor-pointer items-center justify-center rounded-full font-semibold shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]',
+        className={cx('flex size-10 cursor-pointer sm:size-11 items-center justify-center rounded-full font-semibold shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]',
           open ? 'bg-orange text-white' : 'bg-white text-ink')}>
         <span className="text-[1.0625rem] leading-none">A<span className="text-[0.8125rem]">a</span></span>
       </button>

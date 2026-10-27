@@ -24,7 +24,7 @@ const TILE = 'tf-nav-tile flex size-8 shrink-0 items-center justify-center round
 function NavItem({ role, item, badge, onNavigate, compact, rail }) {
   const base = cx(
     'tf-anim-host tf-nav group relative flex items-center gap-3 rounded-xl text-[1rem] font-medium transition-all duration-200 active:scale-[0.97]',
-    compact ? 'flex-col gap-1 px-1 py-2 text-[0.8125rem]' : rail ? 'size-12 justify-center' : 'h-11 px-2',
+    compact ? 'tf-nav-tab flex-col justify-center gap-1 px-0.5 py-1 text-[0.75rem]' : rail ? 'size-12 justify-center' : 'h-11 px-2',
   );
   if (rail) {
     const railContent = (
@@ -45,22 +45,22 @@ function NavItem({ role, item, badge, onNavigate, compact, rail }) {
       </ViewLink>
     );
   }
-  // แบบ B: ไอคอนอยู่ในกรอบสี่เหลี่ยมมุมมน (เมนูข้าง) · แถบล่างมือถือยังเป็นไอคอนเปล่า
+  // แบบ B: ไอคอนอยู่ในกรอบสี่เหลี่ยมมุมมน (เมนูข้าง) · แถบล่างมือถือเป็นปุ่มสี่เหลี่ยมมุมมน มือถือเหลือแค่ไอคอน (ชื่อเมนูขึ้นตั้งแต่จอ 640px)
   const content = (
     <>
       {compact
-        ? <Icon name={item.icon} className="size-[1.375rem]" />
+        ? <span className="tf-tab-tile flex size-12 items-center justify-center rounded-2xl transition-all duration-200"><Icon name={item.icon} className="size-[1.375rem]" /></span>
         : <span className={TILE}>{NAV_ART.has(item.icon) ? <NavArt name={item.icon} className="size-[1.375rem]" alert={badge > 0} /> : <Icon name={item.icon} className="size-[1.0625rem]" />}</span>}
-      <span className={compact ? 'max-w-full truncate' : 'min-w-0 flex-1 truncate'}>{item.label}</span>
+      <span className={compact ? 'hidden max-w-full truncate sm:block' : 'min-w-0 flex-1 truncate'}>{item.label}</span>
       {!compact && item.external && <Icon name="external" className="size-3.5 shrink-0 opacity-40 transition-opacity group-hover:opacity-80" />}
       {badge > 0 && (
-        <span className={cx('rounded-full bg-orange px-1.5 text-center text-[0.78125rem] font-semibold leading-[18px] text-white', compact ? 'absolute right-[18%] top-1 min-w-[18px]' : 'min-w-[20px]')}>
+        <span className={cx('rounded-full bg-orange px-1.5 text-center text-[0.78125rem] font-semibold leading-[18px] text-white', compact ? 'absolute left-1/2 top-0 ml-2 min-w-[18px] ring-2 ring-white' : 'min-w-[20px]')}>
           {badge > 99 ? '99+' : badge}
         </span>
       )}
     </>
   );
-  const idle = compact ? 'text-[#57534E] hover:text-ink' : 'text-[#44403C] hover:translate-x-0.5 hover:bg-tile/70 hover:text-ink [&:hover_.tf-nav-tile]:border-orange-soft';
+  const idle = compact ? 'text-[#57534E] hover:text-ink [&:hover_.tf-tab-tile]:bg-tile' : 'text-[#44403C] hover:translate-x-0.5 hover:bg-tile/70 hover:text-ink [&:hover_.tf-nav-tile]:border-orange-soft';
   if (item.external) {
     return (
       <Link to={item.external} target="_blank" className={cx(base, idle)}>{content}</Link>
@@ -74,9 +74,11 @@ function NavItem({ role, item, badge, onNavigate, compact, rail }) {
       nav
       end
       onClick={onNavigate}
+      aria-label={compact ? item.label : undefined}
+      title={compact ? item.label : undefined}
       className={({ isActive }) => cx(base, isActive && !item.query
         // เมนูที่เลือก: แถบส้มด้านซ้าย + พื้นส้มจาง + กรอบไอคอนส้ม (เด้งและมีวงกระเพื่อมตอนเลือก ดู .tf-nav ใน index.css)
-        ? (compact ? 'text-orange-deep' : 'bg-orange-pale/70 font-semibold text-ink [&_.tf-nav-tile]:border-orange [&_.tf-nav-tile]:bg-orange [&_.tf-nav-tile]:text-white')
+        ? (compact ? 'font-semibold text-orange-deep [&_.tf-tab-tile]:bg-orange [&_.tf-tab-tile]:text-white [&_.tf-tab-tile]:shadow-[0_8px_18px_-8px_rgba(232,90,0,0.8)]' : 'bg-orange-pale/70 font-semibold text-ink [&_.tf-nav-tile]:border-orange [&_.tf-nav-tile]:bg-orange [&_.tf-nav-tile]:text-white')
         : idle)}
     >
       {content}
@@ -282,10 +284,10 @@ export default function AppLayout({ roles }) {
 
       {/* แถบเมนูล่าง (มือถือ) */}
       {tabs.length > 0 && (
-        <nav aria-label="เมนูลัด" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-white/95 px-1 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur lg:hidden">
+        <nav aria-label="เมนูลัด" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 place-items-center border-t border-line bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur lg:hidden">
           {tabs.map((it) => <NavItem key={it.key} role={role} item={it} badge={it.badge ? badges[it.badge] : 0} compact />)}
-          <button type="button" onClick={() => setDrawer(true)} className="flex cursor-pointer flex-col items-center gap-1 rounded-xl px-1 py-2 text-[0.8125rem] font-medium text-ink-soft">
-            <Icon name="menu" className="size-[1.375rem]" /><span>เมนู</span>
+          <button type="button" onClick={() => setDrawer(true)} aria-label="เมนูทั้งหมด" title="เมนูทั้งหมด" className="group flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1 text-[0.75rem] font-medium text-[#57534E] hover:text-ink">
+            <span className="flex size-12 items-center justify-center rounded-2xl transition-all duration-200 group-hover:bg-tile"><Icon name="menu" className="size-[1.375rem]" /></span><span className="hidden sm:block">เมนู</span>
           </button>
         </nav>
       )}

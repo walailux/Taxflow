@@ -143,7 +143,7 @@ export default function RecentTable({ role, items, loading }) {
       <ul className="flex flex-1 flex-col">
         {loading && Array.from({ length: 4 }, (_, i) => <li key={i} className="py-2"><Skeleton className="h-14 w-full rounded-2xl" /></li>)}
         {!loading && rows.map((d, i) => (
-          <li key={d.id} className="tf-fade-up flex max-h-[104px] flex-1 flex-col" style={{ animationDelay: `${i * 40}ms` }}>
+          <li key={d.id} className="tf-fade-up flex flex-1 flex-col sm:max-h-[104px]" style={{ animationDelay: `${i * 40}ms` }}>
             <div
               role="button"
               tabIndex={0}
@@ -158,6 +158,11 @@ export default function RecentTable({ role, items, loading }) {
                 <small className="block truncate text-[0.84375rem] text-ink-soft">
                   <span className="font-mono">{d.docNo || 'แบบร่าง'}</span> · {partyOf(d)}
                 </small>
+                {/* มือถือ: ยอดและสถานะอยู่บรรทัดล่าง (จอใหญ่แสดงเป็นคอลัมน์ทางขวา) */}
+                <span className="mt-1 flex items-center gap-2 sm:hidden">
+                  <b className="font-mono text-[0.90625rem] font-medium tabular-nums">฿{baht(amountOf(d))}</b>
+                  <StatusPill status={d.status} size="sm" />
+                </span>
               </span>
               <span className="hidden shrink-0 text-right sm:block">
                 <b className="block font-mono text-[0.96875rem] font-medium tabular-nums">฿{baht(amountOf(d))}</b>

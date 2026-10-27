@@ -53,16 +53,19 @@
 @layer base {
   /*
    * ความหนาแน่นของหน้าจอ: ขนาดตัวอักษร ไอคอน ระยะห่าง และความสูงปุ่มทั้งหมดเป็น rem จึงย่อ/ขยายตามค่านี้พร้อมกัน
-   * มือถือคง 16px (ช่องกรอก >= 16px กัน iOS ซูมเองตอนแตะ) · แท็บเล็ต 15px · จอคอมพิวเตอร์ 14px ให้เห็นเนื้อหาครบโดยไม่ต้องเลื่อนมาก
+   * มือถือ 14px (ย่อให้เห็นเนื้อหามากขึ้นในจอเล็ก) · แท็บเล็ต 15px · จอคอมพิวเตอร์ 14px ให้เห็นเนื้อหาครบโดยไม่ต้องเลื่อนมาก
    * ใช้แทน CSS zoom เพราะ zoom ทำให้หน่วย vh และตำแหน่งเมนูลอยที่คำนวณจาก getBoundingClientRect เพี้ยน
    * หน้าคลังความรู้ (.ip-body) ออกแบบแยกเป็น px ไม่ย่อตาม
    */
   /* --app-scale = ขนาดตัวอักษรที่ผู้ใช้เลือก (เล็ก/ปกติ/ใหญ่/ใหญ่มาก) คูณกับความหนาแน่นตามขนาดจอ */
-  html:not(:has(.ip-body)) { font-size: calc(100% * var(--app-scale, 1)); }
+  html:not(:has(.ip-body)) { font-size: calc(87.5% * var(--app-scale, 1)); }
   @media (min-width: 768px) { html:not(:has(.ip-body)) { font-size: calc(93.75% * var(--app-scale, 1)); } }
   @media (min-width: 1024px) { html:not(:has(.ip-body)) { font-size: calc(87.5% * var(--app-scale, 1)); } }
   /* หน้าข้อมูลสาธารณะ (.ip-body) ออกแบบที่ฐาน 16px ทุกขนาดจอ แต่ยังปรับตามขนาดตัวอักษรที่ผู้ใช้เลือก */
   html:has(.ip-body) { font-size: calc(100% * var(--app-scale, 1)); }
+  @media (max-width: 639px) { html:has(.ip-body) { font-size: calc(87.5% * var(--app-scale, 1)); } }
+  /* มือถือ: ช่องกรอกต้องไม่ต่ำกว่า 16px ไม่อย่างนั้น iOS Safari ซูมหน้าเองตอนแตะช่อง (ตัวอักษรส่วนอื่นย่อตามฐาน 14px ได้) */
+  @media (max-width: 639px) { input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), select, textarea, [contenteditable="true"] { font-size: max(16px, 1em) !important; } }
   body {
     background: var(--color-paper);
     color: var(--color-ink);
@@ -144,6 +147,9 @@
   .tf-seg:has(input:checked) { border-color: var(--color-orange); background: var(--color-orange-pale); color: var(--color-orange-deep); }
   .tf-seg:has(input:checked)::after { border-color: var(--color-orange); background: radial-gradient(circle, #fff 0 3px, var(--color-orange) 3.5px); }
   .tf-seg:has(input:focus-visible) { outline: 2px solid var(--color-orange); outline-offset: 2px; }
+  /* ตัวเลือกที่มีคำอธิบาย: ขึ้นบรรทัดใหม่ได้ วงกลมอยู่มุมบน · จอแคบเรียงลงเต็มแถว (กว้างอย่างน้อย 15rem) */
+  .tf-seg:has(.tf-seg-desc) { white-space: normal; align-items: flex-start; flex-basis: 15rem; }
+  .tf-seg-desc { display: block; margin-top: 2px; font-size: 0.84375rem; font-weight: 400; line-height: 1.5; color: var(--color-ink-soft); }
 
   /* การ์ดเลือกบทบาท และรายการความยินยอม */
   .tf-choice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1.5px solid var(--color-line);
@@ -365,6 +371,9 @@ html[data-theme="dark"] .tf-ico-colorful[data-icon="calc"] > :nth-child(5) { str
   content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
   background: var(--color-orange); animation: tf-nav-bar .35s var(--ease-pop) both;
 }
+/* แถบล่างมือถือ: ปุ่มที่เลือกเป็นสี่เหลี่ยมส้มทึบอยู่แล้ว ไม่ต้องมีแถบด้านซ้าย */
+.tf-nav-tab[aria-current="page"]::before { content: none; }
+.tf-nav-tab[aria-current="page"] .tf-tab-tile { animation: tf-nav-pop .45s var(--ease-pop) both, tf-nav-ripple .7s ease-out both; }
 .tf-nav[aria-current="page"] .tf-nav-tile { animation: tf-nav-pop .45s var(--ease-pop) both, tf-nav-ripple .7s ease-out both; }
 @keyframes tf-nav-bar { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes tf-nav-pop { 0% { transform: scale(.82); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }

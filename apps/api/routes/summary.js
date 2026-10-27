@@ -157,14 +157,9 @@ api.get('/api/creator/summary', requireAuth(async (req, res) => {
 const RECEIPT_TYPES = ['RECEIPT', 'ETAX', 'ETAX_RECEIPT'];
 const BILL_TYPES = ['INVOICE', 'ETAX_INVOICE'];
 const VAT_INVOICE_TYPES = ['ETAX', 'ETAX_INVOICE'];
-api.get('/api/agency/summary', requireAuth(async (req, res) => {
-  const p = new URL(req.url, 'http://localhost').searchParams;
-  const qYear = p.get('year') || '';
-  const year = /^\d{4}$/.test(qYear) ? qYear : bangkokDateStr().slice(0, 4);
-  const docs = await store.all('documents', (d) => d.userId === req.user.id);
-  // ยอดเงินบนแดชบอร์ดเป็น "ปีนี้" (ตามวันที่ออกเอกสาร เวลาไทย) ส่วนจำนวนตามสถานะยังนับทุกฉบับ
-  const inYear = (d) => String(d.issueDate || bangkokDateStr(new Date(d.createdAt || Date.now()))).slice(0, 4) === year;
-  const eff = docs.filter((d) => isEffectiveDoc(d) && d.status !== 'draft' && inYear(d));
+/** ยอดเงินของบริษัท/เอเจนซี่จากเอกสารที่มีผลในช่วงเวลา (inPeriod) ใช้ทั้งแดชบอร์ดรายปีและรายเดือน */
+function businessTotals(docs, inPeriod) {
+  const eff = docs.filter((d) => isEffectiveDoc(d) && d.status !== 'draft' && inPeriod(d));
   // รายได้ = เอกสารรับเงินที่ออกแล้ว · ค่าใช้จ่าย = ใบสำคัญจ่าย · ภาษีหัก ณ ที่จ่าย = 50 ทวิ ที่ออก (หรือใบสำคัญจ่ายที่ยังไม่ได้ออก 50 ทวิ)
   const receipts = eff.filter((d) => RECEIPT_TYPES.includes(d.type));
   const invoices = eff.filter((d) => BILL_TYPES.includes(d.type));
@@ -173,19 +168,86 @@ api.get('/api/agency/summary', requireAuth(async (req, res) => {
   const linked = new Set(certs.map((c) => c.refDocId).filter(Boolean));
   const whtTotal = certs.reduce((s2, d) => s2 + (+d.wht || 0), 0) + payments.filter((p) => !linked.has(p.id)).reduce((s2, d) => s2 + (+d.wht || 0), 0);
   const taxInvoices = eff.filter((d) => VAT_INVOICE_TYPES.includes(d.type));
-  sendJson(res, 200, {
-    year: Number(year),
-    counts: { total: docs.length, invoices: invoices.length, receipts: receipts.length, payments: payments.length, whtCertificates: certs.length,
+  return {
+    counts: { invoices: invoices.length, receipts: receipts.length, payments: payments.length, whtCertificates: certs.length,
       eTaxInvoice: taxInvoices.length, eWithholding: certs.length },
     totals: {
       revenue: round2(receipts.reduce((s2, d) => s2 + (+d.total || 0), 0)),
       billed: round2(invoices.reduce((s2, d) => s2 + (+d.total || 0), 0)),
-      // ภาษีขายตามใบกำกับภาษีที่ออกในปี (ใบรับ/ใบเสร็จไม่มี VAT แยก จึงนับจากใบกำกับ)
+      // ภาษีขายตามใบกำกับภาษีที่ออกในช่วงเวลา (ใบรับ/ใบเสร็จไม่มี VAT แยก จึงนับจากใบกำกับ)
       vat: round2(taxInvoices.reduce((s2, d) => s2 + (+d.vat || 0), 0)),
       expense: round2(payments.reduce((s2, d) => s2 + (+d.base || 0), 0) + certs.filter((c) => !c.refDocId).reduce((s2, d) => s2 + (+d.subtotal || +d.base || 0), 0)),
       withholding: round2(whtTotal),
     },
+  };
+}
+
+api.get('/api/agency/summary', requireAuth(async (req, res) => {
+  const p = new URL(req.url, 'http://localhost').searchParams;
+  const qYear = p.get('year') || '';
+  const year = /^\d{4}$/.test(qYear) ? qYear : bangkokDateStr().slice(0, 4);
+  const docs = await store.all('documents', (d) => d.userId === req.user.id);
+  // ยอดเงินบนแดชบอร์ดเป็น "ปีนี้" (ตามวันที่ออกเอกสาร เวลาไทย) ส่วนจำนวนตามสถานะยังนับทุกฉบับ
+  const r = businessTotals(docs, (d) => docDate(d).slice(0, 4) === year);
+  sendJson(res, 200, {
+    year: Number(year),
+    counts: { total: docs.length, ...r.counts },
+    totals: r.totals,
     status: statusCounts(docs),
+  });
+}));
+
+/* ---------- แดชบอร์ด: สรุปตามช่วงเวลาที่เลือก (รายเดือน / รายปี) ----------
+ * ?period=month&ym=YYYY-MM | ?period=year&year=YYYY (ค.ศ. ค่าเริ่มต้น = เดือน/ปีปัจจุบันเวลาไทย)
+ * คืนยอดของช่วงที่เลือกและช่วงก่อนหน้า (ไว้เทียบ %) + ยอดแยกรายเดือนเมื่อเลือกรายปี + ปีที่มีเอกสาร
+ * - revenue: ครีเอเตอร์ = เงินได้ตามหน้าคำนวณภาษี (core/pitdocs.js) · บริษัท/เอเจนซี่ = เอกสารรับเงิน (businessTotals)
+ * - income/vat/wht/count: มูลค่าเอกสารที่อนุมัติ/เก็บถาวร แบบเดียวกับกราฟ /api/dashboard/trend
+ */
+const docDate = (d) => String(d.issueDate || bangkokDateStr(new Date(d.createdAt || Date.now())));
+const shiftYm = (ym, n) => { let [y, m] = ym.split('-').map(Number); m += n; while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; } return `${y}-${String(m).padStart(2, '0')}`; };
+
+function periodSummary(docs, role, key) {
+  const inKey = (d) => docDate(d).startsWith(key);
+  const isWht = (d) => ['WHT', 'EWHT'].includes(d.type);
+  const approved = docs.filter((d) => ['approved', 'archived'].includes(d.status) && inKey(d));
+  const out = {
+    key,
+    income: round2(approved.reduce((s2, d) => s2 + Number(isWht(d) ? d.net || 0 : d.total || d.base || 0), 0)),
+    vat: round2(approved.reduce((s2, d) => s2 + Number(!isWht(d) ? d.vat || 0 : 0), 0)),
+    wht: round2(approved.reduce((s2, d) => s2 + Number(isWht(d) ? d.wht || 0 : 0), 0)),
+    count: approved.length,
+  };
+  if (role === 'creator') {
+    const src = pitSourcesFromDocs(docs, key.slice(0, 4)).sources.filter((x) => String(x.date).startsWith(key));
+    out.revenue = round2(src.reduce((s2, x) => s2 + x.amount, 0));
+    out.withholding = round2(src.reduce((s2, x) => s2 + x.wht, 0));
+    out.sourceCount = src.length;
+  } else {
+    const r = businessTotals(docs, inKey);
+    Object.assign(out, r.totals, { receipts: r.counts.receipts, invoices: r.counts.invoices, payments: r.counts.payments });
+  }
+  return out;
+}
+
+api.get('/api/dashboard/period', requireAuth(async (req, res) => {
+  const p = new URL(req.url, 'http://localhost').searchParams;
+  const today = bangkokDateStr();
+  const period = p.get('period') === 'year' ? 'year' : 'month';
+  const key = period === 'year'
+    ? (/^\d{4}$/.test(p.get('year') || '') ? p.get('year') : today.slice(0, 4))
+    : (YM_RE.test(p.get('ym') || '') ? p.get('ym') : today.slice(0, 7));
+  const prevKey = period === 'year' ? String(Number(key) - 1) : shiftYm(key, -1);
+  const docs = await store.all('documents', (d) => d.userId === req.user.id);
+  const role = req.user.role;
+  const years = [...new Set([today.slice(0, 4), ...docs.map((d) => docDate(d).slice(0, 4)).filter((y) => /^\d{4}$/.test(y))])].sort().reverse();
+  sendJson(res, 200, {
+    period, key, prevKey, today, years,
+    current: periodSummary(docs, role, key),
+    previous: periodSummary(docs, role, prevKey),
+    // รายปี: แยกยอดรายเดือน ม.ค.–ธ.ค. ไว้วาดแถบเล็กใต้ตัวเลข
+    months: period === 'year'
+      ? Array.from({ length: 12 }, (_, i) => { const s2 = periodSummary(docs, role, `${key}-${String(i + 1).padStart(2, '0')}`); return { key: s2.key, revenue: s2.revenue, income: s2.income }; })
+      : [],
   });
 }));
 

@@ -27,6 +27,7 @@
   "GET /api/contacts/lookup",
   "GET /api/creator/summary",
   "GET /api/dashboard/analytics",
+  "GET /api/dashboard/period",
   "GET /api/dashboard/trend",
   "GET /api/documents",
   "GET /api/documents/:id",

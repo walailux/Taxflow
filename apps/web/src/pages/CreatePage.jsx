@@ -856,7 +856,7 @@ export default function CreatePage() {
         {kycWarn}
         {etaxDialog}
         {summary.length > 0 && <Alert><b className="font-medium">ยังบันทึกไม่ได้</b><ul className="mt-1 list-disc pl-5">{summary.map((m) => <li key={m}>{m}</li>)}</ul></Alert>}
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <Card>
             <Row k="ประเภทเอกสาร" v={def.label} />
             <Row k="จุดประสงค์" v={PURPOSE_LABEL[purpose]} />
@@ -1190,7 +1190,7 @@ export default function CreatePage() {
       )}
       {def.hint && <Alert kind="info">{textOf(def.hint, role)}</Alert>}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-5">
           {prefillOffer && (
             <div className="tf-reveal flex flex-wrap items-center gap-3 rounded-[20px] bg-orange-pale p-4">

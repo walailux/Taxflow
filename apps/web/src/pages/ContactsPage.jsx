@@ -161,7 +161,7 @@ export default function ContactsPage() {
     <div className="flex flex-col gap-5">
       <PageHeader title="สมุดคู่ค้า" subtitle="เก็บข้อมูลคู่ค้าและผู้รับจ้างไว้ครั้งเดียว แล้วดึงไปใช้ตอนออกเอกสารได้ทันที" />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[400px_1fr]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[400px_minmax(0,1fr)]">
         <section ref={formTop} className="tf-fade-up rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6 lg:sticky lg:top-24" style={{ scrollMarginTop: '96px' }}>
           <h2 className="mb-4 text-[1.125rem] font-medium">{editing ? 'แก้ไขคู่ค้า' : 'เพิ่มคู่ค้า'}</h2>
           {/* เพิ่มคู่ค้าใหม่: ค้นก่อนว่ามีบัญชี TaxFlow ไหม มี = ขออนุญาตดึงข้อมูล · ไม่มี = กรอกเองด้านล่าง */}

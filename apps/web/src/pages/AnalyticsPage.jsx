@@ -1,6 +1,6 @@
 /**
  * AnalyticsPage.jsx วิเคราะห์ข้อมูลเอกสารแบบละเอียด (/app/analytics) ข้อมูลจาก /api/dashboard/analytics
- * - ตัวกรองแถวเดียวด้านบน: ช่วงเวลา (6 เดือน / 12 เดือน / ปีนี้) · ฐานการนับ (อนุมัติแล้ว / ทุกฉบับที่มีผล)
+ * - ตัวกรองแถวเดียวด้านบน: ช่วงเวลา (6 เดือน / 12 เดือน / ปีนี้) · ประเภทเอกสาร (อนุมัติแล้ว / ทุกฉบับ)
  * - ตัวเลขสรุป 4 ใบ · กราฟรายเดือน (แท่ง / เส้น / พื้นที่ / ตาราง) เลือกตัวชี้วัดได้
  * - สัดส่วนตามประเภทเอกสาร (โดนัท / แท่งเคียงกันรายเดือนมีแกน x เดือน · y มูลค่าหรือจำนวน) · สถานะเอกสาร · คู่ค้าที่มียอดสูงสุด
  * กราฟทุกแบบชี้แล้วเห็นค่า และมีป้าย/ตารางกำกับ ไม่ต้องแยกด้วยสีอย่างเดียว
@@ -109,14 +109,14 @@ function Card({ title, sub, controls, children, className }) {
 
 function Stat({ label, value, note, icon, accent }) {
   return (
-    <div className={cx('tf-fade-up relative overflow-hidden rounded-[22px] p-5', accent ? 'bg-gradient-to-br from-orange to-[#D9480F] text-white shadow-[0_18px_40px_-22px_rgba(232,90,0,0.85)]' : 'bg-white shadow-[0_1px_2px_rgba(24,24,27,0.03)]')}>
+    <div className={cx('tf-fade-up relative min-w-0 overflow-hidden rounded-[18px] p-3.5 [container-type:inline-size] sm:rounded-[22px] sm:p-5', accent ? 'bg-gradient-to-br from-orange to-[#D9480F] text-white shadow-[0_18px_40px_-22px_rgba(232,90,0,0.85)]' : 'bg-white shadow-[0_1px_2px_rgba(24,24,27,0.03)]')}>
       <span className={accent ? 'tf-dots-light' : 'tf-dots'} aria-hidden="true" />
       <div className="relative flex items-center justify-between gap-2">
-        <span className={cx('text-[0.875rem]', accent ? 'text-white/85' : 'text-ink-soft')}>{label}</span>
-        <span className={cx('flex size-9 items-center justify-center rounded-xl', accent ? 'bg-white/20' : 'bg-tile text-ink')}><Icon name={icon} className="size-[1.125rem]" /></span>
+        <span className={cx('min-w-0 text-[0.875rem] leading-snug', accent ? 'text-white/85' : 'text-ink-soft')}>{label}</span>
+        <span className={cx('flex size-8 shrink-0 items-center justify-center rounded-xl sm:size-9', accent ? 'bg-white/20' : 'bg-tile text-ink')}><Icon name={icon} className="size-[1.125rem]" /></span>
       </div>
-      <b className="relative mt-2 block font-display text-[1.625rem] font-semibold leading-tight tracking-tight">{value}</b>
-      {note && <small className={cx('relative text-[0.8125rem]', accent ? 'text-white/80' : 'text-ink-soft')}>{note}</small>}
+      <b className="relative mt-2 block whitespace-nowrap font-display text-[clamp(1.0625rem,12cqw,1.625rem)] font-semibold leading-tight tracking-tight">{value}</b>
+      {note && <small className={cx('relative line-clamp-2 block text-[0.8125rem]', accent ? 'text-white/80' : 'text-ink-soft')}>{note}</small>}
     </div>
   );
 }
@@ -264,15 +264,15 @@ export default function AnalyticsPage() {
             <span className="text-[0.84375rem] text-ink-soft">(สูงสุด 60 เดือน)</span>
           </div>
         )}
-        <Control label="นับเอกสาร"><Seg label="นับเอกสาร" value={basis} onChange={setBasis} options={[
+        <Control label="ประเภทเอกสาร"><Seg label="ประเภทเอกสาร" value={basis} onChange={setBasis} options={[
           { value: 'approved', label: 'อนุมัติ/เก็บถาวร', tip: 'นับเฉพาะเอกสารที่อนุมัติแล้วหรือเก็บถาวร เป็นยอดที่เกิดขึ้นจริงแน่นอน (ไม่รวมเอกสารที่รอคู่ค้าตอบกลับ)' },
-          { value: 'effective', label: 'ทุกฉบับที่มีผล', tip: 'นับทุกฉบับที่ออกเลขที่แล้วและยังมีผล รวมเอกสารที่รอคู่ค้าตรวจสอบ/ลงนาม ไม่รวมแบบร่าง ยกเลิก และไม่อนุมัติ' },
+          { value: 'effective', label: 'ทุกฉบับ', tip: 'นับทุกฉบับที่ออกเลขที่แล้วและยังมีผล รวมเอกสารที่รอคู่ค้าตรวจสอบ/ลงนาม ไม่รวมแบบร่าง ยกเลิก และไม่อนุมัติ' },
         ]} /></Control>
         {q.isFetching && <span className="text-[0.84375rem] text-ink-soft">กำลังโหลด...</span>}
       </div>
 
       {/* ---------- ตัวเลขสรุป ---------- */}
-      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {!d ? Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-[128px] w-full rounded-[22px]" />) : (
           <>
             <Stat accent label="มูลค่าเอกสารรวม" icon="wallet" value={moneyWhole(d.totals.income)} note={rangeText} />
@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
       {/* ---------- กราฟรายเดือน ---------- */}
       <Card
         title={`${m.label}รายเดือน`}
-        sub={`${rangeText} · ${basis === 'approved' ? 'เฉพาะเอกสารที่อนุมัติ/เก็บถาวร' : 'ทุกฉบับที่มีผล (ไม่รวมแบบร่าง ยกเลิก ไม่อนุมัติ)'}`}
+        sub={`${rangeText} · ${basis === 'approved' ? 'เฉพาะเอกสารที่อนุมัติ/เก็บถาวร' : 'ทุกฉบับ (ไม่รวมแบบร่าง ยกเลิก ไม่อนุมัติ)'}`}
         controls={(
           <>
             <Control label="ตัวชี้วัด"><Seg small label="ตัวชี้วัด" value={metric} onChange={setMetric} options={METRICS.map((x) => ({ value: x.key, label: x.label }))} /></Control>

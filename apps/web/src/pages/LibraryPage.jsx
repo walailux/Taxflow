@@ -120,7 +120,7 @@ export default function LibraryPage() {
     <div className="flex flex-col gap-5">
       <PageHeader title="คลังเอกสารของฉัน" subtitle="เอกสารที่คุณสร้างในระบบและไฟล์ที่อัปโหลดเอง ไฟล์ทุกไฟล์ถูกเข้ารหัสก่อนจัดเก็บ เปิดดูได้เฉพาะบัญชีของคุณ (เอกสารที่คู่ค้าส่งมาอยู่ใน “เอกสารทั้งหมด”)" />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         {/* การ์ดอัปโหลด: เลือก/ลากไฟล์ → เห็นไฟล์พร้อมรูปย่อ → กรอกรายละเอียด → บันทึก (ไฟล์ที่บันทึกแล้วในรอบนี้ขึ้นเป็น "อัปโหลดแล้ว") */}
         <FileUploadCard
           className="lg:sticky lg:top-24"
@@ -156,7 +156,7 @@ export default function LibraryPage() {
           </div>
           {tab === 'files' && (
             <div className="grid gap-x-3 sm:grid-cols-2">
-              <TextField id="lib-search" label="ค้นหา" placeholder="ชื่อเอกสาร / ชื่อไฟล์" value={q} onChange={(e) => setQ(e.target.value)} />
+              <TextField id="lib-search" label="ค้นหาเอกสาร" placeholder="ชื่อเอกสาร / ชื่อไฟล์" value={q} onChange={(e) => setQ(e.target.value)} />
               {catSelect(filter, (e) => setFilter(e.target.value), 'lib-filter', 'กรองตามหมวด', true)}
             </div>
           )}

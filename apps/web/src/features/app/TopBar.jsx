@@ -73,7 +73,7 @@ function GlobalSearch({ role }) {
   ].filter(([, items]) => items.length) : [];
 
   return (
-    <div ref={box} className="relative min-w-0 flex-1 sm:max-w-[420px]">
+    <div ref={box} className="relative min-w-11 flex-1 sm:max-w-[420px]">
       <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-ink-soft" />
       <input
         ref={input}
@@ -123,19 +123,19 @@ export function ThemeToggle() {
         aria-label="โหมดกลางคืน"
         title={dark ? 'โหมดกลางคืน · กดเพื่อกลับเป็นกลางวัน' : 'โหมดกลางวัน · กดเพื่อเปลี่ยนเป็นกลางคืน'}
         onClick={toggle}
-        className={cx('relative flex h-11 w-[5.25rem] shrink-0 cursor-pointer items-center rounded-full p-1 shadow-[0_1px_2px_rgba(24,24,27,0.05)] ring-1 transition-colors duration-300',
+        className={cx('relative flex size-10 shrink-0 sm:h-11 sm:w-[5.25rem] cursor-pointer items-center rounded-full p-1 shadow-[0_1px_2px_rgba(24,24,27,0.05)] ring-1 transition-colors duration-300',
           dark ? 'bg-[#2A2522] ring-[#3A3431]' : 'bg-white ring-line')}
       >
         {/* ไอคอนบนราง (จาง) */}
-        <span aria-hidden="true" className="relative z-0 flex w-full items-center justify-between px-[0.6875rem]">
+        <span aria-hidden="true" className="relative z-0 hidden w-full items-center justify-between px-[0.6875rem] sm:flex">
           <Icon name="sun" className={cx('size-[1.0625rem] transition-colors', dark ? 'text-[#6E6863]' : 'text-transparent')} />
           <Icon name="moon" className={cx('size-[1.0625rem] transition-colors', dark ? 'text-transparent' : 'text-[#A8A29E]')} />
         </span>
         {/* ปุ่มกลมเลื่อน: กลางวัน = ส้ม + ดวงอาทิตย์ · กลางคืน = น้ำเงินเข้ม + ดวงจันทร์ */}
         <span
           aria-hidden="true"
-          className={cx('absolute left-1 top-1 z-10 flex size-9 items-center justify-center rounded-full text-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.45)] transition-[transform,background-color] duration-300 ease-[var(--ease-pop)]',
-            dark ? 'translate-x-[2.5rem] bg-[#3B4A7A]' : 'translate-x-0 bg-orange')}
+          className={cx('absolute left-1 top-1 z-10 flex size-8 items-center sm:size-9 justify-center rounded-full text-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.45)] transition-[transform,background-color] duration-300 ease-[var(--ease-pop)]',
+            dark ? 'translate-x-0 bg-[#3B4A7A] sm:translate-x-[2.5rem]' : 'translate-x-0 bg-orange')}
         >
           <span key={theme} className="tf-theme-icon flex">
             <Icon name={dark ? 'moon' : 'sun'} className={cx('size-[1.125rem]', dark && 'text-[#F2C46B]')} />
@@ -215,17 +215,17 @@ export default function TopBar({ role, user, onMenu, sideHidden, onLogout }) {
   const isAdmin = role === 'admin';
   return (
     <header className="sticky top-0 z-30 bg-paper/85 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-10 lg:py-5">
-      <div className="mx-auto flex max-w-[1200px] items-center gap-2.5 sm:gap-3">
+      <div className="mx-auto flex max-w-[1200px] items-center gap-1.5 sm:gap-3">
         {/* จอเล็กเท่านั้น: เปิดเมนูเลื่อนออก · จอใหญ่ใช้แฮมเบอร์เกอร์บนแถบไอคอนซ้ายแทน */}
-        <button type="button" onClick={onMenu} aria-label="เปิดเมนู" title="เปิดเมนู" className="tf-anim-host flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white ring-1 ring-line transition-colors hover:bg-field lg:hidden">
+        <button type="button" onClick={onMenu} aria-label="เปิดเมนู" title="เปิดเมนู" className="tf-anim-host flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white ring-1 ring-line transition-colors hover:bg-field sm:size-11 lg:hidden">
           <Icon name="menu" />
         </button>
         <Link to="/app" className={cx('hidden shrink-0 sm:block', !sideHidden && 'lg:hidden')} aria-label="TaxFlow หน้าแรก"><img src="/img/logo.png" alt="TaxFlow" className="h-8 w-auto" /></Link>
         {!isAdmin && <GlobalSearch role={role} />}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           {!isAdmin && (
-            <button type="button" onClick={() => setCalc(true)} title="เครื่องคิดเลขภาษี" aria-label="เครื่องคิดเลขภาษี" className="tf-anim-host flex size-11 cursor-pointer items-center justify-center rounded-full bg-white shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]">
-              <CalcAppIcon className="size-[1.875rem]" />
+            <button type="button" onClick={() => setCalc(true)} title="เครื่องคิดเลขภาษี" aria-label="เครื่องคิดเลขภาษี" className="tf-anim-host flex size-10 cursor-pointer items-center justify-center rounded-full bg-white sm:size-11 shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]">
+              <CalcAppIcon className="size-7 sm:size-[1.875rem]" />
             </button>
           )}
           <AppearanceMenu />

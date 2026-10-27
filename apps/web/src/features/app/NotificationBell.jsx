@@ -217,7 +217,7 @@ export default function NotificationBell({ role }) {
         onClick={() => { setOpen((v) => !v); if (!open) void refresh(); }}
         aria-label={`การแจ้งเตือน${unread ? ` ยังไม่อ่าน ${unread} รายการ` : ''}`}
         aria-expanded={open}
-        className="tf-anim-host relative flex size-11 cursor-pointer items-center justify-center rounded-full bg-white text-ink shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]"
+        className="tf-anim-host relative flex size-10 cursor-pointer sm:size-11 items-center justify-center rounded-full bg-white text-ink shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-all hover:-translate-y-px hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]"
       >
         <Icon name="bell" className="size-[1.375rem]" strokeWidth={1.5} alert={unread > 0 && !open} />
         {/* ป้าย +N สีชมพูซ้อนไหล่ขวาของกระดิ่ง: เด้งเข้าเมื่อจำนวนเปลี่ยน (key) และมีวงกระเพื่อมเป็นจังหวะ */}

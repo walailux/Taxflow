@@ -2,6 +2,7 @@
  * DocBrowser.jsx รายการเอกสารพร้อมตัวกรองและมุมมอง ใช้ร่วมกันระหว่าง "เอกสารทั้งหมด" และแท็บ "เอกสารที่ฉันสร้าง" ในคลังเอกสาร
  * ชิปสถานะพร้อมจำนวน · ค้นหาแบบหน่วงเวลา · กรองประเภท/ช่วงวันที่ · ส่งออก CSV / Excel / ZIP
  * มุมมองเล็ก/กลาง (ตาราง) และใหญ่ (การ์ดพร้อมพรีวิวหน้าแรก) · เลือกคอลัมน์ · ดาวน์โหลดรายฉบับเป็น PDF/Excel/CSV/XML
+ * จอมือถือ (ต่ำกว่า 640px) มุมมองเล็ก/กลางแสดงเป็นการ์ดรายการแทนตาราง ไม่ต้องเลื่อนซ้ายขวา
  */
 import Select from '../../components/Select.jsx';
 import DatePicker from '../../components/DatePicker.jsx';
@@ -27,7 +28,7 @@ const whtType = (t) => ['EWHT', 'PAYMENT', 'PND3', 'PND53', 'WHT'].includes(t);
 const partyOf = (d) => (d.received ? `จาก ${d.received.fromName}` : d.party || d.payer || d.buyer || d.payee || '-');
 /** ป้ายบอกว่าเป็นเอกสารที่คู่ค้าส่งมา */
 const ReceivedTag = () => <span className="inline-flex shrink-0 items-center rounded-full bg-orange-pale px-2 py-0.5 text-[0.75rem] font-semibold text-orange-deep">คู่ค้าส่งมา</span>;
-const EXPORT_BTN = 'flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[0.90625rem] font-medium text-ink transition-all hover:bg-white hover:shadow-[0_2px_8px_-4px_rgba(24,24,27,0.35)] disabled:cursor-not-allowed disabled:opacity-40';
+const EXPORT_BTN = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 text-[0.90625rem] font-medium text-ink transition-all hover:bg-white hover:shadow-[0_2px_8px_-4px_rgba(24,24,27,0.35)] disabled:cursor-not-allowed disabled:opacity-40';
 const amountsOf = (d) => ({
   tax: whtType(d.type) ? d.wht : d.vat,
   total: ['EWHT', 'PAYMENT', 'WHT'].includes(d.type) ? d.net : (d.total ?? d.base),
@@ -126,6 +127,46 @@ function readView(key) {
   } catch { return DEFAULT_VIEW; }
 }
 
+/**
+ * การ์ดเอกสารหนึ่งฉบับบนมือถือ (แทนแถวตาราง): ประเภท + เลขที่ + สถานะ · คู่ค้า · วันที่/ยอดรวม · ปุ่มดาวน์โหลด
+ * ค่าที่แสดงตามคอลัมน์ที่เลือกไว้ (cols) เหมือนตาราง · compact = มุมมองเล็ก ซ่อนคู่ค้าและฐาน/ภาษี
+ */
+function DocCard({ d, cols, compact, onOpen, delay }) {
+  const { tax, total } = amountsOf(d);
+  return (
+    <li>
+      <article
+        onClick={onOpen}
+        className="tf-fade-up tf-tone cursor-pointer rounded-[18px] bg-white p-3.5 ring-1 ring-line"
+        style={{ animationDelay: `${delay}ms`, '--tone': 'var(--color-orange)', '--tone-ink': inkOfType(d.type) }}
+      >
+        <div className="flex min-w-0 items-start gap-2.5">
+          <TypeMark type={d.type} size={compact ? 'sm' : 'md'} />
+          <span className="min-w-0 flex-1">
+            <b className="block text-[0.96875rem] font-medium leading-snug [overflow-wrap:anywhere]">{DOC_LABEL[d.type] || d.type}</b>
+            <small className="flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[0.84375rem] text-ink-soft"><span className="truncate">{d.docNo || 'แบบร่าง'}</span>{d.received && <ReceivedTag />}</small>
+          </span>
+          {cols.status && <span className="shrink-0"><StatusPill status={d.status} size="sm" /></span>}
+        </div>
+        {!compact && <p className="mt-2 truncate text-[0.875rem] text-ink-soft">{partyOf(d)}</p>}
+        {!compact && (cols.base || cols.tax) && (
+          <dl className="mt-2 grid grid-cols-2 gap-2 text-[0.8125rem]">
+            {cols.base && <div className="min-w-0 rounded-lg bg-tile px-2.5 py-1.5"><dt className="text-ink-soft">ฐาน</dt><dd className="truncate font-mono tabular-nums">{baht(d.base)}</dd></div>}
+            {cols.tax && <div className="min-w-0 rounded-lg bg-tile px-2.5 py-1.5"><dt className="text-ink-soft">ภาษี/VAT</dt><dd className="truncate font-mono tabular-nums">{baht(tax)}</dd></div>}
+          </dl>
+        )}
+        <div className="mt-2.5 flex items-end justify-between gap-3 border-t border-line pt-2.5">
+          <span className="min-w-0">
+            {cols.total && <b className="block font-mono text-[1.0625rem] font-semibold tabular-nums text-orange-deep">฿{baht(total)}</b>}
+            {cols.date && <small className="block text-[0.8125rem] text-ink-soft">{thDate(d.issueDate || d.createdAt)}</small>}
+          </span>
+          <DownloadMenu doc={d} />
+        </div>
+      </article>
+    </li>
+  );
+}
+
 /** ปุ่ม "คอลัมน์" เปิดรายการติ๊กเลือกคอลัมน์ที่จะแสดง (เลขที่และชื่อเอกสารแสดงเสมอ) */
 function ColumnPicker({ cols, onChange }) {
   const [open, setOpen] = useState(false);
@@ -206,14 +247,17 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
   };
 
   const chips = (
-    <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label="กรองตามสถานะ">
+    <div className="mb-4 flex min-w-0 items-center gap-2">
+      {/* ป้าย "สถานะ" กว้างเท่าป้าย "ที่มา" ของหน้าเอกสารทั้งหมด ชิปสองแถวจึงเริ่มตรงกัน */}
+      {!panel && <span className="w-10 shrink-0 text-[0.875rem] text-ink-soft">สถานะ</span>}
+      <div className="-my-1 flex min-w-0 gap-2 overflow-x-auto py-1 [scrollbar-width:none]" role="group" aria-label="กรองตามสถานะ">
       {CHIPS.filter((k) => k === '' || count[k]).map((k) => (
         <button
           key={k || 'all'}
           type="button"
           aria-pressed={status === k}
           onClick={() => setStatus(k)}
-          className={cx('flex shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[0.96875rem] font-medium transition-all duration-200',
+          className={cx('flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 text-[0.90625rem] font-medium transition-all duration-200',
             status === k ? 'bg-ink text-white shadow-[0_8px_18px_-10px_rgba(24,24,27,0.6)]' : cx(panel ? 'bg-tile' : 'bg-white', 'text-ink-soft hover:text-ink'))}
         >
           {k && <i className={cx('size-2 rounded-full', DOT[k])} />}
@@ -221,24 +265,27 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
           <span className={cx('rounded-full px-1.5 text-[0.84375rem]', status === k ? 'bg-white/20' : panel ? 'bg-white' : 'bg-tile')}>{count[k] || 0}</span>
         </button>
       ))}
+      </div>
     </div>
   );
 
   const body = (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label className="relative min-w-[220px] flex-1">
+      <div className="mb-4 flex flex-wrap items-end gap-2">
+        <label className="relative w-full min-w-0 sm:w-auto sm:min-w-[220px] sm:flex-1">
           <span className="sr-only">ค้นหาเอกสาร</span>
           <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 size-[1.0625rem] -translate-y-1/2 text-ink-soft" />
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder="เลขที่ / คู่ค้า / เลขภาษี" className="h-11 w-full rounded-full bg-tile pl-10 pr-4 text-[0.96875rem] transition-shadow focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange" />
         </label>
         <Select aria-label="ประเภทเอกสาร" value={type} onChange={(e) => setType(e.target.value)} placeholder="ทุกประเภท"
-          className="!h-11 !w-auto min-w-[190px] !rounded-full !border-transparent !py-0 text-[0.96875rem]"
+          className="!h-11 !w-full min-w-0 !rounded-full !border-transparent !py-0 text-[0.96875rem] sm:!w-auto sm:min-w-[190px]"
           options={types.map((t) => ({ value: t, label: DOC_LABEL[t] || (docschema.FORMS[t] && docschema.FORMS[t].label) || t }))} />
-        <DatePicker aria-label="ตั้งแต่วันที่" placeholder="ตั้งแต่วันที่" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="!h-11 !w-auto min-w-[10rem] !rounded-full !py-0" />
-        <DatePicker aria-label="ถึงวันที่" placeholder="ถึงวันที่" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="!h-11 !w-auto min-w-[10rem] !rounded-full !py-0" />
-        <div className="ml-auto flex items-center gap-1 rounded-full bg-tile p-1" role="group" aria-label="ส่งออกรายการเอกสาร">
-          <span className="hidden pl-2.5 pr-1 text-[0.875rem] text-ink-soft sm:inline">ส่งออก</span>
+        <DatePicker aria-label="ตั้งแต่วันที่" placeholder="ตั้งแต่วันที่" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="!h-11 !w-auto min-w-0 flex-1 basis-[7rem] !rounded-full !py-0 sm:flex-none sm:min-w-[10rem]" />
+        <DatePicker aria-label="ถึงวันที่" placeholder="ถึงวันที่" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="!h-11 !w-auto min-w-0 flex-1 basis-[7rem] !rounded-full !py-0 sm:flex-none sm:min-w-[10rem]" />
+        {/* ส่งออก: ป้ายอยู่เหนือปุ่ม (แถวตัวกรองชิดด้านล่าง ปุ่มจึงตรงแนวกับช่องอื่น) */}
+        <div className="flex w-full flex-col gap-1 sm:ml-auto sm:w-auto">
+          <span className="text-center text-[0.8125rem] font-medium text-ink-soft" id="export-label">ส่งออกเอกสารทั้งหมด</span>
+          <div className="flex items-center justify-between gap-1 rounded-full bg-tile p-1 sm:justify-start" role="group" aria-labelledby="export-label">
           <a className={EXPORT_BTN} href={`${API_URL}/api/export/csv?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น CSV">
             <i className="size-2 rounded-full bg-[#1967D2]" />CSV
           </a>
@@ -248,6 +295,7 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
           <button type="button" className={EXPORT_BTN} onClick={exportZip} disabled={!items.length} title="ส่งออกเอกสารที่แสดงอยู่เป็น PDF/A-3 ในไฟล์ ZIP">
             <Icon name="download" className="size-4 text-orange-deep" />ZIP
           </button>
+          </div>
         </div>
       </div>
 
@@ -328,7 +376,12 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
           </div>
         </>
       ) : (
-        <div ref={tableBox} className="overflow-x-auto rounded-[18px] ring-1 ring-line">
+        <>
+        <ul className="flex flex-col gap-2.5 sm:hidden" aria-label="รายการเอกสาร">
+          {list.isLoading && Array.from({ length: 3 }, (_, i) => <li key={i}><Skeleton className="h-28 w-full rounded-[18px]" /></li>)}
+          {items.map((d, i) => <DocCard key={d.id} d={d} cols={view.cols} compact={compact} onOpen={() => onOpenDoc(d)} delay={Math.min(i, 10) * 30} />)}
+        </ul>
+        <div ref={tableBox} className="hidden overflow-x-auto rounded-[18px] ring-1 ring-line sm:block">
           <table
             className={cx('w-full table-fixed text-left', compact ? 'text-[0.90625rem]' : 'text-[0.96875rem]')}
             style={{ minWidth: `${DOC_MIN_REM + W.no + W.dl}rem` }}
@@ -386,6 +439,7 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
             </tbody>
           </table>
         </div>
+        </>
       )}
       {!list.isLoading && !items.length && (
         <EmptyState
