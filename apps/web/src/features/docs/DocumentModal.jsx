@@ -15,6 +15,7 @@ import Icon from '../../components/Icon.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import OtpDialog from './OtpDialog.jsx';
 import SignaturePad from './SignaturePad.jsx';
+import FileUploadCard, { useUploadProgress } from '../../components/FileUploadCard.jsx';
 import { docsApi, readDataUrl } from './docsApi.js';
 import {
   ATTACH_KIND, EDITABLE, REQUEST_STATUS, STATUS_HELP, STATUS_INFO, STATUS_TITLE,
@@ -566,8 +567,7 @@ function FilesTab({ d, onChanged }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
-  const [drag, setDrag] = useState(false);
-  const input = useRef(null);
+  const progress = useUploadProgress(busy);
 
   async function pick(f) {
     if (!f) return;
@@ -593,8 +593,28 @@ function FilesTab({ d, onChanged }) {
     catch (err) { toast(err.message, 'err'); }
   }
 
+  // ไฟล์ที่เลือกไว้ (รอบันทึก) อยู่บนสุด ตามด้วยไฟล์แนบที่บันทึกแล้วของเอกสารนี้
+  const files = [
+    ...(file ? [{ id: 'pending', file, status: busy ? 'uploading' : 'ready', progress, previewUrl: preview }] : []),
+    ...(d.attachments || []).map((a) => ({
+      id: a.id,
+      file: { name: `${ATTACH_KIND[a.kind] || a.kind} · ${a.filename}`, size: a.size || 0, type: a.mime || '' },
+      status: 'completed',
+      href: `${API_URL}/api/attachments/${Number(a.id)}`,
+    })),
+  ];
+
   return (
-    <>
+    <FileUploadCard
+      title="ไฟล์แนบของเอกสาร"
+      subtitle={(d.attachments || []).length ? `แนบไว้แล้ว ${(d.attachments || []).length} ไฟล์` : 'ยังไม่มีไฟล์แนบ เช่น ใบเสร็จ สลิปโอน หรือสัญญา'}
+      hint="PDF, PNG, JPG, WEBP · ไม่เกิน 5 MB"
+      accept=".pdf,image/png,image/jpeg,image/webp"
+      inputLabel="เลือกไฟล์แนบของเอกสาร"
+      files={files}
+      onFilesChange={(fs) => pick(fs[0])}
+      onFileRemove={(id) => { if (id === 'pending') { setFile(null); setPreview(''); } else void remove(id); }}
+    >
       <SelectField
         id="att-kind"
         label="ประเภทเอกสารแนบ"
@@ -602,46 +622,8 @@ function FilesTab({ d, onChanged }) {
         options={Object.entries(ATTACH_KIND).map(([value, label]) => ({ value, label }))}
         onChange={(e) => setKind(e.target.value)}
       />
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); void pick(e.dataTransfer.files[0]); }}
-        className={cx('rounded-2xl border-[1.5px] border-dashed p-6 text-center', drag ? 'border-orange bg-orange-pale' : 'border-line')}
-      >
-        <input ref={input} type="file" aria-label="เลือกไฟล์แนบของเอกสาร" accept=".pdf,image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => pick(e.target.files[0])} />
-        <p className="text-[0.9375rem]">
-          ลากไฟล์มาวาง หรือ <button type="button" className="cursor-pointer font-bold text-orange-deep underline" onClick={() => input.current.click()}>เลือกไฟล์</button>
-        </p>
-        <p className="mt-1 text-[0.84375rem] text-ink-soft">รองรับ PDF, PNG, JPG, WEBP · ไม่เกิน 5 MB</p>
-      </div>
-
-      {file && (
-        <div className="tf-reveal mt-3 rounded-2xl border border-line p-3">
-          <p className="mb-2 text-[0.875rem] font-semibold text-ink-soft">ตัวอย่างก่อนบันทึก</p>
-          {preview ? <img src={preview} alt="" className="max-h-48 w-auto rounded-lg" /> : <p className="text-[0.90625rem]">PDF · {file.name}</p>}
-          <div className="mt-3 flex gap-2">
-            <Button onClick={upload} loading={busy} className="px-4 py-2 text-[0.90625rem]">บันทึกไฟล์แนบ</Button>
-            <Button variant="ghost" className="px-4 py-2 text-[0.90625rem]" onClick={() => { setFile(null); setPreview(''); }}>ยกเลิก</Button>
-          </div>
-        </div>
-      )}
-
-      <div className="mt-4 flex flex-col gap-2">
-        {(d.attachments || []).length === 0 && <p className="text-[0.90625rem] text-ink-soft">ยังไม่มีไฟล์แนบ</p>}
-        {(d.attachments || []).map((a) => (
-          <div key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-line p-3">
-            <div className="min-w-0">
-              <b className="block text-[0.90625rem]">{ATTACH_KIND[a.kind] || a.kind}</b>
-              <small className="block truncate text-[0.84375rem] text-ink-soft">{a.filename} · {Math.round((a.size || 0) / 1024)} KB</small>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <a className="tf-btn tf-btn-ghost px-3 py-1.5 text-[0.875rem]" href={`${API_URL}/api/attachments/${Number(a.id)}`} target="_blank" rel="noopener">เปิด</a>
-              <button type="button" className="tf-btn tf-btn-ghost border-danger px-3 py-1.5 text-[0.875rem] text-danger" onClick={() => remove(a.id)}>ลบ</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
+      <Button onClick={upload} loading={busy} disabled={!file} className="w-full px-4 py-2.5 text-[0.9375rem]">บันทึกไฟล์แนบ</Button>
+    </FileUploadCard>
   );
 }
 
@@ -707,6 +689,7 @@ function SignTab({ d, onChanged, setOtp, setConfirm }) {
         onUseSaved={(sig) => sign(sig.image, sig.name, false)}
         onDeleteSaved={removeSaved}
         onSign={sign}
+        signerName={name}
       />
     </>
   );

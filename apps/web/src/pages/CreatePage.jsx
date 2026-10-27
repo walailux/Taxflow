@@ -308,8 +308,8 @@ export default function CreatePage() {
   const [fields, setFields] = useState({});
   const [party, setParty] = useState({});
   const [items, setItems] = useState([]);
-  const [docFont, setDocFont] = useState(() => readAppearance().docFont); // ฟอนต์ PDF ของเอกสาร
-  const docFonts = useDocFonts();ฉบับนี้
+  const [docFont, setDocFont] = useState(() => readAppearance().docFont); // ฟอนต์ PDF ของเอกสารฉบับนี้
+  const docFonts = useDocFonts();
   const [errs, setErrs] = useState({ fields: {}, party: {}, items: [] });
   const [summary, setSummary] = useState([]);
   const [saveContact, setSaveContact] = useState(false);
@@ -359,7 +359,14 @@ export default function CreatePage() {
     };
   }, [docList, provinces, user]);
 
-  const types = useMemo(() => docschema.rolesFor(role, { vatRegistered: !!user.vatRegistered }), [role, user.vatRegistered]);
+  // ใบกำกับภาษี/ใบรับอิเล็กทรอนิกส์แสดงให้เห็นเสมอ แต่ล็อกไว้จนกว่าจะจด VAT และได้รับสิทธิ์ e-Tax (อนุมัติจากกรมสรรพากร + แอดมินตรวจแล้ว)
+  // บอกเหตุผลและทางไปขอสิทธิ์ ดีกว่าซ่อนไปเฉยๆ จนผู้ใช้ไม่รู้ว่ามีเอกสารนี้
+  const types = useMemo(() => docschema.rolesFor(role), [role]);
+  const etaxOk = !!user.vatRegistered && user.etaxStatus === 'approved';
+  const etaxLocked = (t) => docschema.isEtaxType(t) && !etaxOk;
+  const kycOk = user.verifyStatus === 'verified';
+  const [etaxNotice, setEtaxNotice] = useState(null); // ประเภท e-Tax ที่กดแต่ยังไม่มีสิทธิ์ (เปิดกล่องอธิบาย)
+  const [etaxAck, setEtaxAck] = useState(false); // ผู้ใช้ยืนยันก่อนออกเอกสาร e-Tax ในขั้นตรวจทาน
   // ขั้นที่ 2 แสดงเฉพาะประเภทที่เหมาะกับจุดประสงค์ที่เลือก
   const purposeTypes = useMemo(() => typesForPurpose(types, purpose), [types, purpose]);
   // ซ่อนจุดประสงค์ที่บทบาทนี้ไม่มีเอกสารให้สร้างเลย (เช่น ครีเอเตอร์ไม่มีเอกสารภายในองค์กร)
@@ -411,6 +418,8 @@ export default function CreatePage() {
   }, [purpose, type, fields, party, items, step, editing]);
 
   function start(t, p = purpose) {
+    if (etaxLocked(t)) { setEtaxNotice(t); return; }
+    setEtaxAck(false);
     const f = formOf(t);
     const pur = f.noSend && p === 'send' ? 'self' : (p || 'send');
     setPurpose(pur);
@@ -580,6 +589,10 @@ export default function CreatePage() {
   }
 
   const [busy, submit] = useSubmit(async () => {
+    if (docschema.isEtaxType(type)) {
+      if (etaxLocked(type)) { setEtaxNotice(type); return; }
+      if (!etaxAck) { toast('กรุณาติ๊กยืนยันว่าได้รับอนุญาตและข้อมูลครบถ้วนตามหลักเกณฑ์กรมสรรพากรก่อน', 'err'); return; }
+    }
     try {
       const body = { type, docPurpose: purpose, docFont, ...data };
       const res = editing
@@ -612,6 +625,38 @@ export default function CreatePage() {
     </Alert>
   );
 
+  // เอกสารทุกประเภทต้องยืนยันตัวตนก่อน (ยกเว้นบันทึกข้อตกลงย้อนหลัง) · e-Tax ต้องได้สิทธิ์เพิ่มอีกขั้น (กล่อง etaxNotice)
+  const kycWarn = !kycOk && purpose !== 'record' && (
+    <Alert kind="dev">
+      {user.verifyStatus === 'pending' ? 'เอกสารยืนยันตัวตนของคุณอยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ' : 'บัญชีนี้ยังไม่ผ่านการยืนยันตัวตน (KYC)'}
+      {' '}กรอกแบบฟอร์มได้ แต่จะออกเอกสารได้หลังผู้ดูแลระบบอนุมัติแล้วเท่านั้น{' '}
+      <Link to="/app/profile?tab=kyc" className="font-medium underline">ไปที่หน้ายืนยันตัวตน</Link>
+    </Alert>
+  );
+  const etaxStatusText = !user.vatRegistered ? 'บัญชีนี้ยังไม่ได้ระบุว่าจดทะเบียนภาษีมูลค่าเพิ่ม (VAT)'
+    : { pending: 'คำขอสิทธิ์ของคุณอยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ', rejected: `คำขอสิทธิ์ไม่ผ่านการตรวจสอบ${user.etaxNote ? `: ${user.etaxNote}` : ''}` }[user.etaxStatus]
+      || 'บัญชีนี้ยังไม่ได้ยื่นขอสิทธิ์ออกเอกสาร e-Tax';
+  const etaxDialog = etaxNotice && (
+    <ConfirmDialog
+      title={`ยังออก${formOf(etaxNotice).label}ไม่ได้`}
+      message={(
+        <span className="block text-left">
+          {etaxStatusText}
+          <span className="mt-2 block">
+            ใบกำกับภาษีอิเล็กทรอนิกส์และใบรับอิเล็กทรอนิกส์ออกได้เฉพาะผู้ประกอบการที่จดทะเบียน VAT
+            และได้รับอนุมัติจากกรมสรรพากรแล้ว (เช่น ยื่นคำขอ ก.อ.01 หรือใช้ผู้ให้บริการนำส่งข้อมูลที่ผ่านการรับรองจาก ETDA)
+            โดยต้องส่งหลักฐานให้ผู้ดูแลระบบตรวจก่อน
+          </span>
+          <span className="mt-2 block text-ink-soft">ระหว่างนี้ออก &quot;ใบเสร็จรับเงิน&quot; หรือ &quot;ใบแจ้งหนี้&quot; แทนได้</span>
+        </span>
+      )}
+      confirmText="ไปยื่นขอสิทธิ์"
+      cancelText="ปิด"
+      onConfirm={() => { setEtaxNotice(null); void navigate('/app/profile?tab=etax'); }}
+      onCancel={() => setEtaxNotice(null)}
+    />
+  );
+
   if (!docs.data || (editId && !editing)) {
     return <><PageHeader title={editId ? 'แก้ไขเอกสาร' : 'สร้างเอกสาร'} /><Skeleton className="h-64 w-full rounded-[24px]" /></>;
   }
@@ -627,6 +672,8 @@ export default function CreatePage() {
         />
         <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={step} /></Card>
         {profileWarn}
+        {kycWarn}
+        {etaxDialog}
         {draftOffer && step === 1 && (
           <div className="tf-reveal mb-5 flex flex-wrap items-center gap-3 rounded-[20px] bg-white p-4 ring-1 ring-orange-soft">
             <span className="min-w-[220px] flex-1 text-[0.96875rem]">
@@ -715,6 +762,9 @@ export default function CreatePage() {
                             </span>
                             <small className="mt-1 block text-[0.90625rem] leading-relaxed text-ink-soft">{textOf(f.desc, role)}</small>
                             {f.noSend && <span className="mt-1.5 inline-block rounded-full bg-tile px-2.5 py-0.5 text-[0.8125rem] text-ink-soft">จัดเตรียมข้อมูลภายใน</span>}
+                            {docschema.isEtaxType(t) && (etaxLocked(t)
+                              ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-0.5 text-[0.8125rem] font-medium text-danger"><Icon name="shield" className="size-3.5" />ต้องได้รับอนุญาตจากกรมสรรพากร</span>
+                              : <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ok-soft px-2.5 py-0.5 text-[0.8125rem] font-medium text-ok"><Icon name="check" className="size-3.5" />ได้รับสิทธิ์ e-Tax แล้ว</span>)}
                           </span>
                           {/* ลูกศรไปต่อ: โผล่และเลื่อนเข้าเมื่อชี้ */}
                           <span aria-hidden="true" className="flex size-8 shrink-0 -translate-x-1 items-center justify-center rounded-full bg-orange text-white opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
@@ -779,6 +829,8 @@ export default function CreatePage() {
       <>
         <PageHeader title={title} subtitle="ตรวจสอบข้อมูลก่อนยืนยัน" back={<BackButton onClick={() => setStep(3)}>กลับไปแก้ไข</BackButton>} />
         <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={4} /></Card>
+        {kycWarn}
+        {etaxDialog}
         {summary.length > 0 && <Alert><b className="font-medium">ยังบันทึกไม่ได้</b><ul className="mt-1 list-disc pl-5">{summary.map((m) => <li key={m}>{m}</li>)}</ul></Alert>}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <Card>
@@ -814,9 +866,29 @@ export default function CreatePage() {
                 : purpose === 'send' ? 'เมื่อสร้างแล้ว ระบบเปิดแท็บ "ส่งเอกสาร" ลงนามฝั่งคุณก่อน แล้วส่งขอลายเซ็นคู่ค้า'
                   : 'สร้างเป็นแบบร่าง ตรวจทาน/เปิด PDF แล้วกด "บันทึกเสร็จสิ้น" เพื่อออกเลขที่เอกสาร'}
             </p>
+            {/* e-Tax: ตรวจสิทธิ์อีกครั้ง และให้ผู้ใช้ยืนยันความถูกต้องก่อนออกทุกครั้ง (เซิร์ฟเวอร์ตรวจสิทธิ์ซ้ำตอนสร้างและตอนออกเลขที่) */}
+            {docschema.isEtaxType(type) && (
+              <div className={cx('rounded-[20px] px-4 py-3 text-[0.9375rem] leading-relaxed ring-1', etaxOk ? 'bg-white ring-line' : 'bg-danger-soft text-danger ring-danger')}>
+                {etaxOk ? (
+                  <label className="tf-choice items-start">
+                    <input type="checkbox" checked={etaxAck} onChange={(e) => setEtaxAck(e.target.checked)} />
+                    <span>
+                      ข้าพเจ้ายืนยันว่ากิจการได้รับอนุมัติจากกรมสรรพากรให้จัดทำ{def.label}
+                      และตรวจแล้วว่าข้อมูลผู้ขาย ผู้ซื้อ รายการสินค้า/บริการ และจำนวนภาษีถูกต้องครบถ้วนตามหลักเกณฑ์ของกรมสรรพากร
+                    </span>
+                  </label>
+                ) : (
+                  <>
+                    <b className="block font-medium">ยังออกเอกสารนี้ไม่ได้</b>
+                    {etaxStatusText} ต้องได้รับอนุมัติจากกรมสรรพากรและผู้ดูแลระบบตรวจหลักฐานแล้วก่อน{' '}
+                    <Link to="/app/profile?tab=etax" className="font-medium underline">ไปยื่นขอสิทธิ์</Link>
+                  </>
+                )}
+              </div>
+            )}
             <StepActions
               back={<Button variant="soft" onClick={() => setStep(3)}>← กลับไปแก้ไข</Button>}
-              next={<Button variant="dark" loading={busy} onClick={submit}>{editing ? 'ยืนยันบันทึกการแก้ไข' : 'ยืนยันสร้างเอกสาร'}</Button>}
+              next={<Button variant="dark" loading={busy} onClick={submit} disabled={docschema.isEtaxType(type) && (!etaxOk || !etaxAck)}>{editing ? 'ยืนยันบันทึกการแก้ไข' : 'ยืนยันสร้างเอกสาร'}</Button>}
             />
           </div>
         </div>
@@ -1084,6 +1156,14 @@ export default function CreatePage() {
           : <BackButton onClick={() => { clearDraft(); setStep(2); }}>ย้อนกลับ: เลือกประเภทเอกสาร</BackButton>}
       />
       <Card className="mb-5" bodyClassName="!py-6 sm:!py-7"><StepBar size="lg" label="ขั้นตอนการสร้างเอกสาร" steps={STEPS} current={3} /></Card>
+      {kycWarn}
+      {etaxDialog}
+      {docschema.isEtaxType(type) && (
+        <Alert kind="info">
+          <b className="font-medium">{def.label}เป็นเอกสารตามรูปแบบของกรมสรรพากร</b> ระบบสร้างเป็นตัวอย่างการออกเอกสารเท่านั้น ไม่ได้นำส่งข้อมูลให้กรมสรรพากร
+          ต้องกรอกรายการให้ครบถ้วนตามมาตรา 86/4 แห่งประมวลรัษฎากร และออกได้เฉพาะเมื่อได้รับอนุมัติจากกรมสรรพากรแล้ว
+        </Alert>
+      )}
       {def.hint && <Alert kind="info">{textOf(def.hint, role)}</Alert>}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">

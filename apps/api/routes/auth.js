@@ -169,6 +169,14 @@ async function startLoginChallenge(res, user) {
     });
   }
 
+  // บัญชีทดสอบ (สร้างด้วย scripts/seed-test-accounts.js) เข้าได้ด้วยรหัสผ่านอย่างเดียว ไม่ต้องกรอก OTP
+  // ใช้ได้เฉพาะอีเมลโดเมนทดสอบ (@taxflow.test ฯลฯ ที่ไม่มีกล่องจดหมายจริง) บัญชีอีเมลจริงตั้งธงนี้ก็ยังต้องยืนยัน OTP
+  if (user.otpExempt === true && mailer.isReservedDomain(user.email)) {
+    auth.setSessionCookie(res, auth.createToken({ uid: user.id, role: user.role, tv: user.tokenVersion || 0 }));
+    await logAudit(user.id, null, 'login', 'เข้าสู่ระบบสำเร็จ (บัญชีทดสอบ ไม่ต้องยืนยัน OTP)', user.displayName);
+    return sendJson(res, 200, { user: publicUser(user), otpSkipped: true });
+  }
+
   // ข้อ: ถ้าบัญชีนี้เปิดใช้ TOTP (แอป Authenticator) ไว้แล้ว ให้ข้ามการส่ง OTP ทางอีเมลไปเลย
   // เพราะ TOTP เชื่อถือได้เทียบเท่า/สูงกว่าอีเมลอยู่แล้ว และเร็วกว่ามาก (ไม่ต้องรอกล่องจดหมาย)
   if (user.totpEnabled && user.totpSecret) {

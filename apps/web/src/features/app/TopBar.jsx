@@ -110,7 +110,7 @@ function GlobalSearch({ role }) {
  * สวิตช์โหมดกลางวัน/กลางคืน: รางมีไอคอนดวงอาทิตย์ (ซ้าย) และดวงจันทร์ (ขวา) ปุ่มกลมเลื่อนไปฝั่งโหมดที่เปิดอยู่
  * role="switch" อ่านได้ด้วยโปรแกรมอ่านหน้าจอ · ป้ายคำอธิบายแบบกำหนดเอง (แทน title ของเบราว์เซอร์) ขึ้นตอนชี้/โฟกัส
  */
-function ThemeToggle() {
+export function ThemeToggle() {
   const [theme, toggle] = useTheme();
   const dark = theme === 'dark';
   // ป้ายอธิบายใช้ title → TooltipLayer เหมือนทุกปุ่มในเว็บ (ซ่อนเองเมื่อกด/เอาเมาส์ออก)

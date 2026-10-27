@@ -22,7 +22,9 @@ function profileMeta(user) {
     isJuristic: profile.isJuristic(user),
     branchLabel: profile.branchLabel(user),
     requiredKyc: profile.requiredKyc(user),
-    canIssueEtax: !!user.vatRegistered,
+    // ใบกำกับภาษี/ใบรับอิเล็กทรอนิกส์ต้องจด VAT และได้รับสิทธิ์ e-Tax (แอดมินตรวจหลักฐานจากกรมสรรพากรแล้ว)
+    canIssueEtax: !!user.vatRegistered && user.etaxStatus === 'approved',
+    etaxStatus: user.etaxStatus || 'none',
   };
 }
 

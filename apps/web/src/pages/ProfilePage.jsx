@@ -21,6 +21,7 @@ import { useToast } from '../components/Toast.jsx';
 import { Alert, Button, PageHeader, SegGroup, SelectField, Spinner, TextField, cx } from '../components/ui.jsx';
 import Icon from '../components/Icon.jsx';
 import Avatar from '../components/Avatar.jsx';
+import EtaxPermission from '../features/profile/EtaxPermission.jsx';
 import { ROLE_TAG } from '../features/app/nav.js';
 import { AddressCascade } from '../features/address/AddressFields.jsx';
 import {
@@ -72,6 +73,7 @@ const TABS = [
   { key: 'bank', label: 'บัญชีรับเงิน', icon: 'wallet' },
   { key: 'brand', label: 'รูปและโลโก้', icon: 'grid' },
   { key: 'kyc', label: 'ยืนยันตัวตน', icon: 'file' },
+  { key: 'etax', label: 'สิทธิ์ออก e-Tax', icon: 'shield' },
   { key: 'security', label: 'ความปลอดภัย', icon: 'shield' },
   { key: 'privacy', label: 'ความเป็นส่วนตัว', icon: 'info' },
 ];
@@ -508,6 +510,13 @@ export default function ProfilePage() {
                   )}
                 </>
               )}
+            </Panel>
+          )}
+
+          {current.key === 'etax' && (
+            <Panel id="pf-etax-panel" title="สิทธิ์ออกใบกำกับภาษีอิเล็กทรอนิกส์ / ใบรับอิเล็กทรอนิกส์"
+              sub="สองประเภทนี้ออกได้เฉพาะผู้จด VAT ที่ได้รับอนุมัติจากกรมสรรพากรแล้ว และผู้ดูแลระบบตรวจหลักฐานผ่าน เอกสารประเภทอื่นแค่ยืนยันตัวตนก็ออกได้">
+              <EtaxPermission user={user} />
             </Panel>
           )}
 

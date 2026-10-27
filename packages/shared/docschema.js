@@ -557,7 +557,8 @@
         creator: 'ใบกำกับภาษีแบบเต็มรูป ออกได้เมื่อจดทะเบียน VAT แล้ว',
       },
       hint: 'ออกได้เฉพาะผู้ประกอบการที่จดทะเบียนภาษีมูลค่าเพิ่มแล้ว ระบบสร้างไฟล์ PDF/A-3 ที่มีไฟล์ XML แนบอยู่ภายใน '
-        + 'ตามโครงสร้างของ ETDA (ขมธอ. 3-2560) เพื่อสาธิตกระบวนการเท่านั้น ยังไม่ได้ยื่นคำขอจัดทำกับกรมสรรพากร',
+        + 'ตามโครงสร้างของ ETDA (ขมธอ. 3-2560) เป็นตัวอย่างตามรูปแบบของกรมสรรพากรเท่านั้น ไม่ได้นำส่งข้อมูลให้กรมสรรพากร '
+        + 'ออกได้เมื่อได้รับอนุมัติจากกรมสรรพากรและผู้ดูแลระบบตรวจหลักฐานแล้ว (หน้าโปรไฟล์ หัวข้อสิทธิ์ออก e-Tax)',
       issuerTitle: 'ผู้ประกอบการจดทะเบียน (ผู้ขาย)',
       party: {
         title: 'ผู้ซื้อสินค้าหรือผู้รับบริการ', role: 'ผู้ซื้อ',
@@ -595,7 +596,8 @@
         creator: 'ใบรับอิเล็กทรอนิกส์ ออกได้เมื่อจดทะเบียน VAT แล้ว',
       },
       hint: 'ใบรับตามมาตรา 105 ทวิ ในรูปแบบอิเล็กทรอนิกส์ ออกได้เฉพาะเมื่อได้รับเงินแล้วจริง '
-        + 'ระบบสร้างเป็นไฟล์ PDF/A-3 พร้อมไฟล์ XML แนบภายใน เพื่อสาธิตกระบวนการเท่านั้น',
+        + 'ระบบสร้างเป็นไฟล์ PDF/A-3 พร้อมไฟล์ XML แนบภายใน เป็นตัวอย่างตามรูปแบบของกรมสรรพากรเท่านั้น '
+        + 'ออกได้เมื่อได้รับอนุมัติจากกรมสรรพากรและผู้ดูแลระบบตรวจหลักฐานแล้ว (หน้าโปรไฟล์ หัวข้อสิทธิ์ออก e-Tax)',
       issuerTitle: 'ผู้รับเงิน (ผู้ประกอบการจดทะเบียน)',
       party: {
         title: 'ผู้จ่ายเงิน', role: 'ผู้จ่ายเงิน',
@@ -767,8 +769,32 @@
     { value: 'niramit', label: 'TH Niramit (Niramit)', file: 'Niramit', web: '"Niramit", sans-serif' },
     { value: 'k2d', label: 'TH K2D July8 (K2D)', file: 'K2D', web: '"K2D", sans-serif' },
     { value: 'krub', label: 'TH Krub (Krub)', file: 'Krub', web: '"Krub", sans-serif' },
-    { value: 'chulabhorn', label: 'จุฬาภรณ์ลิขิต', file: 'ChulabhornLikit', web: '"Chulabhorn Likit", "ChulabhornLikitText", sans-serif' },
+    { value: 'chulabhorn', label: 'จุฬาภรณ์ลิขิต', file: 'ChulabhornLikitText', web: '"Chulabhorn Likit", sans-serif' },
   ];
+
+  /**
+   * สิทธิ์ออกเอกสาร e-Tax (ใบกำกับภาษีอิเล็กทรอนิกส์ / ใบรับอิเล็กทรอนิกส์)
+   * สองประเภทนี้ต่างจากเอกสารอื่น: นอกจากยืนยันตัวตน (KYC) แล้ว ต้องจด VAT และได้รับอนุมัติจากกรมสรรพากรก่อน
+   * ผู้ใช้ส่งหลักฐานที่หน้าโปรไฟล์ → แอดมินตรวจว่าจด VAT จริง ได้รับอนุมัติจริง (และผู้ให้บริการผ่านการรับรองจริง) → อนุมัติสิทธิ์
+   * ระบบนี้สร้างเอกสารตามรูปแบบของกรมสรรพากรเพื่อเป็นตัวอย่างเท่านั้น ไม่ได้นำส่งข้อมูลให้กรมสรรพากรเอง
+   */
+  const ETAX_METHODS = [
+    {
+      value: 'service_provider', label: 'ผ่านผู้ให้บริการนำส่งข้อมูล (e-Tax Service Provider)', needsProvider: true,
+      hint: 'ผู้ให้บริการต้องผ่านการตรวจรับรองมาตรฐานความมั่นคงปลอดภัยจาก ETDA และได้รับอนุญาตจากกรมสรรพากร ให้แนบหนังสือ/ใบรับรองของผู้ให้บริการ',
+    },
+    {
+      value: 'own_cert', label: 'จัดทำเองและลงลายมือชื่อดิจิทัลด้วยใบรับรองของกิจการ (ยื่นคำขอ ก.อ.01)',
+      hint: 'ยื่นคำขอจัดทำ ส่งมอบ และเก็บรักษาใบกำกับภาษีอิเล็กทรอนิกส์ (ก.อ.01) ต่อกรมสรรพากร และใช้ใบรับรองอิเล็กทรอนิกส์ (CA) ของกิจการ',
+    },
+    {
+      value: 'timestamp_email', label: 'แบบ e-Tax Invoice by Email (ประทับรับรองเวลา Time Stamp) ยื่นคำขอ ก.อ.01',
+      hint: 'สำหรับผู้ประกอบการที่มีรายได้ไม่เกิน 30 ล้านบาทต่อปี ต้องยื่นคำขอและได้รับอนุมัติจากกรมสรรพากรก่อน',
+    },
+  ];
+  const ETAX_STATUS_LABEL = { none: 'ยังไม่ได้ยื่นขอสิทธิ์', pending: 'รอผู้ดูแลระบบตรวจสอบ', approved: 'ได้รับสิทธิ์แล้ว', rejected: 'ไม่อนุมัติ' };
+  /** เอกสารที่ต้องได้รับอนุญาตจากกรมสรรพากรก่อนออก (ใบกำกับภาษี/ใบรับอิเล็กทรอนิกส์ และ ETAX แบบเดิม) */
+  function isEtaxType(type) { return type === 'ETAX' || !!(FORMS[type] && FORMS[type].etax); }
 
   const EXAMPLE = {
     refNo: 'เช่น PR-2569-0012', note: 'เช่น ราคานี้รวมค่าเดินทางในกรุงเทพมหานครแล้ว', poRef: 'เช่น PO-2026-00012',
@@ -1034,7 +1060,7 @@
 
   return {
     VAT_RATE, WHT_RATES, INCOME_TYPES, INCOME_LABEL, WHT_PRESETS, WHT_CONDITIONS, PND_FORMS, THAI_MONTHS, THAI_MONTHS_SHORT,
-    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, UNIT_GROUPS, DOC_FONTS, DEFAULT_TERMS,
+    PAY_METHODS, PLATFORMS, PARTY_FIELDS, PARTY_KEYS, CONTACT_KINDS, normKind, FORMS, ITEM_COLS, UNIT_PRESETS, UNIT_GROUPS, DOC_FONTS, ETAX_METHODS, ETAX_STATUS_LABEL, isEtaxType, DEFAULT_TERMS,
     allFields, matchCond, rolesFor, isJuristicParty, autoPndForm, calcWht, compute, thaiDate, round2,
     FORMAT, checkField, validateDoc, isValidThaiId,
   };

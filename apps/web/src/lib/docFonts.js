@@ -8,8 +8,8 @@ import { DOC_FONTS } from './appearance.js';
 
 const FALLBACK = ['sarabun', 'googlesans'];
 
-export function useDocFonts() {
-  const q = useQuery({ queryKey: ['meta', 'doc-fonts'], queryFn: () => api.get('/api/meta/doc-fonts'), staleTime: Infinity, retry: false });
+export function useDocFonts(enabled = true) {
+  const q = useQuery({ queryKey: ['meta', 'doc-fonts'], queryFn: () => api.get('/api/meta/doc-fonts'), staleTime: Infinity, retry: false, enabled });
   const available = (q.data && q.data.available) || FALLBACK;
   return DOC_FONTS.filter((f) => available.includes(f.value));
 }

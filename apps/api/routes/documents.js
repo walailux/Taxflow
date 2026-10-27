@@ -253,6 +253,11 @@ api.post('/api/documents/:id/status', requireAuth(async (req, res) => {
     return sendJson(res, 400, { error: 'เอกสารนี้ถูกส่งให้คู่ค้าลงนาม/ตรวจสอบแล้ว ต้องรอผลจากคู่ค้าเท่านั้น ไม่สามารถอนุมัติเองได้' });
   }
   // ข้อ: ออกเลขที่จริงตอนเอกสารออกจากสถานะแบบร่างเป็นครั้งแรก (ยกเว้นยกเลิกตั้งแต่ยังเป็นแบบร่าง ไม่ต้องออกเลข)
+  // ออกเลขที่จากแบบร่าง = การออกเอกสารจริง ตรวจสิทธิ์อีกครั้ง (เช่น สิทธิ์ e-Tax ถูกเพิกถอนหลังสร้างแบบร่างไว้)
+  if (doc.status === 'draft' && next !== 'cancelled') {
+    const gate = profile.canIssue(req.user, doc.type, { purpose: doc.docPurpose });
+    if (!gate.ok) return sendJson(res, 403, { error: gate.error, missing: gate.missing });
+  }
   if (doc.status === 'draft' && next !== 'cancelled') await ensureIssued(doc, req.user.displayName);
   const updated = await store.update('documents', doc.id, { status: next, statusNote: b.note || '' });
   if (next === 'cancelled') {

@@ -111,8 +111,9 @@ export function FolderCard({ folder, count, style }) {
     <Link to={to} onClick={open} className={`kc-folder tone-${folder.tone}${opening ? ' is-opening' : ''}`} style={style} aria-label={`${folder.title} ${count} หัวข้อ`}>
       <span className="kc-folder-tab" aria-hidden="true" />
       <span className="kc-folder-back" aria-hidden="true" />
-      <span className="kc-paper p1" aria-hidden="true"><i /><i /><i /></span>
-      <span className="kc-paper p2" aria-hidden="true"><i /><i /></span>
+      <span className="kc-paper p1" aria-hidden="true"><i /><i /><i /><i /></span>
+      <span className="kc-paper p3" aria-hidden="true"><i /><i /><i /><i /></span>
+      <span className="kc-paper p2" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /><i /></span>
       <span className="kc-folder-front">
         <span className="kc-folder-top">
           <span className="kc-folder-icon"><KIcon name={folder.icon} /></span>

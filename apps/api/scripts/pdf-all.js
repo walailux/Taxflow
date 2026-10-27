@@ -160,7 +160,12 @@ async function main() {
   console.log(`\nไฟล์อยู่ที่ ${outDir}\nตรวจต่อด้วย: verapdf --flavour 3b "${outDir}"/*.pdf`);
   if (failed) process.exit(1);
 }
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// ข้อมูลตัวอย่างชุดนี้ใช้ซ้ำใน scripts/seed-test-accounts.js (สร้างเอกสารตัวอย่างให้บัญชีทดสอบ)
+module.exports = { FIELDS, itemsFor, issuer, partyInfo, items };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

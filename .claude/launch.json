@@ -8,12 +8,18 @@
         "run",
         "dev"
       ],
-      "port": 3000
+      "port": 4000
     },
     {
       "name": "web",
-      "url": "http://localhost:5173",
-      "port": 5173
+      "port": 5173,
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "apps/web"
+      ]
     }
   ]
 }

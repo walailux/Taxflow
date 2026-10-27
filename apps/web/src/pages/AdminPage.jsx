@@ -12,6 +12,7 @@ import { useToast } from '../components/Toast.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import Icon from '../components/Icon.jsx';
 import { Button, Card, EmptyState, PageHeader, Skeleton, cx } from '../components/ui.jsx';
+import { docschema } from '../lib/shared.js';
 
 const STATUS = {
   pending: ['รอตรวจสอบ', 'bg-[#FFF4DB] text-[#8A5A00]'],
@@ -19,12 +20,120 @@ const STATUS = {
   rejected: ['ไม่อนุมัติ', 'bg-danger-soft text-danger'],
   unverified: ['ยังไม่ส่งเอกสาร', 'bg-tile text-ink-soft'],
 };
-const FILTERS = [['pending', 'รอตรวจสอบ'], ['verified', 'ยืนยันแล้ว'], ['rejected', 'ไม่อนุมัติ'], ['unverified', 'ยังไม่ส่งเอกสาร'], ['', 'ทั้งหมด']];
+const FILTERS = [['pending', 'รอตรวจสอบ'], ['etax', 'คำขอสิทธิ์ e-Tax'], ['verified', 'ยืนยันแล้ว'], ['rejected', 'ไม่อนุมัติ'], ['unverified', 'ยังไม่ส่งเอกสาร'], ['', 'ทั้งหมด']];
+const ETAX_PILL = { pending: 'bg-[#FFF4DB] text-[#8A5A00]', approved: 'bg-ok-soft text-ok', rejected: 'bg-danger-soft text-danger', none: 'bg-tile text-ink-soft' };
 const ROLE_TEXT = { creator: 'อินฟลูเอนเซอร์', agency: 'เอเจนซี่', corporate: 'บริษัทผู้ว่าจ้าง' };
 
 function Pill({ status }) {
   const [text, cls] = STATUS[status] || STATUS.unverified;
   return <span className={cx('whitespace-nowrap rounded-full px-3 py-1 text-[0.875rem] font-medium', cls)}>{text}</span>;
+}
+
+/**
+ * ตรวจคำขอสิทธิ์ออกเอกสาร e-Tax: แอดมินเปิดดูหลักฐานแล้วติ๊กยืนยันทีละข้อ ปุ่มอนุมัติใช้ได้เมื่อครบทุกข้อเท่านั้น
+ * (API ตรวจซ้ำอีกชั้น) · ไม่อนุมัติ/เพิกถอนต้องระบุเหตุผล
+ */
+function EtaxReview({ u, kycDocs, onDone }) {
+  const toast = useToast();
+  const [checks, setChecks] = useState({ vat: false, approval: false, provider: false });
+  const [note, setNote] = useState('');
+  const [confirm, setConfirm] = useState(null);
+  const st = u.etaxStatus || 'none';
+  const info = u.etax || {};
+  const method = docschema.ETAX_METHODS.find((m) => m.value === info.method);
+  const needsProvider = !!(method && method.needsProvider);
+  const docs = kycDocs.filter((k) => ['vat_pp20', 'etax_approval', 'etax_sp_cert'].includes(k.docType));
+  const allChecked = checks.vat && checks.approval && (!needsProvider || checks.provider);
+  const items = [
+    ['vat', 'ตรวจ ภ.พ.20 แล้ว ผู้ใช้จดทะเบียน VAT จริง ชื่อและเลขผู้เสียภาษีตรงกับบัญชี'],
+    ['approval', 'ตรวจหลักฐานแล้ว ได้รับอนุมัติจากกรมสรรพากรจริง (เลขที่/วันที่ตรงกับหนังสืออนุมัติ หรือคำขอ ก.อ.01)'],
+    needsProvider && ['provider', 'ตรวจแล้ว ผู้ให้บริการผ่านการรับรองมาตรฐานจาก ETDA และได้รับอนุญาตจากกรมสรรพากร (มีชื่อในรายชื่อบนเว็บไซต์ ETDA / rd.go.th)'],
+  ].filter(Boolean);
+
+  function act(kind) {
+    if (kind !== 'approve' && !note.trim()) { toast(kind === 'revoke' ? 'กรุณาระบุเหตุผลที่เพิกถอน' : 'กรุณาระบุเหตุผลที่ไม่อนุมัติ', 'err'); return; }
+    setConfirm({
+      title: { approve: 'อนุมัติสิทธิ์ออกเอกสาร e-Tax?', reject: 'ไม่อนุมัติคำขอ e-Tax?', revoke: 'เพิกถอนสิทธิ์ออกเอกสาร e-Tax?' }[kind],
+      message: kind === 'approve' ? 'ผู้ใช้จะออกใบกำกับภาษีอิเล็กทรอนิกส์และใบรับอิเล็กทรอนิกส์ได้ทันที' : 'ผู้ใช้จะออกเอกสาร e-Tax ไม่ได้ และเห็นเหตุผลที่ระบุไว้',
+      confirmText: { approve: 'อนุมัติสิทธิ์', reject: 'ไม่อนุมัติ', revoke: 'เพิกถอนสิทธิ์' }[kind], danger: kind !== 'approve',
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          await api.post(`/api/admin/users/${Number(u.id)}/etax`, { approve: kind === 'approve', revoke: kind === 'revoke', note: note.trim(), checks });
+          toast(kind === 'approve' ? 'อนุมัติสิทธิ์ e-Tax แล้ว' : 'บันทึกผลแล้ว');
+          setNote('');
+          onDone();
+        } catch (err) { toast(err.message, 'err'); }
+      },
+    });
+  }
+
+  const rows = [
+    ['รูปแบบ', method ? method.label : '-'],
+    ['เลขที่อนุมัติ / ก.อ.01', info.approvalRef || '-'],
+    ['วันที่ได้รับอนุมัติ', info.approvalDate || '-'],
+    needsProvider && ['ผู้ให้บริการ (Service Provider)', info.provider || '-'],
+    needsProvider && ['เลขที่ใบรับรองผู้ให้บริการ', info.providerCertRef || '-'],
+    info.reviewedAt && ['ตรวจล่าสุด', `${info.reviewedBy || '-'} · ${new Date(info.reviewedAt).toLocaleString('th-TH')}`],
+  ].filter(Boolean);
+
+  return (
+    <div className="mb-5 rounded-[18px] p-4 ring-1 ring-line">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-[1.03125rem] font-medium">สิทธิ์ออกเอกสาร e-Tax</h3>
+        <span className={cx('rounded-full px-3 py-1 text-[0.875rem] font-medium', ETAX_PILL[st])}>{docschema.ETAX_STATUS_LABEL[st]}</span>
+      </div>
+      {u.etaxNote && st !== 'approved' && <p className="mb-3 rounded-2xl bg-[#FFF8E8] px-4 py-3 text-[0.9375rem]">หมายเหตุล่าสุด: {u.etaxNote}</p>}
+      {!info.method ? <p className="text-[0.9375rem] text-ink-soft">ผู้ใช้ยังไม่ได้ยื่นขอสิทธิ์ ออกใบกำกับภาษีอิเล็กทรอนิกส์/ใบรับอิเล็กทรอนิกส์ไม่ได้</p> : (
+        <>
+          <dl className="mb-3 divide-y divide-line rounded-2xl bg-tile px-4 text-[0.9375rem]">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex flex-col gap-0.5 py-2 sm:flex-row sm:justify-between sm:gap-4"><dt className="text-ink-soft">{k}</dt><dd className="font-medium sm:text-right">{v}</dd></div>
+            ))}
+          </dl>
+          <div className="mb-3 flex flex-col gap-2">
+            {docs.length ? docs.map((k) => (
+              <div key={k.id} className="flex items-center justify-between gap-3 rounded-2xl p-3 ring-1 ring-line">
+                <span className="min-w-0"><b className="block truncate text-[0.9375rem] font-medium">{k.label}</b><small className="text-[0.84375rem] text-ink-soft">{k.filename || 'ไฟล์'}</small></span>
+                <a className="tf-btn tf-btn-soft !py-2 text-[0.9375rem]" href={`${API_URL}/api/kyc/${Number(k.id)}/file`} target="_blank" rel="noreferrer">เปิดดู</a>
+              </div>
+            )) : <p className="text-[0.9375rem] text-danger">ไม่พบหลักฐานประกอบคำขอ</p>}
+          </div>
+          {st === 'pending' && (
+            <>
+              {u.verifyStatus !== 'verified' && <p className="mb-3 rounded-2xl bg-danger-soft px-4 py-3 text-[0.9375rem] text-danger">ผู้ใช้ยังไม่ผ่านการยืนยันตัวตน อนุมัติสิทธิ์ e-Tax ไม่ได้จนกว่า KYC จะผ่าน</p>}
+              <p className="mb-2 text-[0.9375rem] text-ink-soft">ตรวจหลักฐานแล้วติ๊กยืนยันให้ครบทุกข้อก่อนอนุมัติ</p>
+              <div className="mb-3 flex flex-col gap-2">
+                {items.map(([k, label]) => (
+                  <label key={k} className="tf-choice items-start">
+                    <input type="checkbox" checked={checks[k]} onChange={(e) => setChecks((c) => ({ ...c, [k]: e.target.checked }))} />
+                    <span className="text-[0.9375rem] leading-relaxed">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+          {(st === 'pending' || st === 'approved') && (
+            <>
+              <label htmlFor="etax-note" className="mb-1.5 block text-[0.9375rem] text-ink-soft">หมายเหตุ / เหตุผล (บังคับกรอกเมื่อไม่อนุมัติหรือเพิกถอน)</label>
+              <textarea id="etax-note" rows={2} className="tf-input mb-3" placeholder="เช่น ชื่อในหนังสืออนุมัติไม่ตรงกับชื่อบริษัท / ผู้ให้บริการไม่อยู่ในรายชื่อที่ ETDA รับรอง" value={note} onChange={(e) => setNote(e.target.value)} />
+              <div className="flex flex-wrap gap-2">
+                {st === 'pending' ? (
+                  <>
+                    <Button variant="dark" className="flex-1" onClick={() => act('approve')} disabled={!allChecked || u.verifyStatus !== 'verified'}>อนุมัติสิทธิ์ e-Tax</Button>
+                    <Button variant="ghost" className="!text-danger hover:!border-danger" onClick={() => act('reject')}>ไม่อนุมัติ</Button>
+                  </>
+                ) : (
+                  <Button variant="ghost" className="!text-danger hover:!border-danger" onClick={() => act('revoke')}>เพิกถอนสิทธิ์</Button>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
+      {confirm && <ConfirmDialog {...confirm} onCancel={() => setConfirm(null)} />}
+    </div>
+  );
 }
 
 function Detail({ id, onDecided }) {
@@ -44,7 +153,7 @@ function Detail({ id, onDecided }) {
     ['เลขประจำตัวผู้เสียภาษี', formatTaxId(u.taxId) || '-'],
     jur && ['สำนักงานใหญ่/สาขา', branchText || '-'],
     jur && ['กรรมการผู้มีอำนาจ', `${u.authName || '-'}${u.authPosition ? ` (${u.authPosition})` : ''}`],
-    ['สถานะ VAT', u.vatRegistered ? 'จดทะเบียนแล้ว ออกใบกำกับภาษีได้' : 'ยังไม่จดทะเบียน ออกใบกำกับภาษีไม่ได้'],
+    ['สถานะ VAT (ผู้ใช้ระบุ)', u.vatRegistered ? 'จดทะเบียนแล้ว (ต้องตรวจกับ ภ.พ.20)' : 'ยังไม่จดทะเบียน ออกใบกำกับภาษีไม่ได้'],
     ['ที่อยู่', addressText || '-'],
     ['เบอร์ติดต่อ', u.phone || '-'],
     ['อีเมล', `${u.email}${u.emailVerified ? ' (ยืนยันแล้ว)' : ' (ยังไม่ยืนยัน)'}`],
@@ -97,7 +206,8 @@ function Detail({ id, onDecided }) {
           </div>
         )) : <p className="text-[0.96875rem] text-ink-soft">ผู้ใช้ยังไม่ได้แนบเอกสาร</p>}
       </div>
-      <h3 className="mb-2 text-[1.03125rem] font-medium">ผลการตรวจสอบ</h3>
+      <EtaxReview key={`${u.id}-${u.etaxStatus}`} u={u} kycDocs={kycDocs} onDone={() => { void q.refetch(); onDecided(); }} />
+      <h3 className="mb-2 text-[1.03125rem] font-medium">ผลการตรวจสอบตัวตน (KYC)</h3>
       {u.verifyStatus === 'pending' ? (
         <>
           <label htmlFor="verify-note" className="mb-1.5 block text-[0.9375rem] text-ink-soft">หมายเหตุ / เหตุผล (บังคับกรอกเมื่อไม่อนุมัติ)</label>
@@ -124,14 +234,17 @@ export default function AdminPage() {
   const [params, setParams] = useSearchParams();
   const status = params.get('status') ?? 'pending';
   const openId = params.get('user');
-  const list = useQuery({ queryKey: ['admin', 'users', status], queryFn: () => api.get(`/api/admin/users${status ? `?status=${status}` : ''}`) });
+  // หมวด "คำขอสิทธิ์ e-Tax" กรองตามสถานะ e-Tax (รอตรวจ) แทนสถานะ KYC
+  const listUrl = status === 'etax' ? '/api/admin/users?etax=pending' : `/api/admin/users${status ? `?status=${status}` : ''}`;
+  const list = useQuery({ queryKey: ['admin', 'users', status], queryFn: () => api.get(listUrl) });
+  const etaxCount = useQuery({ queryKey: ['admin', 'users', 'etax-count'], queryFn: () => api.get('/api/admin/users?etax=pending') });
   const pendingCount = useQuery({ queryKey: ['admin', 'users', 'pending'], queryFn: () => api.get('/api/admin/users?status=pending') });
   const items = list.data ? list.data.items : [];
   const setQ = (patch) => setParams((p) => { const n = new URLSearchParams(p); Object.entries(patch).forEach(([k, v]) => (v == null ? n.delete(k) : n.set(k, v))); return n; });
 
   return (
     <>
-      <PageHeader title="ตรวจสอบการยืนยันตัวตน" subtitle="ตรวจเอกสารที่ผู้ใช้ส่งมา แล้วอนุมัติหรือแจ้งเหตุผลที่ไม่อนุมัติ ทุกครั้งที่เปิดดูเอกสารจะถูกบันทึกไว้ตาม PDPA" />
+      <PageHeader title="ตรวจสอบการยืนยันตัวตน" subtitle="ตรวจเอกสารยืนยันตัวตน (KYC) และคำขอสิทธิ์ออกเอกสาร e-Tax แล้วอนุมัติหรือแจ้งเหตุผลที่ไม่อนุมัติ ทุกครั้งที่เปิดดูเอกสารจะถูกบันทึกไว้ตาม PDPA" />
       <p className="mb-4 rounded-[20px] bg-[#FFF8E8] px-4 py-3 text-[0.96875rem] text-[#7A5B00]">
         เอกสารยืนยันตัวตนเป็นข้อมูลส่วนบุคคล เปิดดูเท่าที่จำเป็นต่อการตรวจสอบเท่านั้น ระบบบันทึกผู้เปิดดู เวลา และเอกสารที่เปิดไว้ทุกครั้ง
       </p>
@@ -142,6 +255,9 @@ export default function AdminPage() {
             {label}
             {k === 'pending' && pendingCount.data && pendingCount.data.items.length > 0 && (
               <span className="rounded-full bg-orange px-1.5 text-[0.84375rem] text-white">{pendingCount.data.items.length}</span>
+            )}
+            {k === 'etax' && etaxCount.data && etaxCount.data.items.length > 0 && (
+              <span className="rounded-full bg-orange px-1.5 text-[0.84375rem] text-white">{etaxCount.data.items.length}</span>
             )}
           </button>
         ))}
@@ -158,7 +274,10 @@ export default function AdminPage() {
                   <small className="block truncate text-[0.875rem] text-ink-soft">{ROLE_TEXT[u.role] || u.role} · {u.email}</small>
                   <small className="block text-[0.875rem] text-ink-soft">เลขผู้เสียภาษี {formatTaxId(u.taxId) || '-'} · เอกสาร {u.docCount} ฉบับ</small>
                 </span>
-                <Pill status={u.verifyStatus} />
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <Pill status={u.verifyStatus} />
+                  {u.etaxStatus && u.etaxStatus !== 'none' && <span className={cx('whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.78125rem] font-medium', ETAX_PILL[u.etaxStatus])}>e-Tax: {docschema.ETAX_STATUS_LABEL[u.etaxStatus]}</span>}
+                </span>
               </button>
             )) : <EmptyState compact img="/img/mascot-success.webp" text="ไม่มีรายการในหมวดนี้" />}
         </Card>

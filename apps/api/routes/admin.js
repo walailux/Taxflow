@@ -5,6 +5,7 @@ const { store, profile, readJsonBody, sendJson, publicUser, requireAdmin, logAud
 } = require('../core/context');
 const { profileMeta,
 } = require('../core/docs');
+const DS = require('../lib/docschema.js');
 
 const api = express.Router();
 /* =========================================================
@@ -13,13 +14,16 @@ const api = express.Router();
 api.get('/api/admin/users', requireAdmin(async (req, res) => {
   const status = new URL(req.url, 'http://localhost').searchParams.get('status');
   let list = await store.all('users', (u) => u.role !== 'admin');
+  const etax = new URL(req.url, 'http://localhost').searchParams.get('etax');
   if (status) list = list.filter((u) => (u.verifyStatus || 'unverified') === status);
+  if (etax) list = list.filter((u) => (u.etaxStatus || 'none') === etax);
   const items = (await Promise.all(list.map(async (u) => ({
     id: u.id, email: u.email, role: u.role, entityType: u.entityType,
     displayName: u.displayName, companyName: u.companyName,
     taxId: u.taxId, vatRegistered: !!u.vatRegistered,
     verifyStatus: u.verifyStatus || 'unverified', verifyNote: u.verifyNote || '',
     submittedAt: u.submittedAt || null, createdAt: u.createdAt,
+    etaxStatus: u.etaxStatus || 'none',
     docCount: await store.count('kyc_documents', (k) => k.userId === u.id),
   })))).reverse();
   sendJson(res, 200, { items });
@@ -57,7 +61,8 @@ api.post('/api/admin/users/:id/verify', requireAdmin(async (req, res) => {
     verifiedBy: req.user.displayName,
   });
   // ข้อ: สถานะรายเอกสารใน kyc_documents ค้างเป็น pending ตลอด ไม่เคยอัปเดตตามผลตรวจของแอดมิน
-  for (const doc of await store.all('kyc_documents', (k) => k.userId === u.id)) {
+  // หลักฐาน e-Tax ตรวจแยกที่ /etax ด้านล่าง ไม่เปลี่ยนสถานะตามผล KYC
+  for (const doc of await store.all('kyc_documents', (k) => k.userId === u.id && !String(k.docType).startsWith('etax_'))) {
     await store.update('kyc_documents', doc.id, { status: approve ? 'approved' : 'rejected', reviewedAt: new Date().toISOString(), reviewedBy: req.user.displayName });
   }
   await logAudit(u.id, null, approve ? 'kyc-approve' : 'kyc-reject',
@@ -68,5 +73,51 @@ api.post('/api/admin/users/:id/verify', requireAdmin(async (req, res) => {
   sendJson(res, 200, { user: publicUser(updated) });
 }));
 
+
+/**
+ * ตรวจคำขอสิทธิ์ออกเอกสาร e-Tax: แอดมินต้องยืนยันครบทุกข้อก่อนอนุมัติ
+ * vat = ตรวจแล้วว่าจด VAT จริง (ภ.พ.20 ตรงกับชื่อและเลขผู้เสียภาษี) · approval = หลักฐานอนุมัติจากกรมสรรพากรถูกต้อง
+ * provider = ผู้ให้บริการผ่านการรับรองจาก ETDA/กรมสรรพากรจริง (เฉพาะคำขอแบบ Service Provider)
+ * revoke = เพิกถอนสิทธิ์ที่เคยอนุมัติไว้ (เช่น ผู้ใช้แจ้งยกเลิก VAT หรือหนังสืออนุมัติถูกเพิกถอน)
+ */
+api.post('/api/admin/users/:id/etax', requireAdmin(async (req, res) => {
+  const b = await readJsonBody(req);
+  const u = await store.find('users', req.params.id);
+  if (!u || u.role === 'admin') return sendJson(res, 404, { error: 'ไม่พบผู้ใช้' });
+  const approve = !!b.approve && !b.revoke;
+  const revoke = !!b.revoke;
+  const note = String(b.note || '').slice(0, 500);
+  if (revoke) {
+    if (u.etaxStatus !== 'approved') return sendJson(res, 400, { error: 'ผู้ใช้รายนี้ไม่ได้มีสิทธิ์ออกเอกสาร e-Tax อยู่' });
+    if (!note) return sendJson(res, 400, { error: 'กรุณาระบุเหตุผลที่เพิกถอนสิทธิ์' });
+  } else {
+    if (u.etaxStatus !== 'pending') return sendJson(res, 400, { error: 'ผู้ใช้รายนี้ไม่มีคำขอสิทธิ์ e-Tax ที่รอตรวจสอบ' });
+    if (!approve && !note) return sendJson(res, 400, { error: 'กรุณาระบุเหตุผลที่ไม่อนุมัติ เพื่อให้ผู้ใช้แก้ไขได้ถูกต้อง' });
+    if (approve) {
+      const needsProvider = !!(DS.ETAX_METHODS.find((m) => m.value === (u.etax || {}).method) || {}).needsProvider;
+      const c = b.checks || {};
+      if (u.verifyStatus !== 'verified') return sendJson(res, 400, { error: 'ผู้ใช้ยังไม่ผ่านการยืนยันตัวตน จึงอนุมัติสิทธิ์ e-Tax ไม่ได้' });
+      if (!u.vatRegistered) return sendJson(res, 400, { error: 'ผู้ใช้ไม่ได้ระบุว่าจดทะเบียน VAT จึงอนุมัติสิทธิ์ e-Tax ไม่ได้' });
+      if (!c.vat || !c.approval || (needsProvider && !c.provider)) {
+        return sendJson(res, 400, { error: 'กรุณาตรวจและยืนยันให้ครบทุกข้อก่อนอนุมัติ (จด VAT จริง · ได้รับอนุมัติจากกรมสรรพากรจริง' + (needsProvider ? ' · ผู้ให้บริการผ่านการรับรองจริง)' : ')') });
+      }
+    }
+  }
+  const status = revoke ? 'none' : approve ? 'approved' : 'rejected';
+  const now = new Date().toISOString();
+  const updated = await store.update('users', u.id, {
+    etaxStatus: status, etaxNote: note,
+    etax: { ...(u.etax || {}), reviewedAt: now, reviewedBy: req.user.displayName, checks: approve ? { vat: true, approval: true, provider: !!(b.checks || {}).provider } : null },
+  });
+  for (const doc of await store.all('kyc_documents', (k) => k.userId === u.id && ['etax_approval', 'etax_sp_cert'].includes(k.docType))) {
+    await store.update('kyc_documents', doc.id, { status: approve ? 'approved' : 'rejected', reviewedAt: now, reviewedBy: req.user.displayName });
+  }
+  const text = revoke ? `ผู้ดูแลระบบเพิกถอนสิทธิ์ออกเอกสาร e-Tax: ${note}`
+    : approve ? 'ผู้ดูแลระบบอนุมัติสิทธิ์ออกเอกสาร e-Tax แล้ว ออกใบกำกับภาษีอิเล็กทรอนิกส์และใบรับอิเล็กทรอนิกส์ได้'
+      : `คำขอสิทธิ์ออกเอกสาร e-Tax ไม่ผ่าน: ${note}`;
+  await logAudit(u.id, null, revoke ? 'etax-revoke' : approve ? 'etax-approve' : 'etax-reject', text, req.user.displayName);
+  await notify(u.id, 'kyc', text, null);
+  sendJson(res, 200, { user: publicUser(updated) });
+}));
 
 module.exports = api;

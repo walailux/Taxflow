@@ -66,12 +66,29 @@ const KYC_TYPES = {
     hint: 'จำเป็นเมื่อต้องการออกใบกำกับภาษีแบบเต็มรูป',
     purpose: 'ใช้ยืนยันสถานะผู้ประกอบการจดทะเบียนภาษีมูลค่าเพิ่ม',
   },
+  /* สองรายการล่างใช้กับคำขอสิทธิ์ออก e-Tax เท่านั้น (ไม่อยู่ในชุดยืนยันตัวตนทั่วไป ดู ETAX_DOCS) */
+  etax_approval: {
+    label: 'หลักฐานการอนุมัติจากกรมสรรพากร (ก.อ.01)',
+    hint: 'หนังสือแจ้งผลอนุมัติให้จัดทำ ส่งมอบ และเก็บรักษาใบกำกับภาษีอิเล็กทรอนิกส์และใบรับอิเล็กทรอนิกส์ หรือหลักฐานการยื่นคำขอ ก.อ.01 ที่ได้รับอนุมัติแล้ว',
+    purpose: 'ใช้ยืนยันว่ากิจการได้รับอนุญาตจากกรมสรรพากรให้ออกเอกสาร e-Tax ได้ตามกฎหมาย',
+  },
+  etax_sp_cert: {
+    label: 'หนังสือรับรองผู้ให้บริการ e-Tax Service Provider',
+    hint: 'หนังสือหรือใบรับรองที่แสดงว่าผู้ให้บริการผ่านการตรวจรับรองมาตรฐานความมั่นคงปลอดภัยจาก ETDA และได้รับอนุญาตจากกรมสรรพากร (ตรวจรายชื่อได้ที่เว็บไซต์ ETDA และ rd.go.th)',
+    purpose: 'ใช้ยืนยันว่าผู้ให้บริการนำส่งข้อมูลที่กิจการใช้ ได้รับการรับรองจริง',
+  },
   bank_book: {
     label: 'หน้าสมุดบัญชีธนาคาร',
     hint: 'ชื่อบัญชีต้องตรงกับชื่อผู้ลงทะเบียน กรุณาปิดทับส่วนที่ไม่เกี่ยวข้องก่อนอัปโหลด',
     purpose: 'ใช้ยืนยันบัญชีรับเงินค่าจ้าง และกรณีคืนเงิน (Refund)',
   },
 };
+
+/** เอกสารประกอบคำขอสิทธิ์ออก e-Tax ตามวิธีที่เลือก (ภ.พ.20 ต้องมีเสมอ เพราะต้องจด VAT ก่อน) */
+function etaxRequiredDocs(method) {
+  const m = DS.ETAX_METHODS.find((x) => x.value === method);
+  return ['vat_pp20', 'etax_approval', ...(m && m.needsProvider ? ['etax_sp_cert'] : [])];
+}
 
 /** เอกสารที่ต้องใช้ตามบทบาท/ประเภทผู้เสียภาษี */
 function requiredKyc(user) {
@@ -299,7 +316,8 @@ function canIssue(user, type, opts = {}) {
       error: 'ออกเอกสารไม่ได้ เนื่องจากบัญชีนี้ยังไม่ผ่านการยืนยันตัวตน (KYC) กรุณาส่งเอกสารยืนยันตัวตนที่หน้าโปรไฟล์ และรอผู้ดูแลระบบอนุมัติก่อนจึงจะออกเอกสารได้',
     };
   }
-  if (type === 'ETAX') {
+  // ใบกำกับภาษีอิเล็กทรอนิกส์ / ใบรับอิเล็กทรอนิกส์: ต้องจด VAT และได้รับสิทธิ์ e-Tax (แอดมินตรวจหลักฐานอนุมัติจากกรมสรรพากรแล้ว)
+  if (DS.isEtaxType(type) && user.role !== 'admin') {
     if (!user.vatRegistered) {
       return {
         ok: false,
@@ -307,6 +325,20 @@ function canIssue(user, type, opts = {}) {
           + '(ตามประมวลรัษฎากร มาตรา 86 ผู้ที่ไม่ได้จดทะเบียน VAT ไม่มีสิทธิออกใบกำกับภาษี) '
           + 'หากจดทะเบียนแล้ว กรุณาไปที่หน้าโปรไฟล์เพื่อเปิดสถานะ VAT และแนบ ภ.พ.20 '
           + 'หรือเลือกออก "ใบเสร็จรับเงิน" / "ใบแจ้งหนี้" แทนได้',
+      };
+    }
+    const st = user.etaxStatus || 'none';
+    if (st !== 'approved') {
+      const why = {
+        none: 'บัญชีนี้ยังไม่ได้ยื่นขอสิทธิ์ออกเอกสาร e-Tax',
+        pending: 'คำขอสิทธิ์ออกเอกสาร e-Tax ของคุณอยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ',
+        rejected: `คำขอสิทธิ์ออกเอกสาร e-Tax ไม่ผ่านการตรวจสอบ${user.etaxNote ? ` (${user.etaxNote})` : ''}`,
+      }[st] || 'บัญชีนี้ยังไม่ได้รับสิทธิ์ออกเอกสาร e-Tax';
+      return {
+        ok: false, etax: st,
+        error: `ออกใบกำกับภาษีอิเล็กทรอนิกส์/ใบรับอิเล็กทรอนิกส์ไม่ได้: ${why} `
+          + 'เอกสารสองประเภทนี้ออกได้เฉพาะผู้ประกอบการที่จดทะเบียน VAT และได้รับอนุมัติจากกรมสรรพากรแล้วเท่านั้น '
+          + 'กรุณาส่งหลักฐานที่หน้าโปรไฟล์ หัวข้อ "สิทธิ์ออก e-Tax" แล้วรอผู้ดูแลระบบอนุมัติ',
       };
     }
   }
@@ -334,6 +366,7 @@ function defaults(role) {
     bank: { bankName: '', accountNo: '', accountName: '' },
     logoFile: null, sealFile: null, avatarFile: null,
     verifyStatus: 'unverified', verifyNote: '', verifiedAt: null,
+    etaxStatus: 'none', etaxNote: '', etax: null, // สิทธิ์ออกเอกสาร e-Tax (แยกจาก KYC) ดู routes/kyc.js
     emailVerified: false,
     tokenVersion: 0, // เพิ่มค่านี้เมื่อ logout-all หรือลบบัญชี เพื่อเพิกถอน session เดิมทั้งหมดทันที
   };
@@ -350,7 +383,7 @@ function maskAccountNo(no) {
 
 module.exports = {
   ROLES, ROLE_LABEL, COMPANY_TYPES, PROVINCES, BANKS,
-  KYC_TYPES, requiredKyc, isJuristic,
+  KYC_TYPES, requiredKyc, etaxRequiredDocs, isJuristic,
   normalizeAddress, formatAddress, branchLabel,
   buildPatch, completeness, canIssue, defaults, maskAccountNo,
 };

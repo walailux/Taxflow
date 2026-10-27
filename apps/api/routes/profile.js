@@ -38,6 +38,13 @@ api.put('/api/auth/profile', requireAuth(async (req, res) => {
     extra.verifyNote = 'ข้อมูลสำคัญถูกแก้ไข ระบบส่งกลับไปตรวจสอบอีกครั้งโดยอัตโนมัติ';
   }
 
+  // สิทธิ์ e-Tax ผูกกับเลขผู้เสียภาษี ชื่อ และสถานะ VAT ที่แอดมินตรวจไว้ เปลี่ยนแล้วต้องยื่นตรวจใหม่
+  const etaxCritical = ['taxId', 'companyName', 'vatRegistered', 'entityType'];
+  if (['pending', 'approved'].includes(req.user.etaxStatus)
+    && etaxCritical.some((k) => patch[k] !== undefined && JSON.stringify(patch[k]) !== JSON.stringify(req.user[k]))) {
+    extra.etaxStatus = 'none';
+    extra.etaxNote = 'ข้อมูลผู้ประกอบการ (เลขผู้เสียภาษี/ชื่อ/สถานะ VAT) ถูกแก้ไข สิทธิ์ออกเอกสาร e-Tax ถูกระงับ กรุณายื่นขอใหม่';
+  }
   const u = await store.update('users', req.user.id, { ...patch, ...extra });
   await logAudit(req.user.id, null, 'profile-update', bankChanged ? 'แก้ไขข้อมูลโปรไฟล์ (รวมถึงเปลี่ยนบัญชีธนาคาร ยืนยันด้วย OTP แล้ว)' : 'แก้ไขข้อมูลโปรไฟล์', req.user.displayName);
   sendJson(res, 200, { user: publicUser(u), profile: profileMeta(u) });

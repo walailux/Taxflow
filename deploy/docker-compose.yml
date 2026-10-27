@@ -5,7 +5,7 @@
 # ไฟล์ที่ต้องมีใน ~/taxflow ข้าง ๆ ไฟล์นี้ (แยกจากแอปครุภัณฑ์ใน ~/app)
 #   .env     ความลับของ API (คัดลอกจาก apps/api/.env) + บรรทัด IMAGE_PREFIX=ghcr.io/<github-user>/taxflow
 #   data/    session.key file.key mail.config.json sign/ uploads/  เจ้าของต้องเป็น uid 1000 (ผู้ใช้ node ในคอนเทนเนอร์)
-#   fonts/   Sarabun-*.ttf GoogleSans-*.ttf  ไม่ได้อยู่ใน git และไม่ได้อยู่ใน image จึงวางไว้ที่ VPS
+#   fonts/   Sarabun / GoogleSans / Niramit / K2D / Krub / ChulabhornLikitText (-Regular/-Bold.ttf)  ไม่ได้อยู่ใน git และไม่ได้อยู่ใน image จึงวางไว้ที่ VPS
 # TAG ว่าง = latest ส่วน job deploy ส่ง TAG=sha-xxxxxxx มาเพื่อให้ตรงกับ commit ที่ผ่าน CI
 
 services:

@@ -24,6 +24,14 @@ PDF/A ห้ามใช้ฟอนต์ที่ไม่ฝังลงใ�
 2. กด Get font แล้ว Download all จะได้ไฟล์ zip
 3. แตกไฟล์แล้วคัดลอก `Sarabun-Regular.ttf` กับ `Sarabun-Bold.ttf` มาไว้ในโฟลเดอร์นี้
 
+## ฟอนต์เสริม (เลือกได้ตอนสร้างเอกสาร ไม่มีไฟล์ = ไม่ขึ้นให้เลือก)
+
+| ฟอนต์ | ไฟล์ | ที่มา |
+| --- | --- | --- |
+| Google Sans | `GoogleSans-Regular.ttf` `GoogleSans-Bold.ttf` | Google Fonts |
+| Niramit / K2D / Krub | `Niramit-*.ttf` `K2D-*.ttf` `Krub-*.ttf` (Regular + Bold) | Google Fonts (Cadson Demak, SIL OFL) |
+| จุฬาภรณ์ลิขิต | `ChulabhornLikitText-Regular.ttf` `ChulabhornLikitText-Bold.ttf` | โฟลเดอร์ `app/` ใน zip ของราชวิทยาลัยจุฬาภรณ์ |
+
 ตรวจว่าวางถูกที่ด้วย `npm run pdf:sample` ถ้ายังไม่ครบจะบอกว่าขาดไฟล์ไหน
 
 ## ใช้ฟอนต์อื่นแทนได้ไหม

@@ -29,9 +29,10 @@ function Option({ on, onClick, stack, label, sample, isDefault }) {
   );
 }
 
-export default function AppearanceMenu() {
+/** docFont=false: ซ่อนส่วนฟอนต์เอกสาร PDF (หน้าข้อมูลสาธารณะที่ยังไม่ได้เข้าสู่ระบบ) */
+export default function AppearanceMenu({ docFont = true }) {
   const [a, update] = useAppearance();
-  const docFonts = useDocFonts();
+  const docFonts = useDocFonts(docFont);
   const [open, setOpen] = useState(false);
   const box = useRef(null);
   useEffect(() => {
@@ -106,6 +107,7 @@ export default function AppearanceMenu() {
             </div>
           </div>
 
+          {docFont && (<>
           <b className="mb-1 mt-4 block text-[0.9375rem] font-semibold">ฟอนต์ในเอกสาร (PDF)</b>
           <p className="mb-2 text-[0.84375rem] text-ink-soft">ใช้กับเอกสารที่สร้างใหม่ เปลี่ยนรายฉบับได้ในหน้าสร้างเอกสาร</p>
           <div role="radiogroup" aria-label="ฟอนต์ในเอกสาร" className="flex flex-col gap-1.5">
@@ -113,6 +115,7 @@ export default function AppearanceMenu() {
               <Option key={f.value} on={a.docFont === f.value} onClick={() => update({ docFont: f.value })} stack={f.stack} label={f.label} sample="ใบแจ้งหนี้ เลขที่ INV-2026-00001" isDefault={f.value === DEFAULTS.docFont} />
             ))}
           </div>
+          </>)}
         </div>
       )}
     </div>

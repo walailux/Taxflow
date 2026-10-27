@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* dark: ของ Tailwind ผูกกับโหมดกลางคืนของเว็บ (<html data-theme="dark"> ดู lib/theme.js) แทนค่าของเครื่อง */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* จุฬาภรณ์ลิขิต (ไม่มีใน Google Fonts) โฮสต์เองใน public/fonts ใช้แสดงตัวอย่างฟอนต์เอกสารบนหน้าเว็บ · PDF ใช้ไฟล์ .ttf ฝั่งเซิร์ฟเวอร์ */
+@font-face { font-family: "Chulabhorn Likit"; src: url("/fonts/chulabhornlikittext-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Chulabhorn Likit"; src: url("/fonts/chulabhornlikittext-bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
 /*
  * ชุดสีและตัวอักษรของ TaxFlow ประกาศเป็น theme ของ Tailwind จึงใช้เป็นคลาสได้ เช่น bg-orange, text-ink-soft
  * ใช้ static เพื่อให้ตัวแปร CSS ทุกตัวถูกสร้างเสมอ คลาส tf-* ด้านล่างอ้างถึงตัวแปรเหล่านี้โดยตรง
@@ -54,6 +61,8 @@
   html:not(:has(.ip-body)) { font-size: calc(100% * var(--app-scale, 1)); }
   @media (min-width: 768px) { html:not(:has(.ip-body)) { font-size: calc(93.75% * var(--app-scale, 1)); } }
   @media (min-width: 1024px) { html:not(:has(.ip-body)) { font-size: calc(87.5% * var(--app-scale, 1)); } }
+  /* หน้าข้อมูลสาธารณะ (.ip-body) ออกแบบที่ฐาน 16px ทุกขนาดจอ แต่ยังปรับตามขนาดตัวอักษรที่ผู้ใช้เลือก */
+  html:has(.ip-body) { font-size: calc(100% * var(--app-scale, 1)); }
   body {
     background: var(--color-paper);
     color: var(--color-ink);
@@ -426,3 +435,10 @@ html[data-theme="dark"] .tf-tip-box .tf-tip-muted { color: rgba(28, 26, 25, .6);
 @supports not selector(::-webkit-scrollbar) {
   * { scrollbar-width: thin; scrollbar-color: #D6D3D1 transparent; }
 }
+
+/* ---------- แผงลงลายมือชื่อ (features/docs/SignaturePad.jsx) ---------- */
+.tf-sig-caret { animation: tfSigBlink 1.1s steps(1, end) infinite; }
+@keyframes tfSigBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+.tf-sig-swap { animation: tfSigSwap .16s ease-out both; }
+@keyframes tfSigSwap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tf-sig-caret, .tf-sig-swap { animation: none; } }

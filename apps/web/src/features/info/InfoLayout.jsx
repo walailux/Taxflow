@@ -1,11 +1,13 @@
 /**
  * InfoLayout.jsx โครงหน้าข้อมูลสาธารณะ (ภาพรวมระบบ / คู่มือ / นโยบายความเป็นส่วนตัว / กฎหมาย) ย้ายจาก info.js
- * - เมนูด้านบน (มือถือพับเป็นปุ่ม) แถบความคืบหน้าการอ่าน ปุ่มกลับด้านบน สารบัญที่ไฮไลต์หัวข้อที่กำลังอ่าน
+ * - เมนูด้านบน (มือถือพับเป็นปุ่ม) ปุ่ม Aa (ฟอนต์/ขนาด) และสวิตช์โหมดกลางคืน ใช้ค่าเดียวกับหน้าในระบบ แถบความคืบหน้าการอ่าน ปุ่มกลับด้านบน สารบัญที่ไฮไลต์หัวข้อที่กำลังอ่าน
  * - ส่วนที่มีคลาส .reveal / .ip-flow / .ip-retention / .ip-stats ค่อยๆ ปรากฏเมื่อเลื่อนถึง
  * - Tabs/Tab/Panel, Chips/Chip/Filtered, Count เป็นคอมโพเนนต์ที่หน้าเนื้อหาเรียกใช้
  */
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
+import AppearanceMenu from '../app/AppearanceMenu.jsx';
+import { ThemeToggle } from '../app/TopBar.jsx';
 import './info.css';
 
 const MENU = [
@@ -108,6 +110,11 @@ export function InfoLayout({ title, tabs = {}, children }) {
             <nav className="ip-menu" aria-label="เมนูข้อมูลระบบ">
               {MENU.map(([to, label, end]) => <NavLink key={to} to={to} end={!!end} className={({ isActive }) => (isActive ? 'active' : undefined)}>{label}</NavLink>)}
             </nav>
+            {/* ฟอนต์ ขนาดตัวอักษร และโหมดกลางวัน/กลางคืน ใช้ค่าเดียวกับหน้าในระบบ (เก็บในเครื่อง) */}
+            <div className="ip-tools">
+              <AppearanceMenu docFont={false} />
+              <ThemeToggle />
+            </div>
             <Link className="ip-back" to="/login">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
               <span>กลับเข้าสู่ระบบ</span>

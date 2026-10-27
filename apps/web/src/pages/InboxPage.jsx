@@ -67,6 +67,7 @@ function SignDialog({ req, user, onClose, onSigned }) {
           onUseSaved={(s) => sign(s.image, s.name, false)}
           onDeleteSaved={async (id) => { await docsApi.delSignature(id).catch(() => {}); void qc.invalidateQueries({ queryKey: ['signatures'] }); }}
           onSign={sign}
+          signerName={name}
         />
       </div>
       {otp && (

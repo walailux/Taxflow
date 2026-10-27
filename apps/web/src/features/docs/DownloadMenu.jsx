@@ -12,6 +12,8 @@ import { cx } from '../../components/ui.jsx';
 // ประเภทที่มีไฟล์ XML ตามมาตรฐาน ขมธอ. 3-2560 (ตรงกับ SUPPORTED ใน apps/api/lib/xmlbuild.js)
 const XML_TYPES = ['ETAX_INVOICE', 'ETAX_RECEIPT'];
 const MENU_W = 272;
+// ปุ่มในตารางกว้างเท่ากันทุกแถว (ทั้งปุ่มคู่ PDF + ดาวน์โหลด และปุ่ม PDF เดี่ยวของเอกสารที่คู่ค้าส่งมา) — ตรงกับ COL_REM.dl ใน DocumentsPage
+const MD_W = 'w-[8.25rem]';
 
 function formatsFor(doc) {
   const base = `${API_URL}/api/documents/${Number(doc.id)}`;
@@ -36,7 +38,7 @@ export default function DownloadMenu({ doc, size = 'md' }) {
         onClick={(e) => e.stopPropagation()}
         title="เปิดไฟล์ PDF ที่คู่ค้าส่งมาในแท็บใหม่"
         className={cx('inline-flex items-center justify-center gap-2 rounded-xl bg-orange font-display font-medium text-white shadow-[0_8px_18px_-10px_rgba(232,90,0,0.75)] transition-colors hover:bg-orange-deep',
-          size === 'lg' ? 'h-11 w-full text-[0.96875rem]' : 'h-9 px-3.5 text-[0.90625rem]')}
+          size === 'lg' ? 'h-11 w-full text-[0.96875rem]' : cx('h-9 text-[0.90625rem]', MD_W))}
       >
         <Icon name="file" className="size-[1.0625rem]" />{size === 'lg' ? 'เปิด PDF' : 'PDF'}
       </a>
@@ -85,7 +87,7 @@ function OwnDownloadMenu({ doc, size }) {
   return (
     <div
       role="presentation"
-      className={cx('inline-flex overflow-hidden rounded-xl shadow-[0_8px_18px_-10px_rgba(232,90,0,0.75)] transition-shadow hover:shadow-[0_12px_24px_-10px_rgba(232,90,0,0.8)]', lg && 'w-full')}
+      className={cx('inline-flex overflow-hidden rounded-xl shadow-[0_8px_18px_-10px_rgba(232,90,0,0.75)] transition-shadow hover:shadow-[0_12px_24px_-10px_rgba(232,90,0,0.8)]', lg ? 'w-full' : MD_W)}
       onClick={(e) => e.stopPropagation()}
     >
       <a
@@ -94,7 +96,7 @@ function OwnDownloadMenu({ doc, size }) {
         rel="noreferrer"
         className={cx(
           'inline-flex items-center justify-center gap-2 bg-orange font-display font-medium text-white transition-colors hover:bg-orange-deep active:bg-[#D45200]',
-          lg ? 'h-11 flex-1 text-[0.96875rem]' : 'h-9 pl-3 pr-3.5 text-[0.90625rem]',
+          lg ? 'h-11 flex-1 text-[0.96875rem]' : 'h-9 min-w-0 flex-1 text-[0.90625rem]',
         )}
         title="เปิดไฟล์ PDF ในแท็บใหม่"
       >
@@ -111,7 +113,7 @@ function OwnDownloadMenu({ doc, size }) {
         title="ดาวน์โหลด PDF / Excel / CSV"
         className={cx(
           'inline-flex items-center justify-center gap-1 border-l border-white/30 text-white transition-colors hover:bg-orange-deep',
-          lg ? 'h-11 px-3.5' : 'h-9 w-9',
+          lg ? 'h-11 px-3.5' : 'h-9 w-9 shrink-0',
           pos ? 'bg-orange-deep' : 'bg-orange',
         )}
       >

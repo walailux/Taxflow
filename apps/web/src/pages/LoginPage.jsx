@@ -9,7 +9,8 @@ import { Link, Navigate, useNavigate } from 'react-router';
 import GoogleButton from '../features/auth/GoogleButton.jsx';
 import { authApi } from '../features/auth/authApi.js';
 import { saveOtpSession } from '../features/auth/otpSession.js';
-import { useMe } from '../features/auth/useMe.js';
+import { ME_KEY, useMe } from '../features/auth/useMe.js';
+import { useQueryClient } from '@tanstack/react-query';
 import { liveEmailError, loginErrors, normalizeEmail, otpModeFromLogin } from '../features/auth/validation.js';
 import { Alert, Button, TextField } from '../components/ui.jsx';
 
@@ -20,6 +21,7 @@ const rememberEmail = (e) => { try { localStorage.setItem(LAST_EMAIL_KEY, e); } 
 export default function LoginPage() {
   const navigate = useNavigate();
   const me = useMe();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState(readLastEmail);
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -43,6 +45,12 @@ export default function LoginPage() {
       const addr = normalizeEmail(email);
       const data = await authApi.login(addr, password);
       rememberEmail(addr);
+      // บัญชีทดสอบ (@taxflow.test) เซิร์ฟเวอร์ออก session ให้ทันทีโดยไม่ต้องกรอก OTP
+      if (data.user) {
+        queryClient.setQueryData(ME_KEY, { user: data.user });
+        void navigate('/app', { replace: true });
+        return;
+      }
       saveOtpSession(data, otpModeFromLogin(data));
       void navigate('/verify');
     } catch (err) {

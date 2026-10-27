@@ -3,7 +3,7 @@
  * อัปโหลดแบบลากวาง แสดงตัวอย่างก่อนบันทึก จัดหมวดตามบทบาท และค้นหา
  */
 import Select from '../components/Select.jsx';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
@@ -11,17 +11,17 @@ import { API_URL } from '../lib/env.js';
 import { libCategoryLabel, libraryGroups } from '../features/app/library.js';
 import { readDataUrl } from '../features/docs/docsApi.js';
 import { pdfFirstPage } from '../features/docs/DocPreview.jsx';
-import DownloadMenu from '../features/docs/DownloadMenu.jsx';
-import { DOC_LABEL, STATUS_LABEL, baht, thDate } from '../lib/format.js';
-import { Link } from 'react-router';
+import DocBrowser from '../features/docs/DocBrowser.jsx';
+import DocumentModal from '../features/docs/DocumentModal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useSubmit } from '../lib/useSubmit.js';
 import { useToast } from '../components/Toast.jsx';
 import { Alert, Button, EmptyState, PageHeader, Skeleton, TextField, cx } from '../components/ui.jsx';
 import Icon from '../components/Icon.jsx';
+import FileUploadCard, { useUploadProgress } from '../components/FileUploadCard.jsx';
 
 const OK_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-const MAX = 10 * 1024 * 1024;
+const MAX = 5 * 1024 * 1024; // ตรงกับ LIB_MAX_SIZE ฝั่งเซิร์ฟเวอร์ (เดิมหน้าเว็บบอก 10 MB แต่เซิร์ฟเวอร์รับแค่ 5 MB)
 // ปีของเอกสาร (พ.ศ.) ให้เลือกจากรายการ: ปีหน้า ปีนี้ ย้อนหลังไป 20 ปี
 const YEAR_OPTIONS = (() => {
   const now = new Date().getFullYear() + 543;
@@ -29,7 +29,7 @@ const YEAR_OPTIONS = (() => {
 })();
 
 export default function LibraryPage() {
-  const { role } = useOutletContext();
+  const { role, user } = useOutletContext();
   const toast = useToast();
   const qc = useQueryClient();
   const groups = libraryGroups(role);
@@ -39,19 +39,14 @@ export default function LibraryPage() {
   const [previewState, setPreviewState] = useState('idle'); // idle | loading | done | error
   const [fileUrl, setFileUrl] = useState(''); // blob URL ของไฟล์ที่เลือก ใช้เปิดดูไฟล์เต็มก่อนบันทึก
   useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl); }, [fileUrl]);
-  const [drag, setDrag] = useState(false);
+  // ไฟล์ที่บันทึกเข้าคลังแล้วในรอบนี้ แสดงในการ์ดอัปโหลดเป็นสถานะ "อัปโหลดแล้ว"
+  const [done, setDone] = useState([]);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('');
   const [confirm, setConfirm] = useState(null);
   // แท็บของคลัง: ไฟล์ที่อัปโหลดเอง / เอกสารที่ฉันสร้างในระบบ (เอกสารที่คู่ค้าส่งมาดูได้ที่ "เอกสารทั้งหมด")
   const [tab, setTab] = useState('files');
-  const input = useRef(null);
-  const mine = useQuery({
-    queryKey: ['documents', 'library-mine', q],
-    queryFn: () => api.get(`/api/documents?scope=mine&q=${encodeURIComponent(q)}`),
-    enabled: tab === 'docs',
-  });
-  const myDocs = (mine.data && mine.data.items) || [];
+  const [openId, setOpenId] = useState(null); // เอกสารที่เปิดดูรายละเอียดจากแท็บ "เอกสารที่ฉันสร้าง"
 
   const list = useQuery({
     queryKey: ['library', { q, category: filter }],
@@ -63,7 +58,7 @@ export default function LibraryPage() {
   async function pick(f) {
     if (!f) return;
     if (!OK_TYPES.includes(f.type)) { toast('รองรับเฉพาะ PDF, PNG, JPG, WEBP', 'err'); return; }
-    if (f.size > MAX) { toast('ไฟล์เกิน 10 MB', 'err'); return; }
+    if (f.size > MAX) { toast('ไฟล์เกิน 5 MB', 'err'); return; }
     setFile(f);
     setFileUrl(URL.createObjectURL(f));
     setForm((x) => ({ ...x, title: x.title || f.name.replace(/\.[^.]+$/, '') }));
@@ -82,8 +77,9 @@ export default function LibraryPage() {
     if (!file) { toast('กรุณาเลือกไฟล์ก่อน', 'err'); return; }
     try {
       const dataUrl = await readDataUrl(file);
-      await api.post('/api/library', { ...form, title: form.title.trim(), note: form.note.trim(), filename: file.name, mime: file.type, dataBase64: dataUrl.split(',')[1] });
+      const row = await api.post('/api/library', { ...form, title: form.title.trim(), note: form.note.trim(), filename: file.name, mime: file.type, dataBase64: dataUrl.split(',')[1] });
       toast('บันทึกเข้าคลังเอกสารแล้ว');
+      setDone((list) => [{ id: `lib-${row.id}`, libId: row.id, file, status: 'completed', previewUrl: preview, href: `${API_URL}/api/library/${Number(row.id)}/file` }, ...list].slice(0, 5));
       setFile(null); setPreview(''); setFileUrl(''); setPreviewState('idle');
       setForm({ category: form.category, title: '', year: '', note: '' });
       void qc.invalidateQueries({ queryKey: ['library'] });
@@ -95,11 +91,22 @@ export default function LibraryPage() {
       title: 'ลบจากคลังเอกสาร?', message: 'เอกสารนี้จะถูกลบออกจากคลังถาวร', confirmText: 'ลบ', danger: true,
       onConfirm: async () => {
         setConfirm(null);
-        try { await api.del(`/api/library/${Number(id)}`); toast('ลบแล้ว'); void qc.invalidateQueries({ queryKey: ['library'] }); }
+        try {
+          await api.del(`/api/library/${Number(id)}`); toast('ลบแล้ว');
+          setDone((list) => list.filter((x) => x.libId !== id));
+          void qc.invalidateQueries({ queryKey: ['library'] });
+        }
         catch (err) { toast(err.message, 'err'); }
       },
     });
   }
+
+  const progress = useUploadProgress(busy);
+  const clearFile = () => { setFile(null); setPreview(''); setFileUrl(''); setPreviewState('idle'); };
+  const cardFiles = [
+    ...(file ? [{ id: 'pending', file, status: busy ? 'uploading' : 'ready', progress, previewUrl: preview, href: fileUrl }] : []),
+    ...done,
+  ];
 
   const catSelect = (value, onChange, id, label, withAll) => (
     <div className="mb-4">
@@ -113,50 +120,32 @@ export default function LibraryPage() {
     <div className="flex flex-col gap-5">
       <PageHeader title="คลังเอกสารของฉัน" subtitle="เอกสารที่คุณสร้างในระบบและไฟล์ที่อัปโหลดเอง ไฟล์ทุกไฟล์ถูกเข้ารหัสก่อนจัดเก็บ เปิดดูได้เฉพาะบัญชีของคุณ (เอกสารที่คู่ค้าส่งมาอยู่ใน “เอกสารทั้งหมด”)" />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[360px_1fr]">
-        <section className="tf-fade-up rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6 lg:sticky lg:top-24">
-          <h2 className="mb-4 text-[1.125rem] font-medium">อัปโหลดเอกสาร</h2>
+      <div className="grid items-start gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+        {/* การ์ดอัปโหลด: เลือก/ลากไฟล์ → เห็นไฟล์พร้อมรูปย่อ → กรอกรายละเอียด → บันทึก (ไฟล์ที่บันทึกแล้วในรอบนี้ขึ้นเป็น "อัปโหลดแล้ว") */}
+        <FileUploadCard
+          className="lg:sticky lg:top-24"
+          title="อัปโหลดเอกสาร"
+          subtitle="ไฟล์ถูกเข้ารหัสก่อนจัดเก็บ เปิดดูได้เฉพาะบัญชีของคุณ"
+          hint="PDF, PNG, JPG, WEBP · ไม่เกิน 5 MB"
+          accept=".pdf,image/png,image/jpeg,image/webp"
+          inputLabel="เลือกไฟล์เอกสารเข้าคลัง"
+          files={cardFiles}
+          onFilesChange={(fs) => pick(fs[0])}
+          onFileRemove={(id) => { if (id === 'pending') clearFile(); else remove(done.find((x) => x.id === id).libId); }}
+        >
+          {file && previewState === 'loading' && <p className="mb-3 text-[0.875rem] text-ink-soft">กำลังสร้างรูปย่อ…</p>}
           {catSelect(form.category, set('category'), 'lib-cat', 'หมวดเอกสาร')}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={(e) => { e.preventDefault(); setDrag(false); void pick(e.dataTransfer.files[0]); }}
-            className={cx('rounded-[20px] border-2 border-dashed p-6 text-center transition-colors', drag ? 'border-orange bg-orange-pale' : 'border-line bg-tile')}
-          >
-            <input ref={input} type="file" aria-label="เลือกไฟล์เอกสารเข้าคลัง" accept=".pdf,image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => pick(e.target.files[0])} />
-            <span className="mx-auto mb-2 flex size-11 items-center justify-center rounded-2xl bg-white text-orange"><Icon name="download" className="size-5 rotate-180" /></span>
-            <p className="text-[1rem]">
-              ลากไฟล์มาวาง หรือ <button type="button" className="cursor-pointer font-bold text-orange-deep underline" onClick={() => input.current.click()}>เลือกไฟล์</button>
-            </p>
-            <p className="mt-1 text-[0.84375rem] text-ink-soft">PDF, PNG, JPG, WEBP · ไม่เกิน 10 MB</p>
+          <TextField id="lib-title" label="ชื่อเอกสาร" placeholder="เช่น ภ.พ.20 ปี 2569" value={form.title} onChange={set('title')} />
+          <div className="mb-4">
+            <label htmlFor="lib-year" className="mb-1.5 block text-[0.9375rem] font-medium">ปีของเอกสาร (ถ้ามี)</label>
+            <Select id="lib-year" value={form.year} onChange={set('year')} options={YEAR_OPTIONS} />
+            <p className="mt-1 text-[0.84375rem] text-ink-soft">เช่น ภ.ง.ด.90 ปีภาษี 2568 เลือก พ.ศ. 2568</p>
           </div>
-          {file && (
-            <div className="tf-reveal mt-3 rounded-2xl border border-line p-3">
-              <p className="mb-2 text-[0.875rem] font-semibold text-ink-soft">ตัวอย่างก่อนบันทึก</p>
-              {preview
-                ? <img src={preview} alt={`ตัวอย่าง ${file.name}`} className="tf-sign-paper mx-auto max-h-64 w-auto rounded-lg bg-white ring-1 ring-line" />
-                : <p className="text-[0.90625rem] text-ink-soft">{previewState === 'loading' ? 'กำลังสร้างตัวอย่าง…' : 'แสดงตัวอย่างไม่ได้ กดเปิดดูไฟล์เต็มแทน'}</p>}
-              <p className="mt-2 truncate text-[0.84375rem] text-ink-soft" title={file.name}>{file.name} · {Math.max(1, Math.round(file.size / 1024))} KB</p>
-              <div className="mt-2 flex gap-2">
-                <a href={fileUrl} target="_blank" rel="noreferrer" className="tf-btn tf-btn-soft flex-1 !py-2 text-center text-[0.90625rem]">เปิดดูไฟล์เต็ม</a>
-                <button type="button" onClick={() => { setFile(null); setPreview(''); setFileUrl(''); setPreviewState('idle'); if (input.current) input.current.value = ''; }}
-                  className="tf-btn tf-btn-ghost !py-2 text-[0.90625rem]">เปลี่ยนไฟล์</button>
-              </div>
-            </div>
-          )}
-          <div className="mt-4">
-            <TextField id="lib-title" label="ชื่อเอกสาร" placeholder="เช่น ภ.พ.20 ปี 2569" value={form.title} onChange={set('title')} />
-            <div className="mb-4">
-              <label htmlFor="lib-year" className="mb-1.5 block text-[0.9375rem] font-medium">ปีของเอกสาร (ถ้ามี)</label>
-              <Select id="lib-year" value={form.year} onChange={set('year')} options={YEAR_OPTIONS} />
-              <p className="mt-1 text-[0.84375rem] text-ink-soft">เช่น ภ.ง.ด.90 ปีภาษี 2568 เลือก พ.ศ. 2568</p>
-            </div>
-            <TextField id="lib-note" label="หมายเหตุ" placeholder="เช่น ฉบับจริงเก็บที่สำนักงาน" value={form.note} onChange={set('note')} />
-          </div>
+          <TextField id="lib-note" label="หมายเหตุ" placeholder="เช่น ฉบับจริงเก็บที่สำนักงาน" value={form.note} onChange={set('note')} />
           <Button variant="dark" block onClick={save} loading={busy} disabled={!file}>บันทึกเข้าคลัง</Button>
-        </section>
+        </FileUploadCard>
 
-        <section className="tf-fade-up rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6">
+        <section className="tf-fade-up min-w-0 rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(24,24,27,0.03)] sm:p-6">
           <div role="tablist" aria-label="ประเภทในคลัง" className="mb-4 flex w-fit rounded-full bg-tile p-1">
             {[['files', 'ไฟล์ที่อัปโหลด'], ['docs', 'เอกสารที่ฉันสร้าง']].map(([k, label]) => (
               <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
@@ -165,38 +154,14 @@ export default function LibraryPage() {
               </button>
             ))}
           </div>
-          <div className="grid gap-x-3 sm:grid-cols-2">
-            <TextField id="lib-search" label="ค้นหา" placeholder={tab === 'docs' ? 'เลขที่เอกสาร / คู่ค้า' : 'ชื่อเอกสาร / ชื่อไฟล์'} value={q} onChange={(e) => setQ(e.target.value)} />
-            {tab === 'files' && catSelect(filter, (e) => setFilter(e.target.value), 'lib-filter', 'กรองตามหมวด', true)}
-          </div>
-          {tab === 'docs' && (
-            <>
-              {mine.isLoading && <div className="grid gap-3 sm:grid-cols-2"><Skeleton className="h-36" /><Skeleton className="h-36" /></div>}
-              {!mine.isLoading && !myDocs.length && (
-                <EmptyState compact title="ยังไม่มีเอกสารที่สร้าง" text="เอกสารที่ออกจากบัญชีนี้จะแสดงที่นี่" action={<Link to="/app/create" className="tf-btn tf-btn-dark">สร้างเอกสาร</Link>} />
-              )}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {myDocs.slice(0, 120).map((d) => (
-                  <article key={d.id} className="tf-fade-up flex flex-col rounded-[20px] bg-tile p-4">
-                    <span className="mb-3 flex items-start justify-between gap-2">
-                      <span className="flex size-10 items-center justify-center rounded-xl bg-white text-orange"><Icon name="file" className="size-5" /></span>
-                      <span className="max-w-[70%] truncate rounded-full bg-white px-2.5 py-1 text-[0.84375rem] font-medium text-ink-soft">{STATUS_LABEL[d.status] || d.status}</span>
-                    </span>
-                    <b className="text-[1.03125rem] font-medium">{DOC_LABEL[d.type] || d.type}</b>
-                    <small className="mt-1 flex-1 text-[0.90625rem] leading-relaxed text-ink-soft">
-                      <span className="font-mono">{d.docNo || 'แบบร่าง'}</span> · {thDate(d.issueDate || d.createdAt)}<br />
-                      {d.party || d.payer || d.payee || '-'}{d.total != null ? ` · ${baht(d.total ?? d.base)}` : ''}
-                    </small>
-                    <div className="mt-3 flex gap-2">
-                      <div className="flex-1"><DownloadMenu doc={d} size="lg" /></div>
-                      <Link to={`/app/documents?doc=${Number(d.id)}`} className="tf-btn tf-btn-ghost !py-2 text-[0.9375rem]">รายละเอียด</Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              {myDocs.length > 120 && <p className="mt-3 text-[0.875rem] text-ink-soft">แสดง 120 ฉบับล่าสุด ค้นหาเพื่อดูฉบับอื่น หรือดูทั้งหมดที่ <Link to="/app/documents?source=mine" className="font-medium text-orange-deep underline">เอกสารทั้งหมด</Link></p>}
-            </>
+          {tab === 'files' && (
+            <div className="grid gap-x-3 sm:grid-cols-2">
+              <TextField id="lib-search" label="ค้นหา" placeholder="ชื่อเอกสาร / ชื่อไฟล์" value={q} onChange={(e) => setQ(e.target.value)} />
+              {catSelect(filter, (e) => setFilter(e.target.value), 'lib-filter', 'กรองตามหมวด', true)}
+            </div>
           )}
+          {/* ตัวกรอง ส่งออก และมุมมองเล็ก/กลาง/ใหญ่ ชุดเดียวกับหน้า "เอกสารทั้งหมด" (จำมุมมองแยกจากหน้านั้น) */}
+          {tab === 'docs' && <DocBrowser panel scope="mine" role={role} user={user} viewKey="tf_library_docs_view" onOpenDoc={(d) => setOpenId(d.id)} />}
           {tab === 'files' && (<>
           {list.isError && <Alert>{list.error.message}</Alert>}
           {list.isLoading && <div className="grid gap-3 sm:grid-cols-2"><Skeleton className="h-36" /><Skeleton className="h-36" /></div>}
@@ -225,6 +190,16 @@ export default function LibraryPage() {
           </>)}
         </section>
       </div>
+      {openId && (
+        <DocumentModal
+          key={openId}
+          id={Number(openId)}
+          role={role}
+          onClose={() => setOpenId(null)}
+          onChanged={() => qc.invalidateQueries({ queryKey: ['documents'] })}
+          onOpenDoc={(id) => setOpenId(id)}
+        />
+      )}
       {confirm && <ConfirmDialog {...confirm} onCancel={() => setConfirm(null)} />}
     </div>
   );

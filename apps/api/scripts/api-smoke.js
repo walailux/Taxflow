@@ -241,7 +241,7 @@ async function run() {
   late.loginRes = await late.login.call('POST /api/auth/login', 200, 'POST', '/api/auth/login', { email: 'agency@taxflow.test', password: '123456' });
   late.at = Date.now();
   await agency.call('POST /api/auth/login', 401, 'POST', '/api/auth/login', { email: 'agency@taxflow.test', password: 'ผิด' }, { note: 'รหัสผ่านผิด' });
-  await login(agency, 'agency@taxflow.test');
+  const agencyUser = await login(agency, 'agency@taxflow.test');
   await login(brand, 'brand@taxflow.test');
   const creatorUser = await login(creator, 'creator@taxflow.test');
   await login(admin, 'admin@taxflow.test');
@@ -265,11 +265,25 @@ async function run() {
   await agency.call('GET /api/contacts/export.csv', 200, 'GET', '/api/contacts/export.csv');
   await agency.call('GET /api/search', 200, 'GET', '/api/search?q=ผู้ซื้อ');
 
-  /* ---------- 6) เอกสาร ---------- */
-  const et = await agency.call('POST /api/docs/create', 201, 'POST', '/api/docs/create', {
+  /* ---------- 5.5) สิทธิ์ออกเอกสาร e-Tax: ยังไม่มีสิทธิ์ออกไม่ได้ → แนบหลักฐาน → ยื่นขอ → แอดมินตรวจครบทุกข้อแล้วอนุมัติ ---------- */
+  const ETAX_BODY = {
     type: 'ETAX_INVOICE', docPurpose: 'self', fields: { issueDate: '2026-09-21' }, party: BUYER,
     items: [{ name: 'ค่าผลิตคอนเทนต์', qty: 2, unit: 'ชิ้น', price: 25000 }],
-  }, { note: 'ใบกำกับภาษีอิเล็กทรอนิกส์' });
+  };
+  await agency.call('POST /api/docs/create', 403, 'POST', '/api/docs/create', ETAX_BODY, { note: 'ยังไม่ได้รับสิทธิ์ e-Tax ออกใบกำกับภาษีอิเล็กทรอนิกส์ไม่ได้' });
+  const ETAX_REQ = { method: 'own_cert', approvalRef: 'กอ.01-0105561234567-001', approvalDate: '2026-01-05', declare: true };
+  await agency.call('GET /api/etax/permission', 200, 'GET', '/api/etax/permission?method=own_cert');
+  await agency.call('POST /api/etax/permission', 400, 'POST', '/api/etax/permission', ETAX_REQ, { note: 'ยังไม่แนบหลักฐานจากกรมสรรพากร' });
+  await agency.call('POST /api/kyc', 201, 'POST', '/api/kyc', { docType: 'vat_pp20', ...file(PDF, 'application/pdf', 'pp20.pdf') }, { note: 'ภ.พ.20' });
+  await agency.call('POST /api/kyc', 201, 'POST', '/api/kyc', { docType: 'etax_approval', ...file(PDF, 'application/pdf', 'ka01.pdf') }, { note: 'หลักฐานอนุมัติ ก.อ.01' });
+  await agency.call('POST /api/etax/permission', 400, 'POST', '/api/etax/permission', { ...ETAX_REQ, declare: false }, { note: 'ไม่ได้รับรองความถูกต้อง' });
+  await agency.call('POST /api/etax/permission', 200, 'POST', '/api/etax/permission', ETAX_REQ, { note: 'ยื่นขอสิทธิ์ e-Tax' });
+  await agency.call('POST /api/admin/users/:id/etax', 403, 'POST', `/api/admin/users/${agencyUser.id}/etax`, { approve: true }, { note: 'ไม่ใช่ผู้ดูแลระบบ' });
+  await admin.call('POST /api/admin/users/:id/etax', 400, 'POST', `/api/admin/users/${agencyUser.id}/etax`, { approve: true, checks: { vat: true } }, { note: 'ยังตรวจไม่ครบทุกข้อ' });
+  await admin.call('POST /api/admin/users/:id/etax', 200, 'POST', `/api/admin/users/${agencyUser.id}/etax`, { approve: true, checks: { vat: true, approval: true } }, { note: 'อนุมัติสิทธิ์ e-Tax' });
+
+  /* ---------- 6) เอกสาร ---------- */
+  const et = await agency.call('POST /api/docs/create', 201, 'POST', '/api/docs/create', ETAX_BODY, { note: 'ใบกำกับภาษีอิเล็กทรอนิกส์ (หลังได้สิทธิ์)' });
   const etId = et.json.id;
   await agency.call('POST /api/docs/create', 400, 'POST', '/api/docs/create', { type: 'QUOTATION', party: {}, items: [] }, { note: 'ข้อมูลไม่ครบ' });
   await creator.call('POST /api/docs/create', [400, 403], 'POST', '/api/docs/create', {
