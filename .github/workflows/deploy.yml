@@ -93,9 +93,11 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           TAG: ${{ needs.build-push.outputs.tag }}
+        # บันทึก TAG ลง .env ด้วย: รัน docker compose up เองบนเซิร์ฟเวอร์ภายหลัง (เช่น หลังแก้ .env) จะได้ image รุ่นล่าสุด
+        # ไม่ย้อนกลับไปใช้ TAG เก่าที่ค้างใน .env
         run: |
           ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" \
-            "cd ~/taxflow && export TAG=$TAG && docker compose pull && docker compose up -d --remove-orphans && docker image prune -f"
+            "cd ~/taxflow && (grep -v '^TAG=' .env > .env.tmp; echo 'TAG=$TAG' >> .env.tmp; cat .env.tmp > .env; rm .env.tmp) && export TAG=$TAG && docker compose pull && docker compose up -d --remove-orphans && docker image prune -f"
       - name: เช็ก /api/health ผ่านโดเมนจริง
         env:
           APP_URL: ${{ vars.APP_URL }}
