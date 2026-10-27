@@ -75,5 +75,5 @@ export function navFor(role) {
   ];
 }
 
-/** 4 เมนูหลักบนแถบล่างของมือถือ (ที่เหลืออยู่ในเมนู "เมนู") */
-export const MOBILE_TABS = ['overview', 'create', 'inbox', 'docs'];
+/** 4 เมนูหลักบนแถบล่างของมือถือ (ที่เหลืออยู่ในเมนู "เมนู") · สร้างเอกสาร (+) อยู่ช่องกลางของ 5 ช่อง */
+export const MOBILE_TABS = ['overview', 'inbox', 'create', 'docs'];

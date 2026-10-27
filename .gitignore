@@ -32,3 +32,6 @@ apps/api/assets/fonts/*.ttf
 # คำสั่งส่วนตัวที่มี token ของ SonarQube ห้ามขึ้นที่เก็บโค้ด
 hook.text
 apps/api/data/test-accounts.local.txt
+
+# ภาพตอนสคริปต์แคปหน้า landing ล้มเหลว (ไว้ดูสาเหตุ ไม่ขึ้น git)
+apps/web/public/img/landing/error.png

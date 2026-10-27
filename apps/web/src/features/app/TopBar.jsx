@@ -13,6 +13,7 @@ import { Spinner, cx } from '../../components/ui.jsx';
 import TaxCalcDialog from './TaxCalcDialog.jsx';
 import AppearanceMenu from './AppearanceMenu.jsx';
 import Avatar from '../../components/Avatar.jsx';
+import SunMoonKnob from '../../components/SunMoonKnob.jsx';
 import { ROLE_TAG } from './nav.js';
 import { goView } from './ViewLink.jsx';
 import NotificationBell from './NotificationBell.jsx';
@@ -107,7 +108,8 @@ function GlobalSearch({ role }) {
 }
 
 /**
- * สวิตช์โหมดกลางวัน/กลางคืน: รางมีไอคอนดวงอาทิตย์ (ซ้าย) และดวงจันทร์ (ขวา) ปุ่มกลมเลื่อนไปฝั่งโหมดที่เปิดอยู่
+ * สวิตช์โหมดกลางวัน/กลางคืน: รางมีไอคอนดวงอาทิตย์ (ซ้าย) และดวงจันทร์ (ขวา) ปุ่มกลมท้องฟ้าเลื่อนไปฝั่งโหมดที่เปิดอยู่
+ * มือถือ (ต่ำกว่า 640px) แสดงแค่ปุ่มกลม · สีทั้งหน้าค่อย ๆ จางเปลี่ยน (lib/theme.js + .tf-theme-switching) ไม่แสบตา
  * role="switch" อ่านได้ด้วยโปรแกรมอ่านหน้าจอ · ป้ายคำอธิบายแบบกำหนดเอง (แทน title ของเบราว์เซอร์) ขึ้นตอนชี้/โฟกัส
  */
 export function ThemeToggle() {
@@ -131,15 +133,14 @@ export function ThemeToggle() {
           <Icon name="sun" className={cx('size-[1.0625rem] transition-colors', dark ? 'text-[#6E6863]' : 'text-transparent')} />
           <Icon name="moon" className={cx('size-[1.0625rem] transition-colors', dark ? 'text-transparent' : 'text-[#A8A29E]')} />
         </span>
-        {/* ปุ่มกลมเลื่อน: กลางวัน = ส้ม + ดวงอาทิตย์ · กลางคืน = น้ำเงินเข้ม + ดวงจันทร์ */}
+        {/* ปุ่มกลม = ท้องฟ้ากลางวัน/กลางคืน ดวงอาทิตย์กับดวงจันทร์สลับกันตามแนวโค้ง (SunMoonKnob)
+            จอใหญ่: เลื่อนซ้าย/ขวาบนรางเหมือนเดิม · มือถือ: เหลือแค่วงกลม */}
         <span
           aria-hidden="true"
-          className={cx('absolute left-1 top-1 z-10 flex size-8 items-center sm:size-9 justify-center rounded-full text-white shadow-[0_4px_10px_-4px_rgba(0,0,0,0.45)] transition-[transform,background-color] duration-300 ease-[var(--ease-pop)]',
-            dark ? 'translate-x-0 bg-[#3B4A7A] sm:translate-x-[2.5rem]' : 'translate-x-0 bg-orange')}
+          className={cx('tf-sky-knob absolute left-1 top-1 z-10 isolate size-8 overflow-hidden rounded-full shadow-[0_4px_10px_-4px_rgba(0,0,0,0.45)] ring-1 ring-black/5 transition-transform duration-500 ease-[var(--ease-pop)] sm:size-9',
+            dark ? 'translate-x-0 sm:translate-x-[2.5rem]' : 'translate-x-0')}
         >
-          <span key={theme} className="tf-theme-icon flex">
-            <Icon name={dark ? 'moon' : 'sun'} className={cx('size-[1.125rem]', dark && 'text-[#F2C46B]')} />
-          </span>
+          <SunMoonKnob theme={theme} />
         </span>
       </button>
     </div>

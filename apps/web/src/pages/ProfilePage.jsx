@@ -45,20 +45,20 @@ function StatTile({ icon, label, value, pill, note, foot, accent, onClick }) {
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={cx('tf-fade-up relative flex min-h-[168px] flex-col overflow-hidden rounded-[24px] p-5 text-left transition-all',
+      className={cx('tf-fade-up relative flex min-w-0 flex-col overflow-hidden rounded-[18px] p-3.5 text-left transition-all [container-type:inline-size] sm:rounded-[22px] sm:p-4',
         accent ? 'bg-gradient-to-br from-orange to-[#D9480F] text-white shadow-[0_18px_40px_-22px_rgba(232,90,0,0.85)]' : 'bg-white shadow-[0_1px_2px_rgba(24,24,27,0.03)]',
         onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-24px_rgba(24,24,27,0.45)]')}
     >
       <span className={accent ? 'tf-dots-light' : 'tf-dots'} aria-hidden="true" />
-      <div className="relative flex items-start justify-between gap-2">
-        <span className={cx('flex size-12 items-center justify-center rounded-2xl', accent ? 'bg-white text-orange-deep' : 'bg-tile text-ink')}>
-          <Icon name={icon} className="size-[1.375rem]" />
+      <div className="relative flex items-start justify-between gap-1.5">
+        <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-xl', accent ? 'bg-white text-orange-deep' : 'bg-tile text-ink')}>
+          <Icon name={icon} className="size-[1.125rem]" />
         </span>
-        {pill && <span className={cx('rounded-full px-2.5 py-1 text-[0.78125rem] font-semibold', accent ? 'bg-white/20 text-white' : PILL_TONE[pill.tone])}>{pill.text}</span>}
+        {pill && <span className={cx('min-w-0 truncate rounded-full px-2 py-0.5 text-[0.71875rem] font-semibold', accent ? 'bg-white/20 text-white' : PILL_TONE[pill.tone])}>{pill.text}</span>}
       </div>
-      <p className={cx('relative mt-4 text-[0.875rem]', accent ? 'text-white/85' : 'text-ink-soft')}>{label}</p>
-      <b className="relative font-display text-[1.75rem] font-semibold leading-tight tracking-tight">{value}</b>
-      {note && <small className={cx('relative mt-0.5 text-[0.8125rem] leading-snug', accent ? 'text-white/75' : 'text-ink-soft')}>{note}</small>}
+      <p className={cx('relative mt-3 truncate text-[0.8125rem]', accent ? 'text-white/85' : 'text-ink-soft')}>{label}</p>
+      <b className="relative whitespace-nowrap font-display text-[clamp(1.0625rem,11cqw,1.5rem)] font-semibold leading-tight tracking-tight">{value}</b>
+      {note && <small className={cx('relative mt-0.5 hidden text-[0.78125rem] leading-snug sm:line-clamp-2', accent ? 'text-white/75' : 'text-ink-soft')}>{note}</small>}
       {foot && <div className="relative mt-auto pt-3">{foot}</div>}
     </Tag>
   );
@@ -280,8 +280,8 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* ---------- การ์ดสถิติ 4 ใบ (ใบแรกเป็นการ์ดเด่นพื้นสี) ---------- */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* ---------- การ์ดสถิติ 4 ใบ (ใบแรกเป็นการ์ดเด่นพื้นสี) · มือถือ 2×2 แบบกะทัดรัด จอตั้งแต่ 768px เรียง 4 ช่อง ---------- */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile
           accent
           icon="check"

@@ -730,9 +730,14 @@ export default function CreatePage() {
                 key={p.id}
                 type="button"
                 onClick={() => { setPurpose(p.id); setStep(2); }}
-                className="tf-fade-up group flex cursor-pointer flex-col items-start rounded-[24px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(24,24,27,0.03)] ring-1 ring-transparent transition-all duration-300 hover:-translate-y-1 hover:ring-orange hover:shadow-[0_18px_40px_-22px_rgba(232,90,0,0.45)]"
+                aria-label={`${p.title} ไปขั้นถัดไป`}
+                className="tf-fade-up group relative flex cursor-pointer flex-col items-start rounded-[24px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(24,24,27,0.03)] ring-1 ring-transparent transition-all duration-300 hover:-translate-y-1 hover:ring-orange hover:shadow-[0_18px_40px_-22px_rgba(232,90,0,0.45)]"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
+                {/* ลูกศรมุมขวาบน: บอกว่ากดการ์ดเพื่อไปขั้นถัดไปได้ (ชี้/แตะแล้วเป็นสีส้ม) */}
+                <span aria-hidden="true" className="absolute right-5 top-5 flex size-10 items-center justify-center rounded-full bg-tile text-ink transition-all duration-300 group-hover:translate-x-0.5 group-hover:bg-orange group-hover:text-white group-active:bg-orange group-active:text-white">
+                  <Icon name="arrow" className="size-[1.125rem]" />
+                </span>
                 <span className="mb-5 block text-ink"><PurposeArt id={p.id} /></span>
                 <b className="block text-[1.125rem] font-medium">{p.title}</b>
                 <small className="mt-1.5 block text-[0.96875rem] leading-relaxed text-ink-soft">{p.detail}</small>

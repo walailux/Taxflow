@@ -62,7 +62,7 @@ export default function AuthLayout() {
           )}
         >
           <div className="flex h-full flex-col overflow-y-auto px-6 py-7 sm:px-12 sm:py-9">
-            <Link to="/login" className="mb-8 inline-flex w-fit items-center" aria-label="TaxFlow หน้าแรก">
+            <Link to="/" className="mb-8 inline-flex w-fit items-center" aria-label="TaxFlow หน้าแนะนำระบบ">
               <img src="/img/logo.png" alt="TaxFlow" className="h-9 w-auto" />
             </Link>
             <div key={mode} className="tf-fade-up mx-auto my-auto w-full max-w-[400px]">

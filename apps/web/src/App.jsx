@@ -1,5 +1,6 @@
 /**
  * App.jsx เส้นทางของหน้าเว็บ React
+ * / = หน้าแนะนำระบบ (ยังไม่เข้าสู่ระบบ) หรือเข้าแอป (เข้าสู่ระบบแล้ว)
  * /login /register /verify อยู่ใต้ AuthLayout · /app/* อยู่ใต้ AppLayout (ตรวจการเข้าสู่ระบบและบทบาท)
  */
 import { Suspense, lazy } from 'react';
@@ -15,6 +16,7 @@ import StatusPage from './pages/StatusPage.jsx';
 import GoogleCallbackPage from './pages/GoogleCallbackPage.jsx';
 import { Spinner } from './components/ui.jsx';
 import ApiDownDialog from './components/ApiDownDialog.jsx';
+import { useMe } from './features/auth/useMe.js';
 import TooltipLayer from './components/TooltipLayer.jsx';
 // หน้าในแอปโหลดแยกไฟล์ตามหน้าที่เปิด (Suspense อยู่ใน AppLayout รอบ Outlet แถบเมนูจึงไม่กระพริบ)
 const OverviewPage = lazy(() => import('./pages/OverviewPage.jsx'));
@@ -34,6 +36,7 @@ const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage.jsx'));
 const VerifyPage = lazy(() => import('./pages/VerifyPage.jsx'));
 const InfoOverviewPage = lazy(() => import('./pages/info/InfoOverviewPage.jsx'));
 const KnowledgePage = lazy(() => import('./pages/info/KnowledgePage.jsx'));
+const LandingPage = lazy(() => import('./pages/info/LandingPage.jsx'));
 
 /** ลิงก์ .html เดิม (เช่น QR บนเอกสารที่ออกไปแล้ว /verify.html?token=) ส่งต่อไปหน้า React โดยคง query/hash ไว้ */
 const OLD_PATHS = { '/verify.html': '/verify-doc', '/overview.html': '/overview', '/guide.html': '/guide', '/laws.html': '/guide/laws', '/privacy.html': '/guide/privacy', '/login.html': '/login', '/index.html': '/login' };
@@ -43,6 +46,13 @@ function OldPath({ to }) {
 }
 
 const USERS = ['creator', 'agency', 'corporate'];
+
+/** หน้าแรก (/): เข้าสู่ระบบอยู่แล้วเข้าแอปตามเดิม · ยังไม่เข้าสู่ระบบเห็นหน้าแนะนำระบบ (ตัดสินจาก /api/auth/me เดิม ไม่แตะการยืนยันตัวตน) */
+function Home() {
+  const me = useMe();
+  if (me.isLoading) return <div className="flex min-h-screen items-center justify-center"><Spinner /></div>;
+  return me.data && me.data.user ? <Navigate to="/app" replace /> : <LandingPage />;
+}
 
 /** หน้าที่เปิดได้เฉพาะบางบทบาท บทบาทอื่นกลับไปหน้าแรกของตัวเอง */
 function Only({ roles, children }) {
@@ -57,7 +67,7 @@ export default function App() {
       <TooltipLayer />
       <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Spinner /></div>}>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Home />} />
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

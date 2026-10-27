@@ -106,7 +106,7 @@ export function InfoLayout({ title, tabs = {}, children }) {
         <div className="ip-progress" aria-hidden="true" style={{ width: `${progress}%` }} />
         <header ref={nav} className={['ip-nav', scrolled && 'scrolled', open && 'open'].filter(Boolean).join(' ')}>
           <div className="ip-nav-inner">
-            <Link className="ip-brand" to="/overview" aria-label="TaxFlow หน้าภาพรวมระบบ"><img src="/img/logo.png" alt="TaxFlow" /></Link>
+            <Link className="ip-brand" to="/" aria-label="TaxFlow หน้าแนะนำระบบ"><img src="/img/logo.png" alt="TaxFlow" /></Link>
             <nav className="ip-menu" aria-label="เมนูข้อมูลระบบ">
               {MENU.map(([to, label, end]) => <NavLink key={to} to={to} end={!!end} className={({ isActive }) => (isActive ? 'active' : undefined)}>{label}</NavLink>)}
             </nav>

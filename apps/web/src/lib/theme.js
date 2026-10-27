@@ -20,8 +20,10 @@ export function currentTheme() {
 function apply(theme, animate) {
   const root = document.documentElement;
   if (animate) {
+    // สีทั้งหน้าค่อย ๆ จางเปลี่ยน 0.8 วินาที (ไม่แสบตา) ระยะเวลาตรงกับ .tf-theme-switching ใน theme-dark.css
     root.classList.add('tf-theme-switching');
-    setTimeout(() => root.classList.remove('tf-theme-switching'), 300);
+    clearTimeout(apply.timer);
+    apply.timer = setTimeout(() => root.classList.remove('tf-theme-switching'), 900);
   }
   root.dataset.theme = theme;
   // แถบสีของเบราว์เซอร์บนมือถือให้ตรงกับพื้นหลัง

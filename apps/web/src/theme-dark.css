@@ -153,7 +153,11 @@ html[data-theme="dark"] img { color-scheme: light; }
 @keyframes tf-theme-in { from { transform: rotate(-90deg) scale(.6); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
 .tf-theme-icon { animation: tf-theme-in .35s var(--ease-pop) both; }
 /* เปลี่ยนโหมดแล้วสีค่อย ๆ เปลี่ยน ไม่กระพริบ (เฉพาะช่วงสลับ ดู lib/theme.js) */
-html.tf-theme-switching, html.tf-theme-switching * { transition: background-color .25s ease, color .25s ease, border-color .25s ease !important; }
+/* สลับโหมด: สีพื้น ตัวอักษร เส้นขอบ และไอคอนค่อย ๆ จางเปลี่ยน · ยกเว้นปุ่มท้องฟ้าที่มีแอนิเมชันเลื่อนของตัวเอง */
+html.tf-theme-switching, html.tf-theme-switching *:not(.tf-sky-knob):not(.tf-sky-knob *), html.tf-theme-switching *::before, html.tf-theme-switching *::after {
+  transition-property: background-color, color, border-color, outline-color, fill, stroke, box-shadow !important;
+  transition-duration: .8s !important; transition-timing-function: cubic-bezier(.65, 0, .35, 1) !important; transition-delay: 0s !important;
+}
 @media (prefers-reduced-motion: reduce) { .tf-theme-icon { animation: none; } }
 
 
