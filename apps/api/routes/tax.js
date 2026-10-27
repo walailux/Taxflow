@@ -32,7 +32,7 @@ api.get('/api/pit/from-documents', requireAuth(async (req, res) => {
   const p = new URL(req.url, 'http://localhost').searchParams;
   const qYear = p.get('year') || '';
   const year = /^\d{4}$/.test(qYear) ? qYear : bangkokDateStr().slice(0, 4);
-  const docs = await store.all('documents', (d) => d.userId === req.user.id);
+  const docs = await store.where('documents', { userId: req.user.id });
   sendJson(res, 200, { ...pitSourcesFromDocs(docs, year, p.get('issuedType') || '40(2)'), supportedYears: pit.SUPPORTED_YEARS });
 }));
 

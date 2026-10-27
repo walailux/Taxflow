@@ -289,7 +289,8 @@ function useLevelledSizes(faces, target) {
       if (!cancelled) setSizes(next);
     };
     measure();
-    if (document.fonts) document.fonts.ready.then(() => !cancelled && measure());
+    // ฟอนต์โหลดไม่สำเร็จก็ใช้ขนาดที่วัดจากฟอนต์สำรองไปก่อน
+    if (document.fonts) document.fonts.ready.then(() => !cancelled && measure()).catch(() => {});
     return () => { cancelled = true; };
   }, [faces, target]);
   return sizes;
@@ -372,12 +373,13 @@ function TypeBoard({ value, onChange, face, color, onDark }) {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     let cancelled = false;
-    if (document.fonts) document.fonts.ready.then(() => !cancelled && measure());
+    if (document.fonts) document.fonts.ready.then(() => !cancelled && measure()).catch(() => {});
     return () => { cancelled = true; ro.disconnect(); };
   }, [value, face.family]);
 
   return (
-    <div className={cx('relative cursor-text px-8', BOARD_H)} onClick={() => inputRef.current?.focus()}>
+    // ช่องพิมพ์ (โปร่งใส) คลุมทั้งกระดาน แตะตรงไหนก็พิมพ์ได้ ไม่ต้องใช้ onClick บน div (เข้าถึงด้วยคีย์บอร์ด/โปรแกรมอ่านหน้าจอได้)
+    <div className={cx('relative cursor-text px-8', BOARD_H)}>
       <div className="absolute inset-x-8 bottom-[52px]">
         {/* กล่องสิ้นสุดที่เส้น ชื่อถูกดันลงเท่าหางตัวอักษร ฐานบรรทัดจึงอยู่บนเส้นและหางเลยเส้นแบบลายมือจริง */}
         <div ref={lineRef} style={{ height: BOX }} className="flex items-end justify-center">
@@ -388,8 +390,8 @@ function TypeBoard({ value, onChange, face, color, onDark }) {
         {!value && <p className="pointer-events-none m-0 mt-2 text-center text-[0.875rem] text-neutral-400 dark:text-neutral-500">พิมพ์ชื่อ-นามสกุลของคุณ</p>}
       </div>
       <input ref={inputRef} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        aria-label="พิมพ์ลายเซ็น" maxLength={40} style={{ height: BOX }}
-        className="absolute inset-x-8 bottom-[52px] w-auto bg-transparent text-center text-transparent caret-transparent outline-none" />
+        aria-label="พิมพ์ลายเซ็น" maxLength={40}
+        className="absolute inset-0 size-full cursor-text bg-transparent text-center text-transparent caret-transparent outline-none" />
     </div>
   );
 }
@@ -456,7 +458,7 @@ function UploadBoard({ image, setImage }) {
 
   return (
     <div className={cx('flex items-center justify-center px-6', BOARD_H)}>
-      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="เลือกรูปลายเซ็น" onChange={(e) => take(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="เลือกรูปลายเซ็น" onChange={(e) => { void take(e.target.files?.[0]); }} />
       {image ? (
         <div className="flex w-full flex-col items-center gap-2">
           <img src={image} alt="ลายเซ็นที่อัปโหลด" className={cx('max-h-[118px] max-w-full object-contain', ON_DARK_IMG)} />
@@ -469,7 +471,7 @@ function UploadBoard({ image, setImage }) {
         <button type="button" onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setOver(true); }}
           onDragLeave={() => setOver(false)}
-          onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files?.[0]); }}
+          onDrop={(e) => { e.preventDefault(); setOver(false); void take(e.dataTransfer.files?.[0]); }}
           className={cx('flex h-[156px] w-full flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed transition-colors duration-150',
             over ? 'border-neutral-400 bg-black/[0.04] dark:border-white/30 dark:bg-white/[0.06]' : 'border-neutral-300 hover:bg-black/[0.02] dark:border-white/15 dark:hover:bg-white/[0.03]')}>
           <Lucide name="image-up" className={cx('size-5 text-neutral-400 transition-transform dark:text-neutral-500', over && '-translate-y-0.5')} />

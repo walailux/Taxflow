@@ -93,7 +93,7 @@ api.post('/api/pdpa/delete-account', requireAuth(async (req, res) => {
 
   // ข้อ PDPA: doc_versions เป็น snapshot ของเอกสารภาษีที่ต้องเก็บไว้ตามกฎหมาย (5 ปี) จึงไม่ลบ
   // แต่ชื่อผู้แก้ไข (editor) ที่ฝังไว้ตรงๆ ต้องล้างไม่ให้ระบุตัวตนเจ้าของบัญชีที่ลบไปแล้ว
-  const ownDocs = await store.all('documents', (x) => x.userId === uid);
+  const ownDocs = await store.where('documents', { userId: uid });
   const ownDocIds = new Set(ownDocs.map((d) => d.id));
   // WP5: ไฟล์ PDF/XML ที่ cache ไว้เป็นสำเนาที่สร้างใหม่ได้เสมอจากตัวเอกสาร และมีชื่อ/ที่อยู่ฝังอยู่
   // จึงลบทิ้งตอนลบบัญชี ตัวเอกสารภาษียังเก็บไว้ครบตามมาตรา 87/3 (สร้าง PDF ใหม่ได้เมื่อจำเป็น)

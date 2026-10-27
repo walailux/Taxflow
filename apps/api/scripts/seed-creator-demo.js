@@ -28,8 +28,8 @@ const signerOf = (u) => u.authName || u.displayName;
 function ctxFor(user) {
   return {
     today: bangkokDateStr(),
-    resolveRef: async (types, no) => (await store.all('documents', (d) => d.userId === user.id && types.includes(d.type) && d.docNo === no && d.status !== 'cancelled'))[0] || null,
-    findDocs: (fn) => store.all('documents', (d) => d.userId === user.id && fn(d)),
+    resolveRef: async (types, no) => (await store.allWhere('documents', { userId: user.id }, (d) => types.includes(d.type) && d.docNo === no && d.status !== 'cancelled'))[0] || null,
+    findDocs: (fn) => store.allWhere('documents', { userId: user.id }, (d) => fn(d)),
   };
 }
 

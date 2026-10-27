@@ -21,7 +21,8 @@
 .lp-caption{position:absolute;z-index:4;left:50%;bottom:-6px;translate:-50% 0;margin:0;padding:4px 14px;border-radius:99px;white-space:nowrap;
   background:var(--c-FFFFFF);border:1px solid var(--line);font-size:.84375rem;font-weight:600;color:var(--ink-soft);box-shadow:0 8px 20px -12px rgba(24,24,27,.3);}
 .lp-mascot{position:absolute;height:auto;pointer-events:none;filter:drop-shadow(0 16px 18px rgba(120,50,0,.18));}
-.lp-mascot.m-back-left{z-index:1;width:min(220px,40vw);left:-11%;top:30%;animation:lpFloat 6s ease-in-out infinite;}
+/* ตัวซ้าย (ถือป้าย TAX) ยืนหน้าคอมพิวเตอร์ เห็นหน้าเต็ม */
+.lp-mascot.m-back-left{z-index:3;width:min(220px,40vw);left:-11%;top:30%;animation:lpFloat 6s ease-in-out infinite;}
 .lp-mascot.m-back-right{z-index:1;width:min(150px,28vw);right:-3%;top:-6%;animation:lpFloat 7s ease-in-out -2s infinite;}
 .lp-mascot.m-front{z-index:3;width:min(150px,28vw);right:-9%;bottom:0;animation:lpFloat 5.5s ease-in-out -1s infinite;}
 .lp-ground{position:absolute;z-index:0;left:50%;bottom:14px;width:min(300px,70vw);height:34px;margin-left:calc(min(300px,70vw) / -2);border-radius:50%;
@@ -54,16 +55,19 @@
 
 /* ภาพหมุนวงกลม (CircularShowcase): ภาพซ้าย ข้อความขวา · มือถือเรียงลงมา */
 .ct{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:64px;align-items:center;padding:28px 0 8px;}
-.ct-images{position:relative;width:100%;aspect-ratio:4/3;perspective:1000px;margin-top:40px;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;}
-.ct-images:active{cursor:grabbing;}
+/* กล่องภาพแคบกว่าคอลัมน์ ภาพซ้าย/ขวาที่เอียงออกไปจึงอยู่ในคอลัมน์ของตัวเอง ไม่ทับข้อความด้านข้าง */
+.ct-images{position:relative;width:78%;aspect-ratio:4/3;perspective:1000px;margin:40px auto 0;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;}
+.ct-images:active,.ct-images.dragging{cursor:grabbing;}
 .ct-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:24px;-webkit-user-drag:none;
   background:var(--c-FFFFFF);box-shadow:0 10px 30px rgba(0,0,0,.2);border:1px solid var(--line);}
-.ct-content{display:flex;flex-direction:column;justify-content:space-between;gap:32px;min-height:100%;}
+.ct-content{position:relative;z-index:4;display:flex;flex-direction:column;justify-content:space-between;gap:32px;min-height:100%;}
 .ct-tag{display:inline-block;margin-bottom:10px;padding:4px 12px;border-radius:999px;background:var(--orange-pale);color:var(--orange-deep);font-size:.84375rem;font-weight:600;}
 .ct-title{margin:0 0 14px;font-size:clamp(1.5rem,2.6vw,1.875rem);line-height:1.35;color:var(--ink);}
 .ct-quote{margin:0;font-size:1.125rem;line-height:1.85;color:var(--ink-soft);}
 .ct-word{display:inline-block;animation:ct-word .22s ease-in-out both;}
-.ct-text{animation:ct-in .3s ease-in-out both;}
+/* ข้อความอยู่ในกล่องการ์ดมีขอบและเงาเทา */
+.ct-text{animation:ct-in .3s ease-in-out both;padding:28px 30px;border-radius:24px;background:var(--c-FFFFFF);border:1px solid var(--line);
+  box-shadow:0 22px 48px -30px rgba(24,24,27,.35),0 2px 6px rgba(24,24,27,.04);}
 @keyframes ct-word{from{filter:blur(10px);opacity:0;transform:translateY(5px);}to{filter:blur(0);opacity:1;transform:none;}}
 @keyframes ct-in{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
 .ct-nav{display:flex;align-items:center;justify-content:center;gap:16px;}
@@ -119,7 +123,7 @@
 @media (max-width:920px){
   .lp-hero-grid{grid-template-columns:1fr;gap:28px;}
   .ct{grid-template-columns:1fr;gap:28px;}
-  .ct-images{max-width:560px;margin:44px auto 0;width:100%;}
+  .ct-images{max-width:560px;margin:44px auto 0;width:80%;}
   .ct-content{gap:22px;}
   .lp-devices{margin:0 auto;}
 }

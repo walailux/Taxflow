@@ -14,7 +14,7 @@ const api = express.Router();
 const CAL_FILE_MIME = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const CAL_FILE_MAX = 5 * 1024 * 1024;
 
-async function calOwnDocs(uid) { return store.all('documents', (d) => d.userId === uid); }
+async function calOwnDocs(uid) { return store.where('documents', { userId: uid }); }
 function calRangeFromQuery(req) {
   const url = new URL(req.url, 'http://localhost');
   const today = bangkokDateStr();

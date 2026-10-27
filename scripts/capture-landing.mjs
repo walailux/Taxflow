@@ -173,7 +173,7 @@ async function highlight(page, targets) {
     // หาการ์ดที่ครอบข้อความ: ไล่ขึ้นไปจนเจอกล่องที่มีมุมโค้ง (การ์ดของระบบ)
     const card = (el) => {
       for (let a = el; a && a !== document.body; a = a.parentElement) {
-        const r = parseFloat(getComputedStyle(a).borderTopLeftRadius);
+        const r = Number.parseFloat(getComputedStyle(a).borderTopLeftRadius);
         if (r >= 16 && a.getBoundingClientRect().width > 160) return a;
       }
       return el;

@@ -82,7 +82,7 @@ async function buildDataExport(store, user) {
   };
   const uid = user.id;
   const [documents, contacts, kycDocs, library, signatures, notifications, auditLog, consents, calEvents] = await Promise.all([
-    store.all('documents', (d) => d.userId === uid),
+    store.where('documents', { userId: uid }),
     store.all('contacts', (c) => c.userId === uid),
     store.all('kyc_documents', (k) => k.userId === uid),
     store.all('library', (l) => l.userId === uid),

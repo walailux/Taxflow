@@ -696,6 +696,15 @@ function SignTab({ d, onChanged, setOtp, setConfirm }) {
 }
 
 /* ---------- แท็บส่งเอกสาร ---------- */
+/** ตรวจรูปแบบอีเมลแบบเส้นตรง (ไม่ใช้ regex ที่ย้อนรอยได้ จึงไม่เสี่ยง ReDoS): มี @ ตัวเดียว มีชื่อหน้า @ และโดเมนมีจุดคั่น */
+function looksLikeEmail(s) {
+  if (!s || s.length > 254 || /\s/.test(s)) return false;
+  const at = s.indexOf('@');
+  if (at < 1 || at !== s.lastIndexOf('@')) return false;
+  const dot = s.lastIndexOf('.');
+  return dot > at + 1 && dot < s.length - 1;
+}
+
 function SendTab({ d, onChanged, onGoSign }) {
   const toast = useToast();
   const qc = useQueryClient();
@@ -718,7 +727,7 @@ function SendTab({ d, onChanged, onGoSign }) {
     const e = {};
     const email = form.toEmail.trim();
     if (!email) e.toEmail = 'กรุณากรอกอีเมลบัญชี TaxFlow ของคู่ค้า';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.toEmail = 'รูปแบบอีเมลไม่ถูกต้อง เช่น name@example.com';
+    else if (!looksLikeEmail(email)) e.toEmail = 'รูปแบบอีเมลไม่ถูกต้อง เช่น name@example.com';
     const today = new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10); // วันนี้ตามเวลาไทย
     if (!form.dueDate) e.dueDate = 'กรุณาเลือกวันที่ต้องการให้ตอบกลับ';
     else if (form.dueDate < today) e.dueDate = 'กำหนดตอบกลับต้องไม่ใช่วันที่ผ่านมาแล้ว';

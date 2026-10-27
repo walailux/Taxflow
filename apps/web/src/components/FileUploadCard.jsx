@@ -13,7 +13,7 @@ export function formatFileSize(bytes) {
   const k = 1024;
   const units = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
-  return `${parseFloat((bytes / k ** i).toFixed(i ? 2 : 0))} ${units[i]}`;
+  return `${Number.parseFloat((bytes / k ** i).toFixed(i ? 2 : 0))} ${units[i]}`;
 }
 
 /** ป้ายชนิดไฟล์ 3 ตัวอักษรในกล่องสี่เหลี่ยม (PDF / PNG / JPE ...) */

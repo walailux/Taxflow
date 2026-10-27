@@ -36,9 +36,9 @@ const amountsOf = (d) => ({
 
 /* ---------- มุมมอง: ขนาด (เล็ก/กลาง/ใหญ่ + พรีวิว) และคอลัมน์ที่แสดง จำไว้ในเครื่องนี้ ---------- */
 const VIEW_SIZES = [
-  { key: 'sm', label: 'เล็ก', icon: 'menu', title: 'ตารางแบบกะทัดรัด เห็นได้หลายรายการ' },
-  { key: 'md', label: 'กลาง', icon: 'table', title: 'ตารางปกติ' },
-  { key: 'lg', label: 'ใหญ่', icon: 'grid', title: 'การ์ดพร้อมตัวอย่างเอกสาร' },
+  { key: 'sm', label: 'เล็ก', icon: 'menu', title: 'มุมมองเล็ก: ตารางแบบกะทัดรัด เห็นได้หลายรายการในหน้าเดียว' },
+  { key: 'md', label: 'กลาง', icon: 'table', title: 'มุมมองกลาง: ตารางปกติ แสดงชื่อคู่ค้าใต้ชื่อเอกสาร' },
+  { key: 'lg', label: 'ใหญ่', icon: 'grid', title: 'มุมมองใหญ่: การ์ดพร้อมภาพตัวอย่างเอกสาร' },
 ];
 const COLS = [
   { key: 'base', label: 'ฐาน' },
@@ -110,7 +110,7 @@ function fitColumns(widthPx, cols, W) {
 const COL_CLS = {
   no: 'pl-4 pr-3 text-left',
   doc: 'pr-3 text-left',
-  base: 'px-3 text-right',
+  base: 'px-3 text-center', // ฐานอยู่กึ่งกลางคอลัมน์ (คอลัมน์กว้าง ตัวเลขชิดขวาแล้วดูห่างจากชื่อเอกสาร)
   tax: 'px-3 text-right',
   total: 'px-3 text-right',
   status: 'px-3 text-left',
@@ -187,6 +187,7 @@ function ColumnPicker({ cols, onChange }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        title="เลือกคอลัมน์ที่แสดงในตาราง: ฐาน ภาษี/VAT รวม สถานะ และวันที่"
         className={cx('flex h-11 items-center gap-2 rounded-full px-3.5 text-[0.90625rem] font-medium transition-colors sm:px-4', open ? 'bg-ink text-white' : 'bg-tile text-ink hover:bg-[#EFEBE7]')}
       >
         <Icon name="table" className="size-4" />คอลัมน์
@@ -284,20 +285,19 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
         <DatePicker aria-label="ถึงวันที่" placeholder="ถึงวันที่" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="!h-11 !w-auto min-w-0 flex-1 basis-[7rem] !rounded-full !py-0 sm:flex-none sm:min-w-[10rem]" />
       </div>
 
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-        <p className="pb-2.5 text-[0.90625rem] text-ink-soft">{list.isLoading ? 'กำลังโหลด' : `${items.length} รายการ`}</p>
-        <div className="flex w-full flex-wrap items-end gap-2 sm:w-auto sm:justify-end">
-          {/* ส่งออก: ป้ายอยู่กึ่งกลางเหนือปุ่ม วางแถวเดียวกับปุ่มมุมมอง (แถวชิดด้านล่าง ปุ่มทุกกลุ่มตรงแนว) */}
-          <div className="flex w-full flex-col gap-1 sm:ml-auto sm:w-auto">
-            <span className="text-center text-[0.8125rem] font-medium text-ink-soft" id="export-label">ส่งออกเอกสารทั้งหมด</span>
-            <div className="flex items-center justify-between gap-1 rounded-full bg-tile p-1 sm:justify-start" role="group" aria-labelledby="export-label">
-            <a className={EXPORT_BTN} href={`${API_URL}/api/export/csv?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น CSV">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[0.90625rem] text-ink-soft">{list.isLoading ? 'กำลังโหลด' : `${items.length} รายการ`}</p>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          {/* ส่งออก / มุมมอง / คอลัมน์ แถวเดียวกัน · คำอธิบายแต่ละปุ่มขึ้นเมื่อชี้ (title → TooltipLayer) */}
+          <div className="flex w-full sm:ml-auto sm:w-auto">
+            <div className="flex w-full items-center justify-between gap-1 rounded-full bg-tile p-1 sm:justify-start" role="group" aria-label="ส่งออกเอกสารทั้งหมด">
+            <a className={EXPORT_BTN} href={`${API_URL}/api/export/csv?${exportQs}`} download title="ส่งออกเอกสารทั้งหมดตามตัวกรองที่เลือกเป็นไฟล์ CSV (เปิดใน Excel/Google Sheets ได้)">
               <i className="size-2 rounded-full bg-[#1967D2]" />CSV
             </a>
-            <a className={EXPORT_BTN} href={`${API_URL}/api/export/xls?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น Excel">
+            <a className={EXPORT_BTN} href={`${API_URL}/api/export/xls?${exportQs}`} download title="ส่งออกเอกสารทั้งหมดตามตัวกรองที่เลือกเป็นไฟล์ Excel">
               <i className="size-2 rounded-full bg-[#188038]" />Excel
             </a>
-            <button type="button" className={EXPORT_BTN} onClick={exportZip} disabled={!items.length} title="ส่งออกเอกสารที่แสดงอยู่เป็น PDF/A-3 ในไฟล์ ZIP">
+            <button type="button" className={EXPORT_BTN} onClick={exportZip} disabled={!items.length} title="ส่งออกเอกสารทั้งหมดที่แสดงอยู่เป็น PDF/A-3 รวมในไฟล์ ZIP">
               <Icon name="download" className="size-4 text-orange-deep" />ZIP
             </button>
             </div>

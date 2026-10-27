@@ -13,10 +13,19 @@ const auth = require('../lib/auth');
 const profile = require('../lib/profile');
 const pdpa = require('../lib/pdpa');
 
+/** ตรวจรูปแบบอีเมลแบบเส้นตรง (ไม่ใช้ regex ที่ย้อนรอยได้ จึงไม่เสี่ยง ReDoS): มี @ ตัวเดียว มีชื่อหน้า @ และโดเมนมีจุดคั่น */
+function looksLikeEmail(s) {
+  if (!s || s.length > 254 || /\s/.test(s)) return false;
+  const at = s.indexOf('@');
+  if (at < 1 || at !== s.lastIndexOf('@')) return false;
+  const dot = s.lastIndexOf('.');
+  return dot > at + 1 && dot < s.length - 1;
+}
+
 async function main() {
   const [email, password] = process.argv.slice(2);
   if (!email || !password) throw new Error('วิธีใช้: node scripts/create-admin.js <อีเมล> <รหัสผ่าน>');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('รูปแบบอีเมลไม่ถูกต้อง');
+  if (!looksLikeEmail(email)) throw new Error('รูปแบบอีเมลไม่ถูกต้อง');
   if (password.length < 8) throw new Error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
   await store.ensureReady();
   const key = email.trim().toLowerCase();

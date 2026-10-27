@@ -14,6 +14,7 @@
     "db:setup": "node scripts/db-setup.js",
     "db:migrate": "node scripts/migrate-sqlite-to-pg.js",
     "db:backup": "node scripts/backup-db.js",
+    "db:migrate-supabase": "node scripts/migrate-supabase.js",
     "files:migrate": "node scripts/migrate-files-to-storage.js",
     "env:check": "node scripts/env-check.js",
     "pdf:sample": "node scripts/pdf-sample.js",

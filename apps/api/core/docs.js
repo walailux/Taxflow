@@ -61,7 +61,7 @@ function refResolver(user) {
   return async (types, docNo) => {
     const no = String(docNo || '').trim();
     if (!no) return null;
-    return (await store.all('documents', (d) => d.userId === user.id && types.includes(d.type) && d.docNo === no
+    return (await store.allWhere('documents', { userId: user.id }, (d) => types.includes(d.type) && d.docNo === no
       && !['cancelled'].includes(d.status)))[0] || null;
   };
 }
@@ -70,7 +70,7 @@ function buildCtx(user, selfId = null) {
   return {
     today: bangkokDateStr(), selfId,
     resolveRef: refResolver(user),
-    findDocs: (fn) => store.all('documents', (d) => d.userId === user.id && fn(d)),
+    findDocs: (fn) => store.allWhere('documents', { userId: user.id }, (d) => fn(d)),
   };
 }
 
@@ -277,7 +277,7 @@ async function filteredDocs(req) {
   const url = new URL(req.url, 'http://localhost');
   const p = url.searchParams;
   const type = p.get('type'), status = p.get('status');
-  return (await store.all('documents', (d) => d.userId === req.user.id && (!type || d.type === type) && (!status || d.status === status))).reverse();
+  return (await store.allWhere('documents', { userId: req.user.id }, (d) => (!type || d.type === type) && (!status || d.status === status))).reverse();
 }
 // หัวรายงานที่ผู้ใช้ตั้งค่าเองได้ (ชื่อผู้ประกอบการ เลขผู้เสียภาษี ที่อยู่ สาขา และโลโก้)
 async function exportBrand(user) {

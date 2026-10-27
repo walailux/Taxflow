@@ -207,7 +207,7 @@ api.get('/api/search', requireAuth(async (req, res) => {
   const q = (new URL(req.url, 'http://localhost').searchParams.get('q') || '').trim().toLowerCase();
   if (q.length < 2) return sendJson(res, 200, { query: q, documents: [], contacts: [], library: [] });
 
-  const documents = (await store.all('documents', (d) => d.userId === req.user.id &&
+  const documents = (await store.allWhere('documents', { userId: req.user.id }, (d) =>
     ((d.docNo || '').toLowerCase().includes(q) || JSON.stringify(d).toLowerCase().includes(q))
   )).reverse().slice(0, 20).map((d) => ({
     id: d.id, docNo: d.docNo || 'แบบร่าง', type: d.type, status: d.status,

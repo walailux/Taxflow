@@ -13,6 +13,9 @@
  *
  *   node scripts/seed-test-accounts.js
  *   OWNER_EMAIL=you@example.com node scripts/seed-test-accounts.js
+ *   node scripts/seed-test-accounts.js --bulk 55   เติมเอกสารบัญชีทดสอบ 3 บัญชีให้ครบราว 55 ฉบับต่อบัญชี (ไม่แตะบัญชีอื่น)
+ *     วันที่กระจายตั้งแต่ ม.ค. ถึงเดือนปัจจุบัน (เลขที่เรียงตามวันที่) ยอดเงินและคู่ค้าหลากหลาย สถานะส่วนใหญ่อนุมัติ
+ *     มีรอตรวจสอบ แบบร่าง และยกเลิกปนบ้าง ให้แดชบอร์ดรายเดือน/รายปีและหน้าวิเคราะห์มีข้อมูลจริงให้ดู
  */
 require('./_env');
 const fs = require('fs');
@@ -166,7 +169,107 @@ async function seedDocs(user, wanted) {
   return { made, failed };
 }
 
+/* ---------- เติมเอกสารจำนวนมาก (--bulk N) ---------- */
+const BULK_MARK = 'test-accounts-bulk-v1';
+// ประเภทที่เติมต่อบัญชี (กรองตามสิทธิ์ของบทบาทอีกชั้น) วนตามลำดับนี้
+const BULK_TYPES = {
+  creator: ['QUOTATION', 'INVOICE', 'RECEIPT', 'ETAX_INVOICE', 'ETAX_RECEIPT', 'DELIVERY'],
+  brand: ['PO', 'PAYMENT', 'CONTRACT_INF', 'EWHT', 'ETAX_RECEIPT', 'QUOTATION', 'INVOICE', 'RECEIPT'],
+  agency: ['QUOTATION', 'INVOICE', 'CONTRACT_BRAND', 'ETAX_INVOICE', 'RECEIPT', 'PAYMENT', 'EWHT', 'PND53'],
+};
+const PARTNERS = [
+  PARTNER,
+  { ...PARTNER, name: 'บริษัท สื่อสร้างสรรค์ จำกัด', taxId: taxIdOf('010555900021'), email: 'partner2@taxflow.test', bankAccountName: 'บริษัท สื่อสร้างสรรค์ จำกัด' },
+  { ...PARTNER, name: 'บริษัท ไลฟ์สไตล์ มีเดีย จำกัด', taxId: taxIdOf('010555900033'), email: 'partner3@taxflow.test', bankAccountName: 'บริษัท ไลฟ์สไตล์ มีเดีย จำกัด' },
+];
+const SCALES = [0.6, 0.8, 1, 1.2, 1.5, 2];
+const BASE_DATE = '2026-09-20'; // วันที่ในข้อมูลตัวอย่าง (scripts/pdf-all.js) ใช้เป็นจุดอ้างอิงเลื่อนวันที่
+
+const addDays = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+const daysBetween = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);
+/** เลื่อนทุกค่าที่เป็นวันที่ (YYYY-MM-DD) เท่ากัน ลำดับวันในเอกสารจึงยังถูกต้อง */
+function shiftDates(v, days) {
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return addDays(v, days);
+  if (Array.isArray(v)) return v.map((x) => shiftDates(x, days));
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shiftDates(x, days)]));
+  return v;
+}
+/** คูณยอดเงิน (ราคา/จำนวนเงิน/ค่าจ้าง) ด้วยตัวคูณเดียวกัน ยอดรวมกับงวดจึงยังตรงกัน */
+function scaleMoney(obj, f) {
+  const out = { ...obj };
+  for (const k of ['price', 'amount', 'fee', 'discount']) if (typeof out[k] === 'number') out[k] = Math.round(out[k] * f);
+  if (typeof out.wht === 'number' && typeof out.amount === 'number') out.wht = Math.round(out.amount * (Number(out.rate) || 3)) / 100;
+  return out;
+}
+
+/** เนื้อหาเอกสารฉบับที่ i: ข้อมูลตัวอย่างเดิม + วันที่ คู่ค้า และยอดเงินที่ต่างกัน */
+function bulkBody(type, date, i) {
+  const base = bodyFor(type);
+  const days = daysBetween(BASE_DATE, date);
+  const f = SCALES[i % SCALES.length];
+  const fields = scaleMoney(shiftDates(base.fields, days), f);
+  if (type === 'RECEIPT') fields.invoiceRef = ''; // ไม่ผูกใบแจ้งหนี้ (หลายใบเสร็จอ้างฉบับเดียวกันจะเกินยอด)
+  if (type === 'PND3' || type === 'PND53') { // แบบ ภ.ง.ด. เป็นของเดือนที่ออก (ห้ามซ้ำเดือนเดียวกัน)
+    fields.taxMonth = String(Number(date.slice(5, 7)));
+    fields.taxYearBE = Number(date.slice(0, 4)) + 543;
+  }
+  const party = type === 'CONTRACT_INF' ? base.party : { ...PARTNERS[i % PARTNERS.length] };
+  return { docPurpose: 'self', fields, party, items: shiftDates(base.items, days).map((it) => scaleMoney(it, f)) };
+}
+
+/** สถานะตามลำดับ: ส่วนใหญ่อนุมัติ มีรอตรวจสอบ แบบร่าง และยกเลิกปนบ้าง */
+const bulkStatus = (i) => (i % 13 === 7 ? 'cancelled' : i % 9 === 4 ? 'draft' : i % 6 === 2 ? 'pending' : 'approved');
+
+async function bulkDocs(user, key, target) {
+  const existing = await store.where('documents', { userId: user.id });
+  const need = Math.max(0, target - existing.length);
+  if (!need) return { made: 0, failed: [], total: existing.length };
+  const allowed = DS.rolesFor(user.role);
+  const types = BULK_TYPES[key].filter((t) => allowed.includes(t));
+  // วันที่กระจายเท่า ๆ กันตั้งแต่ 5 ม.ค. ของปีนี้ถึงวันนี้ เรียงจากเก่าไปใหม่ (เลขที่เอกสารจึงเรียงตามวันที่)
+  const today = new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10);
+  const start = `${today.slice(0, 4)}-01-05`;
+  const span = Math.max(1, daysBetween(start, today));
+  const dates = Array.from({ length: need }, (_, i) => addDays(start, Math.round((span * i) / Math.max(1, need - 1))));
+  let made = 0;
+  const failed = [];
+  for (let i = 0; i < need; i++) {
+    let done = false;
+    // ลองประเภทถัดไปถ้าข้อมูลไม่ผ่านการตรวจ (เช่น ภ.ง.ด. ของเดือนนั้นมีแล้ว)
+    for (let t = 0; t < types.length && !done; t++) {
+      const type = types[(i + t) % types.length];
+      const built = await docbuild.build(user, type, bulkBody(type, dates[i], i), buildCtx(user));
+      if (built.errors && built.errors.length) { if (t === types.length - 1) failed.push(`${type} ${dates[i]}: ${built.errors[0]}`); continue; }
+      let doc = await createDoc(user, type, { docPurpose: 'self', issuerRole: user.role, ...built.record, demoSeed: BULK_MARK });
+      const status = bulkStatus(i);
+      if (status !== 'draft') doc = await ensureIssued(doc, user.displayName);
+      await store.update('documents', doc.id, { status, issueDate: dates[i] });
+      made++;
+      done = true;
+    }
+  }
+  return { made, failed, total: existing.length + made };
+}
+
+async function mainBulk(target) {
+  await store.ensureReady();
+  for (const a of ACCOUNTS.filter((x) => x.otpExempt)) {
+    const user = await store.whereOne('users', { email: a.email });
+    if (!user) { console.log(`ข้าม ${a.email}: ยังไม่มีบัญชี (รันสคริปต์แบบไม่ใส่ --bulk ก่อน)`); continue; }
+    const r = await bulkDocs(user, a.key, target);
+    console.log(`${a.email}: เติม ${r.made} ฉบับ · รวม ${r.total} ฉบับ`);
+    for (const f of r.failed.slice(0, 5)) console.log(`  ข้าม ${f}`);
+  }
+}
+
 async function main() {
+  const bulkAt = process.argv.indexOf('--bulk');
+  if (bulkAt !== -1) {
+    const target = Number(process.argv[bulkAt + 1]);
+    if (!(target > 0 && target <= 200)) throw new Error('ใส่จำนวนเอกสารต่อบัญชี 1–200 เช่น --bulk 55');
+    await mainBulk(target);
+    return;
+  }
   await store.ensureReady();
   const password = testPassword();
   const ownerPassword = process.env.OWNER_PASSWORD || '';

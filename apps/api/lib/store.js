@@ -134,6 +134,11 @@ function where(table, criteria = {}) {
     .map((r) => JSON.parse(r.data));
   return rows;
 }
+/** where() แล้วกรองต่อด้วย filterFn (ชื่อเดียวกับ lib/store.pg.js ที่ใช้ลดข้อมูลที่ดึงจาก PostgreSQL) */
+function allWhere(table, criteria, filterFn) {
+  const rows = where(table, criteria);
+  return filterFn ? rows.filter(filterFn) : rows;
+}
 /** เหมือน where() แต่คืนแถวแรกที่พบ หรือ null */
 function whereOne(table, criteria) { return where(table, criteria)[0] || null; }
 function update(table, id, patch) {
@@ -194,7 +199,7 @@ function close() {
 }
 
 module.exports = {
-  insert, all, find, findOne, where, whereOne, update, remove,
+  insert, all, find, findOne, where, whereOne, allWhere, update, remove,
   nextDocNumber, count, ensureReady, transaction, close,
   DB_FILE, UPLOAD_DIR,
 };

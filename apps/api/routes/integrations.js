@@ -106,7 +106,7 @@ function requireApiKey(handler) {
   };
 }
 api.get('/api/v1/documents', requireApiKey(async (req, res) => {
-  const items = (await store.all('documents', (d) => d.userId === req.user.id)).reverse().map(docWebhookPayload);
+  const items = (await store.where('documents', { userId: req.user.id })).reverse().map(docWebhookPayload);
   sendJson(res, 200, { items });
 }));
 api.get('/api/v1/documents/:id', requireApiKey(async (req, res) => {

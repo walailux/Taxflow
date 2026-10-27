@@ -9,7 +9,7 @@ const { DS, isIssuedEffective } = require('./context');
 async function pndCandidates(user, form, month, yearBE) {
   const yCE = Number(yearBE) - 543;
   const inMonth = (iso) => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') && Number(iso.slice(0, 4)) === yCE && Number(iso.slice(5, 7)) === Number(month);
-  const mine = await store.all('documents', (d) => d.userId === user.id && ['EWHT', 'PAYMENT'].includes(d.type) && d.schemaVersion === 2);
+  const mine = await store.allWhere('documents', { userId: user.id }, (d) => ['EWHT', 'PAYMENT'].includes(d.type) && d.schemaVersion === 2);
   const certs = mine.filter((d) => d.type === 'EWHT');
   const linkedPayments = new Set(certs.filter((c) => c.status !== 'cancelled' && c.refDocId).map((c) => c.refDocId));
   const rows = [];

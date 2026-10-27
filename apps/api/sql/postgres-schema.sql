@@ -140,4 +140,30 @@ CREATE INDEX IF NOT EXISTS idx_calendar_overrides_userid ON calendar_overrides (
 -- ดัชนีเสริมสำหรับค้นหาในก้อน JSONB โดยตรง (เผื่อ query ที่ store.pg.js ยังไม่มี SQL เฉพาะให้)
 CREATE INDEX IF NOT EXISTS idx_documents_data_gin ON documents USING GIN (data);
 
+-- ===== ความปลอดภัย (Supabase Security Advisor: "RLS Disabled in Public") =====
+-- แอปเชื่อมต่อด้วยบทบาทเจ้าของตาราง (postgres) ซึ่งไม่ถูก RLS จำกัด จึงทำงานได้ตามเดิม
+-- แต่ API สาธารณะของ Supabase (PostgREST ด้วยบทบาท anon / authenticated) ต้องอ่านเขียนตารางใดไม่ได้เลย
+-- 1) เปิด Row Level Security ทุกตารางใน schema public (ไม่มี policy = ปฏิเสธทุกคำขอจาก anon/authenticated)
+DO $$
+DECLARE t record;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t.tablename);
+  END LOOP;
+END $$;
+-- 2) ถอนสิทธิ์ของ anon / authenticated ทั้งตารางและลำดับเลข รวมถึงตารางที่จะสร้างในอนาคต
+--    (บทบาทสองตัวนี้มีเฉพาะบน Supabase บน PostgreSQL ทั่วไปจึงข้ามไป)
+DO $$
+DECLARE r text;
+BEGIN
+  FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+      EXECUTE format('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM %I', r);
+      EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', r);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM %I', r);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %I', r);
+    END IF;
+  END LOOP;
+END $$;
+
 COMMIT;

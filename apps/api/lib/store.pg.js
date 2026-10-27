@@ -81,6 +81,35 @@ pool.on('error', (err) => console.error('[store.pg] การเชื่อม�
 const als = new AsyncLocalStorage();
 function getClient() { return als.getStore() || pool; }
 
+/**
+ * แคชทั้งตารางในหน่วยความจำของ API (ลดปริมาณข้อมูลที่ดึงจาก Supabase = Egress)
+ * all()/findOne()/count() แบบส่งฟังก์ชันกรองต้องอ่านทั้งตารางแล้วกรองใน JS เดิมดึงทั้งตารางทุกครั้งที่เรียก
+ * (หน้าแดชบอร์ดหนึ่งหน้าเรียกหลายครั้ง จึงดึงข้อมูลซ้ำหลาย MB ต่อการเปิดหน้า) ตอนนี้อ่านจากแคชแทน
+ * - ล้างแคชของตารางทันทีที่ API เขียนตารางนั้น (insert/update/remove/nextDocNumber) และล้างทั้งหมดเมื่อจบ transaction
+ * - หมดอายุเองใน STORE_CACHE_TTL_MS (ค่าเริ่มต้น 10 วินาที) เผื่อสคริปต์อื่นเขียนฐานข้อมูลตรง · ตั้ง 0 = ปิดแคช
+ * - ภายใน transaction ไม่อ่าน/ไม่เก็บแคช (ต้องเห็นข้อมูลที่ยังไม่ commit ของ transaction นั้นเอง)
+ * - ผลลัพธ์ที่คืนเป็นสำเนา (structuredClone) ผู้เรียกแก้ object ได้โดยไม่กระทบแคช
+ * - ถ้ามีการเขียนระหว่างที่กำลังโหลด จะไม่เก็บผลที่โหลดได้ลงแคช (กันข้อมูลเก่าค้าง)
+ */
+const CACHE_TTL_MS = Number(process.env.STORE_CACHE_TTL_MS ?? 10_000);
+const cache = new Map(); // table -> { at, rows }
+const versions = new Map(); // table -> เลขรุ่น เพิ่มทุกครั้งที่เขียน
+function invalidate(table) {
+  cache.delete(table);
+  versions.set(table, (versions.get(table) || 0) + 1);
+}
+async function loadTable(table) {
+  const inTx = !!als.getStore();
+  const useCache = !inTx && CACHE_TTL_MS > 0;
+  const hit = useCache && cache.get(table);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.rows;
+  const version = versions.get(table) || 0;
+  const { rows } = await getClient().query(`SELECT data FROM ${table} ORDER BY id ASC`);
+  const parsed = rows.map((r) => r.data); // node-postgres คืน JSONB เป็น object ที่ parse ให้แล้ว
+  if (useCache && (versions.get(table) || 0) === version) cache.set(table, { at: Date.now(), rows: parsed });
+  return parsed;
+}
+
 const INDEXED = {
   users: ['email'],
   documents: ['userId', 'type'],
@@ -121,17 +150,18 @@ async function insert(table, record) {
       .replace('"createdAt"', 'now() AS "createdAt"'), // now() ใช้เป็นเวลาสร้างจริงของฝั่งฐานข้อมูล
     values
   );
+  invalidate(table);
   const id = Number(rows[0].id);
   const createdAt = rows[0].createdAt.toISOString();
   const row = { id, createdAt, ...record };
   await getClient().query(`UPDATE ${table} SET data = $1 WHERE id = $2`, [JSON.stringify(row), id]);
+  invalidate(table);
   return row;
 }
 
 async function all(table, filterFn) {
-  const { rows } = await getClient().query(`SELECT data FROM ${table} ORDER BY id ASC`);
-  const parsed = rows.map((r) => r.data); // node-postgres คืน JSONB เป็น object ที่ parse ให้แล้ว
-  return filterFn ? parsed.filter(filterFn) : parsed;
+  const rows = await loadTable(table);
+  return (filterFn ? rows.filter(filterFn) : rows).map((r) => structuredClone(r));
 }
 
 async function find(table, id) {
@@ -140,8 +170,8 @@ async function find(table, id) {
 }
 
 async function findOne(table, predicate) {
-  const rows = await all(table);
-  return rows.find(predicate) || null;
+  const row = (await loadTable(table)).find(predicate);
+  return row ? structuredClone(row) : null;
 }
 
 /** เหมือน store.js: where(table, {col: val}) ค้นหาผ่านคอลัมน์ที่มีดัชนีจริงด้วย SQL WHERE */
@@ -156,6 +186,14 @@ async function where(table, criteria = {}) {
   );
   return rows.map((r) => r.data);
 }
+/**
+ * allWhere(table, {col: val}, filterFn) กรองด้วยคอลัมน์ที่มีดัชนีใน SQL ก่อน (เช่น userId) แล้วค่อยกรองที่เหลือใน JS
+ * ใช้แทน all(table, (x) => x.userId === id && ...) ที่ต้องดึงทั้งตาราง ลดข้อมูลที่ดึงจากฐานข้อมูล (Egress) ลงมาก
+ */
+async function allWhere(table, criteria, filterFn) {
+  const rows = await where(table, criteria);
+  return filterFn ? rows.filter(filterFn) : rows;
+}
 async function whereOne(table, criteria) {
   const rows = await where(table, criteria);
   return rows[0] || null;
@@ -169,11 +207,13 @@ async function update(table, id, patch) {
   const setIndexed = cols.map((c, i) => `${q(c)} = $${i + 3}`).join(', ');
   const sql = `UPDATE ${table} SET data = $1${setIndexed ? ', ' + setIndexed : ''} WHERE id = $2`;
   await getClient().query(sql, [JSON.stringify(row), Number(id), ...cols.map((c) => row[c] ?? null)]);
+  invalidate(table);
   return row;
 }
 
 async function remove(table, id) {
   const { rowCount } = await getClient().query(`DELETE FROM ${table} WHERE id = $1`, [Number(id)]);
+  invalidate(table);
   return rowCount > 0;
 }
 
@@ -186,6 +226,7 @@ async function nextDocNumber(userId, prefix, year) {
      RETURNING value`,
     [key]
   );
+  invalidate('counters');
   return Number(rows[0].value);
 }
 
@@ -194,8 +235,7 @@ async function count(table, filterFn) {
     const { rows } = await getClient().query(`SELECT COUNT(*) AS n FROM ${table}`);
     return Number(rows[0].n);
   }
-  const rows = await all(table, filterFn);
-  return rows.length;
+  return (await loadTable(table)).filter(filterFn).length;
 }
 
 /**
@@ -215,13 +255,15 @@ async function transaction(fn) {
     throw err;
   } finally {
     client.release();
+    // ข้อมูลที่เขียนใน transaction (commit หรือ rollback) อาจไม่ตรงกับแคช ล้างทั้งหมดให้โหลดใหม่
+    for (const t of [...cache.keys()]) invalidate(t);
   }
 }
 
 async function close() { await pool.end(); }
 
 module.exports = {
-  insert, all, find, findOne, where, whereOne, update, remove,
+  insert, all, find, findOne, where, whereOne, allWhere, update, remove,
   nextDocNumber, count, ensureReady, transaction, close,
   DB_FILE: null, UPLOAD_DIR,
 };

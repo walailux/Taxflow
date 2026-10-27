@@ -288,7 +288,7 @@ export default function OverviewPage() {
           <p className="mt-1.5 text-[0.90625rem] text-ink-soft">
             {cur ? (creator
               ? `จากเอกสาร ${cur.sourceCount} ฉบับ · ไม่รวมเอกสารยกเลิก`
-              : `จากใบเสร็จ/ใบรับ ${cur.receipts} ฉบับ · ไม่รวมแบบร่างและเอกสารยกเลิก`) : ' '}
+              : `จากใบเสร็จ/ใบรับ และใบแจ้งหนี้ที่ยังไม่ออกใบเสร็จ ${cur.revenueDocs ?? cur.receipts} ฉบับ · ไม่รวมแบบร่างและเอกสารยกเลิก`) : ' '}
           </p>
           {cur && !creator && (
             <dl className="mt-3 grid grid-cols-3 gap-2 text-[0.84375rem]">

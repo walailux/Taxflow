@@ -35,3 +35,5 @@ apps/api/data/test-accounts.local.txt
 
 # ภาพตอนสคริปต์แคปหน้า landing ล้มเหลว (ไว้ดูสาเหตุ ไม่ขึ้น git)
 apps/web/public/img/landing/error.png
+# สำรองแถวที่ลบด้วย scripts/trim-docs.js (มีข้อมูลส่วนบุคคล ไม่ขึ้น git)
+apps/api/data/backups/
