@@ -282,8 +282,8 @@ export default function RegisterPage() {
       <StepBar label="ขั้นตอนการสมัคร" steps={STEPS} current={step} />
       {restored && (
         <div className="tf-reveal mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-orange-pale px-4 py-3 text-[0.9375rem]">
-          <span className="min-w-[200px] flex-1">ดึงข้อมูลที่เคยกรอกไว้ในเครื่องนี้มาให้แล้ว (ยกเว้นรหัสผ่าน ต้องตั้งใหม่ตอนกดสมัคร)</span>
-          <button type="button" onClick={startOver} className="cursor-pointer font-semibold text-orange-deep underline-offset-2 hover:underline">เริ่มกรอกใหม่</button>
+          <span className="min-w-[200px] flex-1">กรอกข้อมูลที่คุณเคยพิมพ์ค้างไว้ในเครื่องนี้ให้แล้ว ตรวจดูแล้วกรอกต่อได้เลย (รหัสผ่านไม่ได้จำไว้ ต้องตั้งใหม่ด้านล่าง)</span>
+          <button type="button" onClick={startOver} className="cursor-pointer font-semibold text-orange-deep underline-offset-2 hover:underline">ล้างแล้วเริ่มใหม่</button>
         </div>
       )}
       <Alert>{formError}</Alert>
@@ -454,16 +454,16 @@ export default function RegisterPage() {
           {text('email', {
             label: 'อีเมล *',
             type: 'email',
-            placeholder: 'you@example.com',
+            placeholder: 'เช่น yourname@gmail.com',
             autoComplete: 'username',
-            hint: 'ระบบส่งรหัส OTP มายืนยันก่อนเปิดใช้งานบัญชี',
+            hint: 'ใช้อีเมลที่คุณเปิดอ่านได้ หลังกดสมัคร ระบบจะส่งรหัสยืนยัน 6 หลักไปที่อีเมลนี้',
             maxLength: 150,
           })}
           <TextField
             id="r-password"
-            label="รหัสผ่าน *"
+            label="ตั้งรหัสผ่านสำหรับ TaxFlow *"
             type="password"
-            placeholder="อย่างน้อย 8 ตัวอักษร มีตัวอักษรและตัวเลข"
+            placeholder="ตั้งรหัสผ่านใหม่ ไม่ใช่รหัสผ่านอีเมล"
             autoComplete="new-password"
             maxLength={128}
             value={form.password}
@@ -485,7 +485,8 @@ export default function RegisterPage() {
             <div className="h-1.5 overflow-hidden rounded-full bg-[#F1EBE5]" aria-hidden="true">
               <div className={cx('h-full transition-all', METER[strength.level])} style={{ width: `${strength.percent}%` }} />
             </div>
-            <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.84375rem]" aria-label="เงื่อนไขรหัสผ่าน">
+            <p className="mt-2 text-[0.84375rem] text-ink-soft">รหัสผ่านต้องมีครบทั้ง 3 ข้อ (ขึ้นเครื่องหมาย ✓ สีเขียวเมื่อครบ)</p>
+            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.84375rem]" aria-label="เงื่อนไขรหัสผ่าน">
               {passwordRules(form.password).map((r) => (
                 <li key={r.label} className={r.ok ? 'font-semibold text-ok' : 'text-ink-soft'}>
                   <span aria-hidden="true">{r.ok ? '✓' : '○'}</span> {r.label}
@@ -498,7 +499,7 @@ export default function RegisterPage() {
             id="r-password2"
             label="ยืนยันรหัสผ่าน *"
             type="password"
-            placeholder="กรอกรหัสผ่านอีกครั้ง"
+            placeholder="พิมพ์รหัสผ่านเดิมซ้ำอีกครั้ง"
             autoComplete="new-password"
             maxLength={128}
             value={form.password2}

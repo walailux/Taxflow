@@ -69,24 +69,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, data TEXT NOT NULL);
 `);
 
-const INDEXED = {
-  users: ['email'],
-  documents: ['userId', 'type'],
-  contacts: ['userId'],
-  attachments: ['userId', 'docId'],
-  doc_versions: ['docId'],
-  audit_log: ['userId', 'docId'],
-  notifications: ['userId'],
-  shares: ['token', 'docId'],
-  library: ['userId', 'category'],
-  signatures: ['userId'],
-  requests: ['docId', 'fromUserId', 'toUserId'],
-  otp_codes: ['userId', 'purpose'],
-  kyc_documents: ['userId', 'docType'],
-  consents: ['userId'],
-  calendar_events: ['userId'],
-  calendar_overrides: ['userId'],
-};
+const { INDEXED } = require('./tables');
 
 // ข้อ: คอลัมน์ที่ระบุไว้ใน INDEXED ไม่เคยถูก CREATE INDEX จริง all()/findOne() จึงสแกนทั้งตาราง
 // แล้วกรองด้วย JavaScript ทุกครั้ง (เช่นทุกการ login ต้องโหลดผู้ใช้ทั้งตารางมาเทียบอีเมลทีละแถว)

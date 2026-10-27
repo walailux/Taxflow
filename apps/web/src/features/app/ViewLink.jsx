@@ -12,5 +12,5 @@ export default function ViewLink({ role, view, query, nav, end, className, child
 
 /** ไปหน้าจอ view ด้วยโค้ด (navigate ของ React Router) */
 export function goView(navigate, role, view, query) {
-  navigate(viewLink(role, view, query).to);
+  void navigate(viewLink(role, view, query).to);
 }

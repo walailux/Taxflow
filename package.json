@@ -30,7 +30,8 @@
     "sign:verify": "npm run sign:verify --workspace @taxflow/api --",
     "test:api": "npm run test:api --workspace @taxflow/api --",
     "build:status": "npm run build:status --workspace @taxflow/web",
-    "capture:landing": "node scripts/capture-landing.mjs"
+    "capture:landing": "node scripts/capture-landing.mjs",
+    "coverage": "node scripts/coverage.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

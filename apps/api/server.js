@@ -36,29 +36,12 @@ api.use((req, res, next) => {
 api.use(corsAndCsrf);
 
 /* ---------- ประกอบเส้นทางทั้งหมด ลำดับตรงกับ server.js เดิมทุกประการ ---------- */
-api.use(require('./routes/meta'));
-api.use(require('./routes/auth'));
-api.use(require('./routes/summary'));
-api.use(require('./routes/tax'));
-api.use(require('./routes/profile'));
-api.use(require('./routes/integrations'));
-api.use(require('./routes/totp'));
-api.use(require('./routes/kyc'));
-api.use(require('./routes/admin'));
-api.use(require('./routes/pdpa'));
-api.use(require('./routes/otp'));
-api.use(require('./routes/contacts'));
-api.use(require('./routes/doccreate'));
-api.use(require('./routes/documents'));
-api.use(require('./routes/docsign'));
-api.use(require('./routes/pnd'));
-api.use(require('./routes/requests'));
-api.use(require('./routes/attachments'));
-api.use(require('./routes/verify'));
-api.use(require('./routes/exportdata'));
-api.use(require('./routes/library'));
-api.use(require('./routes/calendar'));
-api.use(require('./routes/notifications'));
+const ROUTES = [
+  'meta', 'auth', 'summary', 'tax', 'profile', 'integrations', 'totp', 'kyc', 'admin', 'pdpa', 'otp',
+  'contacts', 'doccreate', 'documents', 'docsign', 'pnd', 'requests', 'attachments', 'verify', 'exportdata',
+  'library', 'calendar', 'notifications',
+];
+for (const name of ROUTES) api.use(require(`./routes/${name}`));
 
 /* ---------- หน้าสถานะ (React) เมื่อเปิดพอร์ตนี้ตรง ๆ ----------
  * API ไม่มีหน้าเว็บของตัวเอง หน้าสถานะเป็น React ที่ build แยกไว้ที่ apps/web/dist-status

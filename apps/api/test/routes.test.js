@@ -46,7 +46,7 @@ require.cache.express = { id: 'express', filename: 'express', loaded: true, expo
 const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'routes.expected.json'), 'utf8'));
 const { api } = require('../server.js');
 // เส้นทางของ API คือ /api และทุกเส้นที่ขึ้นต้นด้วย /api/
-const actual = api._routes.filter((r) => / \/api(\/|$)/.test(r)).sort();
+const actual = api._routes.filter((r) => / \/api(\/|$)/.test(r)).sort((a, b) => (a < b ? -1 : Number(a > b)));
 
 test('เส้นทาง API ที่ลงทะเบียนจริงตรงกับรายการอ้างอิงทุกเส้น', () => {
   const missing = expected.filter((r) => !actual.includes(r));

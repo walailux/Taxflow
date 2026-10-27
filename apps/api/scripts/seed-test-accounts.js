@@ -28,18 +28,11 @@ const pdpa = require('../lib/pdpa');
 const DS = require('../lib/docschema.js');
 const { docbuild } = require('../core/context');
 const { createDoc, ensureIssued, buildCtx } = require('../core/docs');
-const SAMPLE = require('./pdf-all');
+const { taxIdOf, PARTNER, bodyFor } = require('./sample-docs');
 
 const MARK = 'test-accounts-v1';
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'piwpiexq01747@gmail.com').trim().toLowerCase();
 const PASSWORD_FILE = path.join(__dirname, '..', 'data', 'test-accounts.local.txt');
-
-/** เลขผู้เสียภาษี 13 หลักที่ check digit ถูกต้อง จาก 12 หลักแรก */
-function taxIdOf(first12) {
-  const d = String(first12).split('').map(Number);
-  const sum = d.reduce((s, n, i) => s + n * (13 - i), 0);
-  return `${first12}${(11 - (sum % 11)) % 10}`;
-}
 
 const ADDR = {
   creator: { no: '88/8', street: 'ลาดพร้าว', subdistrict: 'จอมพล', district: 'จตุจักร', province: 'กรุงเทพมหานคร', postcode: '10900' },
@@ -123,33 +116,6 @@ async function upsertAccount(a, password) {
   });
   await store.insert('consents', { userId: user.id, version: pdpa.CONSENT_VERSION, purposes: pdpa.PURPOSES.map((x) => x.key), action: 'seed', at: now });
   return { user, created: true };
-}
-
-/**
- * คู่ค้าตัวอย่างที่ผ่านการตรวจของระบบ (เลขผู้เสียภาษีหลักตรวจสอบถูกต้อง สาขาตามรูปแบบที่กำหนด)
- * ข้อมูลใน scripts/pdf-all.js ใช้ทำ PDF อย่างเดียว เลขผู้เสียภาษีจึงไม่ผ่านการตรวจตอนสร้างเอกสารจริง
- */
-const PARTNER = {
-  ...SAMPLE.partyInfo,
-  entityType: 'juristic', name: 'บริษัท คู่ค้าตัวอย่าง จำกัด', taxId: taxIdOf('010555900001'), branch: 'สำนักงานใหญ่',
-  email: 'partner@taxflow.test', bankAccountName: 'บริษัท คู่ค้าตัวอย่าง จำกัด',
-};
-const PERSON_ID = taxIdOf('110070900002'); // เลขประจำตัวประชาชนตัวอย่าง (หลักตรวจสอบถูกต้อง)
-const FIELD_FIX = {
-  RECEIPT: { payDate: '2026-09-20' },
-  POA: { grantorIdNo: PARTNER.taxId, granteeCitizenId: PERSON_ID },
-};
-
-/** เนื้อหาเอกสารตัวอย่างของประเภทหนึ่ง (ข้อมูลชุดเดียวกับ scripts/pdf-all.js แก้เลขผู้เสียภาษีให้ถูกต้อง) */
-function bodyFor(type) {
-  let items = SAMPLE.itemsFor(type);
-  // ภ.ง.ด.53 = ผู้รับเงินนิติบุคคล · ภ.ง.ด.3 = ผู้รับเงินบุคคลธรรมดา
-  if (type === 'PND53') items = items.slice(0, 3).map((it, i) => ({ ...it, payeeTaxId: taxIdOf(`01055590010${i}`) }));
-  if (type === 'PND3') {
-    items = items.slice(0, 3).map((it, i) => ({ ...it, payeeName: `นายผู้รับเงิน ตัวอย่างที่ ${i + 1}`, payeeTaxId: taxIdOf(`11007090010${i}`), payeeBranch: '' }));
-  }
-  const party = type === 'CONTRACT_INF' ? { ...PARTNER, entityType: 'individual', name: 'นางสาวตัวอย่าง ผู้สร้างสรรค์', taxId: PERSON_ID, branch: '' } : PARTNER;
-  return { docPurpose: 'self', fields: { ...(SAMPLE.FIELDS[type] || {}), ...(FIELD_FIX[type] || {}) }, party: { ...party }, items };
 }
 
 async function seedDocs(user, wanted) {

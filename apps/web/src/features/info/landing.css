@@ -8,7 +8,6 @@
 .lp-hero h1 em span{white-space:nowrap;}
 .lp-hero .ip-lede b{color:var(--ink);}
 .lp-hero-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:40px;align-items:center;}
-.lp-logo{display:block;height:48px;width:auto;margin-bottom:18px;}
 /* ภาพหลัก: โทรศัพท์อยู่กลาง มาสคอตสองตัวอยู่ด้านหลัง (z-index ต่ำกว่า) อีกตัวยืนด้านหน้า · เงาวงรีใต้โทรศัพท์ */
 .lp-hero-art{position:relative;display:flex;justify-content:center;padding:24px 0 36px;isolation:isolate;}
 /* คอมพิวเตอร์อยู่หลัง (ใหญ่กว่า) โทรศัพท์ซ้อนมุมขวาล่างด้านหน้า */
@@ -133,7 +132,6 @@
   .ct-image{border-radius:16px;}
   .ct-title{font-size:1.375rem;}
   .ct-quote{font-size:1rem;}
-  .lp-logo{display:none;}
   .lp-steps-head{flex-direction:column;align-items:stretch;gap:16px;}
   .lp-step,.lp-steps.desktop .lp-step,.lp-steps.desktop .lp-step:nth-child(even){grid-template-columns:1fr;gap:20px;padding:24px 18px 26px;border-radius:24px;}
   .lp-steps.desktop .lp-laptop{width:92%;}
@@ -144,7 +142,6 @@
   .lp-caption{font-size:.78125rem;}
   .lp-step.reveal,.lp-step.reveal:nth-child(even){transform:translateY(28px);}
   .lp-step.reveal.in{transform:none;}
-  .lp-logo{height:40px;margin:0 auto 14px;}
   .lp-hero .reveal:first-child{text-align:center;}
   .lp-hero .ip-hero-actions{justify-content:center;}
   .lp-step:nth-child(even) .lp-step-text{order:0;}

@@ -82,7 +82,7 @@ export default function IntegrationsBox() {
           <b className="mb-2 block text-[0.96875rem]">คัดลอกรหัสนี้เก็บไว้ทันที ระบบจะไม่แสดงให้เห็นอีก</b>
           <div className="flex gap-2">
             <input readOnly value={newKey} onFocus={(e) => e.target.select()} className="tf-input flex-1 font-mono text-[0.90625rem]" aria-label="API key" />
-            <Button variant="ghost" onClick={() => navigator.clipboard.writeText(newKey).then(() => toast('คัดลอกแล้ว'))}>คัดลอก</Button>
+            <Button variant="ghost" onClick={() => navigator.clipboard.writeText(newKey).then(() => toast('คัดลอกแล้ว'), () => toast('คัดลอกไม่สำเร็จ เลือกข้อความแล้วคัดลอกเองได้', 'err'))}>คัดลอก</Button>
           </div>
         </div>
       ) : (

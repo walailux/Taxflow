@@ -110,7 +110,7 @@ function Tile({ label, icon, value, format, dlt, unit, accent, loading, delay })
   return (
     <div
       className={cx(
-        'tf-fade-up flex aspect-square min-w-0 flex-col xl:aspect-auto justify-between rounded-[18px] p-4 transition-transform duration-300 [container-type:inline-size] hover:-translate-y-0.5',
+        'tf-fade-up flex aspect-square min-w-0 flex-col @min-[66rem]:aspect-auto justify-between rounded-[18px] p-4 transition-transform duration-300 [container-type:inline-size] hover:-translate-y-0.5',
         accent ? 'bg-[linear-gradient(160deg,#FF8A4C,#FF6A00_60%,#EF5A12)] text-white shadow-[0_16px_34px_-18px_rgba(239,90,18,0.75)]' : 'bg-tile',
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -268,15 +268,23 @@ export default function OverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_425px] 2xl:grid-cols-[minmax(0,1fr)_425px_minmax(0,1fr)]">
-        {/* รายได้รวมของช่วงที่เลือก (รายเดือน/รายปี) + กำหนดยื่นภาษี */}
-        <Panel>
+      {/* แบ่งคอลัมน์ตามพื้นที่จริงของหน้า (container query หน่วย rem จึงคิดรวมขนาดตัวอักษรที่ผู้ใช้ตั้งแล้ว)
+          กว้างพอ (66rem): การ์ดรายได้ | กล่องตัวเลขจัตุรัส แล้วกราฟเต็มแถวถัดไป · แคบกว่านั้นเรียงลงมาทีละการ์ด
+          ครีเอเตอร์ + กว้างมาก (78rem): การ์ดรายได้ | กล่องตัวเลขจัตุรัส | กราฟ ในแถวเดียว สูงเท่ากล่องจัตุรัสทั้งแถว
+          (บัญชีธุรกิจมีแถวยอดเรียกเก็บ/ค่าใช้จ่ายเพิ่ม การ์ดรายได้ในสามคอลัมน์จะสูงเกินกล่องจัตุรัส จึงใช้สองคอลัมน์) */}
+      <div className="@container">
+      <div className={cx('grid grid-cols-1 gap-5 @min-[66rem]:grid-cols-[minmax(0,1fr)_30.375rem]', creator && '@min-[78rem]:grid-cols-[minmax(0,1.15fr)_30.375rem_minmax(0,0.85fr)]')}>
+        {/* รายได้รวมของช่วงที่เลือก (รายเดือน/รายปี) + กำหนดยื่นภาษี
+            แบ่งคอลัมน์แล้ว: h-0 + min-h-full = ไม่กำหนดความสูงของแถวเอง แต่ยืดเท่ากล่องตัวเลขจัตุรัสข้าง ๆ พอดี
+            เนื้อหาเกินเมื่อไร รายการกำหนดยื่นภาษีด้านล่างเลื่อนดูในกล่องแทน */}
+        <Panel className="flex flex-col @min-[66rem]:h-0 @min-[66rem]:min-h-full">
           {/* หัวข้อการ์ด: ไอคอนในกรอบส้มอ่อน + ตัวหนาใหญ่ · ตัวเลือกช่วงเวลาอยู่ใต้หัวข้อ (จอแคบขึ้นบรรทัดใหม่เอง) */}
-          <span className="flex items-center gap-2.5">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-pale text-orange-deep"><Icon name="wallet" className="size-[1.125rem]" /></span>
-            <h2 className="text-[1.1875rem] font-semibold leading-tight sm:text-[1.3125rem]">รายได้รวม</h2>
-          </span>
-          <div className="mt-3">
+          {/* ตัวเลือกช่วงเวลาอยู่บรรทัดเดียวกับหัวข้อ (การ์ดเตี้ยลงพอให้สูงเท่ากล่องจัตุรัส) การ์ดแคบจึงขึ้นบรรทัดใหม่เอง */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
+            <span className="flex items-center gap-2.5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-pale text-orange-deep"><Icon name="wallet" className="size-[1.125rem]" /></span>
+              <h2 className="text-[1.1875rem] font-semibold leading-tight sm:text-[1.3125rem]">รายได้รวม</h2>
+            </span>
             {today ? <PeriodPicker period={period} keyValue={shownKey} nowKey={nowKey} onPeriod={changePeriod} onKey={pickKey} /> : <Skeleton className="h-10 w-72 max-w-full" />}
           </div>
           {!cur ? <Skeleton className="my-3 h-10 w-52" /> : (
@@ -303,36 +311,41 @@ export default function OverviewPage() {
           {period === 'year' && pd && pd.months.length > 0 && (
             <MonthStrip months={pd.months} onPick={(k) => { setPeriod('month'); setPeriodKey(k >= today.slice(0, 7) ? null : k); }} />
           )}
-          <div className="mt-5 grid grid-cols-2 gap-2.5">
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
             <ViewLink role={role} view="create" className="tf-btn tf-btn-dark !px-3"><Icon name="plus" className="size-[1.125rem]" />สร้างเอกสาร</ViewLink>
             <ViewLink role={role} view={creator ? 'add' : 'create'} query={creator ? undefined : { type: 'EWHT' }} className="tf-btn tf-btn-soft !px-3">
               <Icon name="receipt" className="size-[1.125rem]" />{creator ? 'บันทึก 50 ทวิ' : 'ออก 50 ทวิ'}
             </ViewLink>
           </div>
-          <div className="mt-5 rounded-[18px] bg-tile p-3">
-            <div className="mb-2.5 flex items-center justify-between px-1 text-[0.90625rem]">
+          <div className="mt-4 flex min-h-0 flex-1 flex-col rounded-[18px] bg-tile p-3">
+            <div className="mb-2.5 flex shrink-0 items-center justify-between px-1 text-[0.90625rem]">
               <span><b className="font-medium">กำหนดยื่นภาษี</b> <span className="text-ink-soft">| ทั้งหมด {dl.length} รายการ</span></span>
               <ViewLink role={role} view="calendar" className="text-orange-deep hover:underline">ปฏิทิน</ViewLink>
             </div>
-            {deadlines.isLoading ? <Skeleton className="h-[92px] w-full" /> : dl.length ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2">
-                {dl.slice(0, 3).map((d) => (
-                  <div key={`${d.key}-${d.dueDate}`} className="rounded-xl bg-white p-2.5">
-                    <b className="line-clamp-2 min-h-[2.6em] text-[0.875rem] font-medium leading-snug" title={d.label}>{d.label.replace(/^ยื่นแบบ/, '').trim()}</b>
-                    <span className="mt-1 block font-display text-[1.0625rem]">{Number(d.dueDate.slice(8, 10))} {TH_MONTH[Number(d.dueDate.slice(5, 7))]}</span>
-                    <small className={cx('text-[0.8125rem]', d.daysLeft <= 3 ? 'text-danger' : 'text-ok')}>{whenText(d.daysLeft)}</small>
-                  </div>
-                ))}
+            {deadlines.isLoading ? <Skeleton className="h-[84px] w-full" /> : dl.length ? (
+              // การ์ดเล็กเรียงข้างกัน (ชื่อแบบ / วันครบกำหนด / เหลืออีกกี่วัน) · การ์ดรายได้ถูกจำกัดความสูงเท่ากล่องจัตุรัส (แบ่งคอลัมน์แล้ว)
+              // กล่องนี้จึงเป็น container ที่วัดความสูงได้ เตี้ยกว่าการ์ดเมื่อไร index.css (.tf-dl) เปลี่ยนเป็นแถวบรรทัดเดียวให้เห็นครบ
+              <div className="tf-dl min-h-0 flex-1 overflow-y-auto @min-[66rem]:[container:tf-dl/size]">
+                <div className="tf-dl-grid grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] content-start gap-2">
+                  {dl.slice(0, 3).map((d) => (
+                    <div key={`${d.key}-${d.dueDate}`} className="tf-dl-item rounded-xl bg-white p-2.5">
+                      <b className="line-clamp-2 min-h-[2.6em] text-[0.875rem] font-medium leading-snug" title={d.label}>{d.label.replace(/^ยื่นแบบ/, '').trim()}</b>
+                      <span className="tf-dl-date mt-1 block font-display text-[1.0625rem]">{Number(d.dueDate.slice(8, 10))} {TH_MONTH[Number(d.dueDate.slice(5, 7))]}</span>
+                      <small className={cx('text-[0.8125rem]', d.daysLeft <= 3 ? 'text-danger' : 'text-ok')}>{whenText(d.daysLeft)}</small>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : <p className="px-1 pb-1 text-[0.90625rem] text-ink-soft">ไม่มีกำหนดยื่นแบบที่เกี่ยวข้องกับบัญชีนี้</p>}
           </div>
         </Panel>
 
         {/* ตัวเลขเดือนนี้ 2×2 */}
-        <Panel className="!p-3 sm:!p-3 xl:aspect-square">
-          {/* จอ 1280px ขึ้นไป: คอลัมน์กลางกว้าง 425px กล่องเป็นจัตุรัส การ์ดย่อย 2×2 เต็มกล่อง (จัตุรัสตาม) การ์ดข้าง ๆ ยืดสูงเท่ากัน
-              จอเล็กกว่า: การ์ดเรียงลงมาเต็มความกว้าง การ์ดย่อยเป็นจัตุรัสเอง (แถวละ 4 ใบ · มือถือแถวละ 2 ใบ) */}
-          <div className="grid h-full grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2 xl:grid-rows-2">
+        <Panel className="!p-3 sm:!p-3 @min-[66rem]:aspect-square">
+          {/* แบ่งคอลัมน์แล้ว: คอลัมน์กลางกว้าง 30.375rem (425px ที่ขนาดปกติ โตตามขนาดตัวอักษร) กล่องเป็นจัตุรัสและกำหนดความสูงของทั้งแถว
+              การ์ดรายได้และกราฟยืดสูงเท่ากล่องนี้ การ์ดย่อย 2×2 จึงเป็นจัตุรัสเสมอ
+              ยังไม่แบ่งคอลัมน์: การ์ดเรียงลงมาเต็มความกว้าง การ์ดย่อยเป็นจัตุรัสเอง (แถวละ 4 ใบ · มือถือแถวละ 2 ใบ) */}
+          <div className="grid h-full grid-cols-2 gap-3 sm:grid-cols-4 @min-[66rem]:grid-cols-2 @min-[66rem]:grid-rows-2">
             <Tile accent label={`มูลค่าเอกสาร${unit}นี้`} icon="wallet" value={val('income')} format={moneyWhole} dlt={dlt('income')} unit={unit} loading={!cur} delay={0} />
             <Tile label={`VAT ${unit}นี้`} icon="calc" value={val('vat')} format={moneyWhole} dlt={dlt('vat')} unit={unit} loading={!cur} delay={60} />
             <Tile label={`หัก ณ ที่จ่าย${unit}นี้`} icon="receipt" value={val('wht')} format={moneyWhole} dlt={dlt('wht')} unit={unit} loading={!cur} delay={120} />
@@ -341,7 +354,8 @@ export default function OverviewPage() {
         </Panel>
 
         {/* กราฟแท่งซ้อน */}
-        <Panel className="xl:col-span-2 2xl:col-span-1">
+        {/* สามคอลัมน์: h-0 + min-h-full เหมือนการ์ดรายได้ กราฟไม่ดันแถวให้สูงเกินกล่องจัตุรัส (แท่งกราฟเตี้ยลงได้ถึง 120px) */}
+        <Panel className={cx('flex flex-col @min-[66rem]:col-span-2', creator && '@min-[78rem]:col-span-1 @min-[78rem]:h-0 @min-[78rem]:min-h-full')}>
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-[1.1875rem] font-medium">มูลค่าเอกสาร</h2>
             <ViewLink role={role} view="analytics" className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-tile px-3.5 text-[0.875rem] font-medium text-ink transition-colors hover:bg-ink hover:text-white">
@@ -349,8 +363,9 @@ export default function OverviewPage() {
             </ViewLink>
           </div>
           <p className="mb-4 text-[0.9375rem] text-ink-soft">เฉพาะเอกสารที่อนุมัติ/เก็บถาวร 8 เดือนล่าสุด</p>
-          {trend.isLoading ? <Skeleton className="h-[240px] w-full" /> : t && <StackedBars months={t.months} income={t.income} vat={t.vat} wht={t.wht} />}
+          {trend.isLoading ? <Skeleton className="h-[240px] w-full" /> : t && <StackedBars months={t.months} income={t.income} vat={t.vat} wht={t.wht} barsMin={creator ? 'min-h-[190px] @min-[78rem]:min-h-[120px]' : undefined} />}
         </Panel>
+      </div>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,2.05fr)]">

@@ -22,7 +22,8 @@
     "pdf:all": "node scripts/pdf-all.js",
     "sign:setup": "node scripts/sign-setup.js",
     "sign:verify": "node scripts/sign-verify.js",
-    "test:api": "node scripts/api-smoke.js"
+    "test:api": "node scripts/api-smoke.js",
+    "test:report": "node --test --test-reporter=./scripts/report-tests.mjs"
   },
   "dependencies": {
     "@taxflow/shared": "*",

@@ -10,7 +10,8 @@ import { compact, niceTicks } from '../../components/charts.jsx';
 
 const TH_MONTH = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-export default function StackedBars({ months, income, vat, wht, show = 8 }) {
+/** barsMin: ความสูงขั้นต่ำของพื้นที่แท่ง (คลาส Tailwind) หน้าที่วางกราฟในการ์ดสูงคงที่ส่งค่าต่ำกว่านี้ได้ */
+export default function StackedBars({ months, income, vat, wht, show = 8, barsMin = 'min-h-[190px]' }) {
   const [hover, setHover] = useState(null);
   const start = Math.max(0, months.length - show);
   const rows = months.slice(start).map((ym, i) => {
@@ -22,7 +23,8 @@ export default function StackedBars({ months, income, vat, wht, show = 8 }) {
   const max = ticks[ticks.length - 1] || 1;
 
   return (
-    <div className="rounded-[18px] bg-tile p-4">
+    // flex-1: ในการ์ดที่ถูกยืดให้สูงเท่าการ์ดข้าง ๆ กราฟยืดเต็มพื้นที่ ไม่เหลือช่องว่างใต้กราฟ (ต่ำสุด 190px)
+    <div className="flex flex-1 flex-col rounded-[18px] bg-tile p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <b className="text-[0.96875rem] font-medium">มูลค่าเอกสารรายเดือน <span className="text-[0.8125rem] font-normal text-ink-soft">(บาท)</span></b>
         <div className="flex gap-3 text-[0.875rem] text-ink-soft">
@@ -31,7 +33,7 @@ export default function StackedBars({ months, income, vat, wht, show = 8 }) {
         </div>
       </div>
       {/* พื้นที่กราฟ: แกน y กว้าง 44px (พอสำหรับ "1.5M" / "400k") · แถบล่าง 24px สำหรับชื่อเดือน */}
-      <div className="relative h-[190px] pl-11">
+      <div className={cx('relative flex flex-1 flex-col pl-11', barsMin)}>
         <div className="pointer-events-none absolute inset-x-0 bottom-6 top-0">
           {ticks.map((t) => (
             <div key={t} className="absolute inset-x-0 flex items-center gap-2" style={{ bottom: `${(t / max) * 100}%`, transform: 'translateY(50%)' }}>
@@ -40,7 +42,7 @@ export default function StackedBars({ months, income, vat, wht, show = 8 }) {
             </div>
           ))}
         </div>
-        <div className="relative flex h-full gap-2">
+        <div className="relative flex flex-1 gap-2">
           {rows.map((r, i) => (
             <div key={r.ym} className="relative flex flex-1 flex-col items-center justify-end pb-6" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
               <div

@@ -37,3 +37,11 @@ apps/api/data/test-accounts.local.txt
 apps/web/public/img/landing/error.png
 # สำรองแถวที่ลบด้วย scripts/trim-docs.js (มีข้อมูลส่วนบุคคล ไม่ขึ้น git)
 apps/api/data/backups/
+
+# รายงาน test coverage (npm run coverage) สร้างใหม่ทุกครั้ง
+coverage/
+apps/api/lcov.info
+apps/web/coverage/
+
+# ตาราง Test case จาก npm run test:report (สร้างใหม่ทุกครั้งที่รัน)
+apps/api/test-report/

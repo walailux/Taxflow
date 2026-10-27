@@ -100,7 +100,6 @@ export default function LandingPage() {
       <section className="ip-hero lp-hero">
         <div className="ip-wrap lp-hero-grid">
           <div className="reveal">
-            <img className="lp-logo" src="/img/logo.png" alt="TaxFlow" width="200" height="56" />
             <div className="ip-eyebrow"><i />ระบบต้นแบบเพื่อการศึกษา</div>
             <h1>จัดการเอกสารภาษีของ <em><span>อินฟลูเอนเซอร์</span> <span>เอเจนซี่</span> <span>และแบรนด์</span></em> ได้ในที่เดียว</h1>
             <p className="ip-lede"><b>TaxFlow</b> คือระบบต้นแบบจัดการเอกสารภาษีของอินฟลูเอนเซอร์ เอเจนซี่ และแบรนด์ในที่เดียว สร้างเอกสารธุรกิจและเอกสารภาษี คำนวณภาษี ลงลายมือชื่อ ส่งเอกสารถึงคู่ค้า และจัดเก็บอย่างเป็นระบบ</p>

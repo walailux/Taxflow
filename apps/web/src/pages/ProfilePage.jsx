@@ -262,9 +262,9 @@ export default function ProfilePage() {
         <span className="tf-dots" aria-hidden="true" />
         <div className="relative flex flex-col items-center gap-5 sm:flex-row">
           <label className="group relative shrink-0 cursor-pointer" title="เปลี่ยนรูปโปรไฟล์">
-            <Avatar user={user} className="size-24 rounded-[28px] shadow-[0_14px_30px_-18px_rgba(24,24,27,0.6)]" textClass="text-[2.375rem]" />
-            <span className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-ink/45 text-[0.8125rem] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">เปลี่ยนรูป</span>
-            <span className="absolute -bottom-1.5 -right-1.5 flex size-8 items-center justify-center rounded-full bg-orange text-white shadow-[var(--shadow-brand)] ring-4 ring-white">
+            <Avatar user={user} className="size-24 rounded-full shadow-[0_14px_30px_-18px_rgba(24,24,27,0.6)]" textClass="text-[2.375rem]" />
+            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/45 text-[0.8125rem] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">เปลี่ยนรูป</span>
+            <span className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-orange text-white shadow-[var(--shadow-brand)] ring-4 ring-white">
               <Icon name="plus" className="size-4" />
             </span>
             <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label="อัปโหลดรูปโปรไฟล์" onChange={(e) => { void uploadBrand('avatar', e.target.files[0]); e.target.value = ''; }} />

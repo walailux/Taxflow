@@ -26,7 +26,7 @@ test('nextAnnualDeadline — เลยกำหนดของปีนี้แ
 
 test('upcomingDeadlines — เอเจนซี่จด VAT นิติบุคคล ต้องเห็นทั้ง VAT และ WHT แต่ไม่เห็น PIT', () => {
   const items = cal.upcomingDeadlines({ role: 'agency', entityType: 'juristic', vatRegistered: true }, '2026-03-01');
-  const keys = items.map((i) => i.key).sort();
+  const keys = items.map((i) => i.key).sort((a, b) => (a < b ? -1 : Number(a > b)));
   assert.deepEqual(keys, ['VAT', 'WHT']);
 });
 

@@ -42,20 +42,23 @@ export const normalizeOtp = (v) => digitsOnly(v).slice(0, 6);
 export const otpError = (code) => (/^\d{6}$/.test(code) ? null : 'กรุณากรอกรหัส 6 หลักให้ครบ');
 
 /* ---------- รหัสผ่าน ---------- */
+/**
+ * เงื่อนไขที่แสดงใต้ช่องรหัสผ่าน เขียนเป็นภาษาพูดให้ผู้ใช้ทั่วไปเข้าใจทันที
+ * (ความยาวสูงสุด 128 ตัวไม่แสดงเป็นข้อ เพราะช่องกรอกจำกัดไว้แล้ว และเดิมขึ้นเครื่องหมายผ่านทั้งที่ยังไม่ได้พิมพ์ ทำให้สับสน)
+ */
 export function passwordRules(p) {
   const s = String(p || '');
   return [
-    { label: '8+ ตัวอักษร', ok: s.length >= 8 },
-    { label: 'ตัวอักษรภาษาอังกฤษ', ok: /[A-Za-z]/.test(s) },
-    { label: 'ตัวเลข', ok: /\d/.test(s) },
-    { label: 'ไม่เกิน 128', ok: s.length <= 128 },
+    { label: 'ยาวอย่างน้อย 8 ตัว', ok: s.length >= 8 },
+    { label: 'มีตัวอักษรภาษาอังกฤษ (a–z)', ok: /[A-Za-z]/.test(s) },
+    { label: 'มีตัวเลข (0–9)', ok: /\d/.test(s) },
   ];
 }
 
 /** คะแนน 0–6 และระดับสำหรับแถบวัดความแข็งแรง (สูตรเดียวกับหน้าเดิม) */
 export function passwordStrength(p) {
   const s = String(p || '');
-  const score = passwordRules(s).filter((r) => r.ok).length + (s.length >= 12 ? 1 : 0) + (/[^A-Za-z0-9]/.test(s) ? 1 : 0);
+  const score = passwordRules(s).filter((r) => r.ok).length + (s.length <= 128 ? 1 : 0) + (s.length >= 12 ? 1 : 0) + (/[^A-Za-z0-9]/.test(s) ? 1 : 0);
   const level = score >= 5 ? 'strong' : score >= 4 ? 'fair' : 'weak';
   return { score, level, percent: s ? Math.min(100, score * 17) : 0 };
 }

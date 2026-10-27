@@ -110,24 +110,7 @@ async function loadTable(table) {
   return parsed;
 }
 
-const INDEXED = {
-  users: ['email'],
-  documents: ['userId', 'type'],
-  contacts: ['userId'],
-  attachments: ['userId', 'docId'],
-  doc_versions: ['docId'],
-  audit_log: ['userId', 'docId'],
-  notifications: ['userId'],
-  shares: ['token', 'docId'],
-  library: ['userId', 'category'],
-  signatures: ['userId'],
-  requests: ['docId', 'fromUserId', 'toUserId'],
-  otp_codes: ['userId', 'purpose'],
-  kyc_documents: ['userId', 'docType'],
-  consents: ['userId'],
-  calendar_events: ['userId'],
-  calendar_overrides: ['userId'],
-};
+const { INDEXED } = require('./tables');
 
 // ชื่อคอลัมน์แบบ camelCase ต้องอยู่ในเครื่องหมายคำพูดคู่ใน PostgreSQL (ปกติจะ lower-case ให้เอง)
 const q = (col) => `"${col}"`;

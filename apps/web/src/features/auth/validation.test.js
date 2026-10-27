@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_REGISTER_FORM, buildRegisterBody, checkRegisterField, entityOf, loginErrors, missingRequiredConsent,
-  normalizeOtp, otpError, otpModeFromLogin, passwordErrors, passwordStrength, step2Errors,
+  normalizeOtp, otpError, otpModeFromLogin, passwordErrors, passwordRules, passwordStrength, step2Errors,
 } from './validation.js';
 
 // เลขผู้เสียภาษีที่หลักตรวจสอบถูกต้อง (สูตรเดียวกับ packages/shared/thaiid.js)
@@ -59,6 +59,11 @@ describe('รหัสผ่าน', () => {
     expect(passwordStrength('abc12345').level).toBe('fair');
     expect(passwordStrength('abc12345!xyz').level).toBe('strong');
     expect(passwordStrength('abcd').level).toBe('weak');
+  });
+  it('เงื่อนไขรหัสผ่าน: ยังไม่พิมพ์ต้องไม่มีข้อไหนขึ้นว่าผ่าน และครบ 3 ข้อเมื่อรหัสถูกต้อง', () => {
+    expect(passwordRules('').map((r) => r.ok)).toEqual([false, false, false]);
+    expect(passwordRules('abcdefgh').map((r) => r.ok)).toEqual([true, true, false]);
+    expect(passwordRules('abc12345').every((r) => r.ok)).toBe(true);
   });
 });
 

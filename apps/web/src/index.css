@@ -451,3 +451,14 @@ html[data-theme="dark"] .tf-tip-box .tf-tip-muted { color: rgba(28, 26, 25, .6);
 .tf-sig-swap { animation: tfSigSwap .16s ease-out both; }
 @keyframes tfSigSwap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tf-sig-caret, .tf-sig-swap { animation: none; } }
+
+/* กำหนดยื่นภาษีในการ์ดรายได้ (หน้าภาพรวม) · กล่อง .tf-dl เป็น size container เฉพาะตอนแบ่งคอลัมน์ (ความสูงถูกล็อกเท่ากล่องจัตุรัส)
+   เตี้ยกว่าการ์ดเล็ก 1 แถว (~6.75rem) = เปลี่ยนเป็นแถวบรรทัดเดียว ชื่อแบบ · วันครบกำหนด · เหลืออีกกี่วัน ข้อความจึงไม่ถูกตัด
+   (อยู่นอก @layer ตั้งใจให้ชนะคลาส Tailwind ของการ์ด) */
+@container tf-dl (max-height: 6.75rem) {
+  .tf-dl-grid { display: flex; flex-direction: column; gap: .375rem; }
+  .tf-dl-item { display: flex; align-items: center; gap: .5rem; padding: .375rem .75rem; }
+  .tf-dl-item > b { display: block; flex: 1; min-width: 0; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: unset; }
+  .tf-dl-item > .tf-dl-date { margin-top: 0; font-size: .875rem; white-space: nowrap; }
+  .tf-dl-item > small { white-space: nowrap; }
+}

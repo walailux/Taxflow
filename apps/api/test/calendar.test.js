@@ -5,7 +5,7 @@ const cal = require('../lib/calendar');
 
 test('กำหนดยื่นภาษีตามบทบาท: บริษัทจด VAT ได้ ภ.ง.ด.3/53 และ ภ.พ.30', () => {
   const ev = cal.taxEvents({ role: 'corporate', entityType: 'juristic', vatRegistered: true }, '2026-09-01', '2026-09-30');
-  assert.deepStrictEqual(ev.map((e) => e.date).sort(), ['2026-09-07', '2026-09-15']);
+  assert.deepStrictEqual(ev.map((e) => e.date).sort((a, b) => (a < b ? -1 : Number(a > b))), ['2026-09-07', '2026-09-15']);
   assert.ok(ev.every((e) => e.locked && e.source === 'system'));
 });
 

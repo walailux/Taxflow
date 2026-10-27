@@ -30,31 +30,8 @@ const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
-const TABLES = [
-  'users', 'documents', 'contacts', 'attachments', 'doc_versions', 'audit_log',
-  'notifications', 'shares', 'library', 'signatures', 'requests', 'otp_codes',
-  'kyc_documents', 'consents', 'calendar_events', 'calendar_overrides',
-];
-
-// คอลัมน์ที่คัดออกมาเป็นคอลัมน์จริง ต้องตรงกับ INDEXED ใน lib/store.js และ lib/store.pg.js
-const INDEXED = {
-  users: ['email'],
-  documents: ['userId', 'type'],
-  contacts: ['userId'],
-  attachments: ['userId', 'docId'],
-  doc_versions: ['docId'],
-  audit_log: ['userId', 'docId'],
-  notifications: ['userId'],
-  shares: ['token', 'docId'],
-  library: ['userId', 'category'],
-  signatures: ['userId'],
-  requests: ['docId', 'fromUserId', 'toUserId'],
-  otp_codes: ['userId', 'purpose'],
-  kyc_documents: ['userId', 'docType'],
-  consents: ['userId'],
-  calendar_events: ['userId'],
-  calendar_overrides: ['userId'],
-};
+// ตารางและคอลัมน์ที่มีดัชนี ชุดเดียวกับ lib/store.js และ lib/store.pg.js
+const { TABLES, INDEXED } = require('../lib/tables');
 
 const APPLY = process.argv.includes('--apply');
 const DRY = !APPLY; // ไม่ใส่ --apply = โหมดรายงานอย่างเดียว
