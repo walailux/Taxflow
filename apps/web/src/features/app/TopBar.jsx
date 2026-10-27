@@ -182,7 +182,8 @@ function ProfileMenu({ user, role, onLogout }) {
         className="flex cursor-pointer items-center gap-2.5 rounded-full bg-white py-1 pl-1 pr-3 text-left shadow-[0_1px_2px_rgba(24,24,27,0.05)] transition-shadow hover:shadow-[0_8px_18px_-10px_rgba(24,24,27,0.35)]"
       >
         <Avatar user={user} className="size-9 rounded-full" textClass="text-[0.9375rem]" />
-        <span className="min-w-0 max-w-[180px] leading-tight">
+        {/* แท็บเล็ต (ต่ำกว่า 1024px) แสดงแค่รูป ชื่อยาว ๆ + ตัวอักษรใหญ่ทำให้แถบบนล้นจอด้านขวา · ชื่อเต็มอยู่ในเมนูที่เปิด */}
+        <span className="hidden min-w-0 max-w-[180px] leading-tight lg:block">
           <b className="block truncate text-[0.90625rem] font-semibold">{name}</b>
           <small className="block truncate text-[0.78125rem] text-ink-soft">{ROLE_TAG[role]}</small>
         </span>

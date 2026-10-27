@@ -110,7 +110,7 @@ function Tile({ label, icon, value, format, dlt, unit, accent, loading, delay })
   return (
     <div
       className={cx(
-        'tf-fade-up flex aspect-square min-w-0 flex-col @min-[66rem]:aspect-auto justify-between rounded-[18px] p-4 transition-transform duration-300 [container-type:inline-size] hover:-translate-y-0.5',
+        'tf-fade-up flex aspect-square min-w-0 flex-col @min-[66rem]:aspect-auto justify-between rounded-[18px] p-3 @min-[66rem]:p-4 transition-transform duration-300 [container-type:inline-size] hover:-translate-y-0.5',
         accent ? 'bg-[linear-gradient(160deg,#FF8A4C,#FF6A00_60%,#EF5A12)] text-white shadow-[0_16px_34px_-18px_rgba(239,90,18,0.75)]' : 'bg-tile',
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -270,10 +270,9 @@ export default function OverviewPage() {
 
       {/* แบ่งคอลัมน์ตามพื้นที่จริงของหน้า (container query หน่วย rem จึงคิดรวมขนาดตัวอักษรที่ผู้ใช้ตั้งแล้ว)
           กว้างพอ (66rem): การ์ดรายได้ | กล่องตัวเลขจัตุรัส แล้วกราฟเต็มแถวถัดไป · แคบกว่านั้นเรียงลงมาทีละการ์ด
-          ครีเอเตอร์ + กว้างมาก (78rem): การ์ดรายได้ | กล่องตัวเลขจัตุรัส | กราฟ ในแถวเดียว สูงเท่ากล่องจัตุรัสทั้งแถว
-          (บัญชีธุรกิจมีแถวยอดเรียกเก็บ/ค่าใช้จ่ายเพิ่ม การ์ดรายได้ในสามคอลัมน์จะสูงเกินกล่องจัตุรัส จึงใช้สองคอลัมน์) */}
+          กว้างมาก (78rem): การ์ดรายได้ | กล่องตัวเลขจัตุรัส | กราฟ ในแถวเดียว สูงเท่ากล่องจัตุรัสทั้งแถว (ทุกบทบาท) */}
       <div className="@container">
-      <div className={cx('grid grid-cols-1 gap-5 @min-[66rem]:grid-cols-[minmax(0,1fr)_30.375rem]', creator && '@min-[78rem]:grid-cols-[minmax(0,1.15fr)_30.375rem_minmax(0,0.85fr)]')}>
+      <div className="grid grid-cols-1 gap-5 @min-[66rem]:grid-cols-[minmax(0,1fr)_30.375rem] @min-[78rem]:grid-cols-[minmax(0,1.15fr)_30.375rem_minmax(0,0.85fr)]">
         {/* รายได้รวมของช่วงที่เลือก (รายเดือน/รายปี) + กำหนดยื่นภาษี
             แบ่งคอลัมน์แล้ว: h-0 + min-h-full = ไม่กำหนดความสูงของแถวเอง แต่ยืดเท่ากล่องตัวเลขจัตุรัสข้าง ๆ พอดี
             เนื้อหาเกินเมื่อไร รายการกำหนดยื่นภาษีด้านล่างเลื่อนดูในกล่องแทน */}
@@ -293,21 +292,15 @@ export default function OverviewPage() {
               <span className="mb-1.5"><Delta value={dlt('revenue')} unit={unit} /></span>
             </div>
           )}
-          <p className="mt-1.5 text-[0.90625rem] text-ink-soft">
+          {/* ทุกบทบาทใช้ดีไซน์เดียวกับครีเอเตอร์: คำอธิบายบรรทัดเดียว · บัญชีธุรกิจดูยอดเรียกเก็บ/ค่าใช้จ่าย/หัก ณ ที่จ่าย ได้จาก tooltip ของบรรทัดนี้ */}
+          <p
+            className="mt-1.5 text-[0.90625rem] text-ink-soft"
+            title={cur && !creator ? `ยอดเรียกเก็บ ${money(cur.billed)} · ค่าใช้จ่าย ${money(cur.expense)} · หัก ณ ที่จ่าย ${money(cur.withholding)} (ใบเสร็จ/ใบรับ และใบแจ้งหนี้ที่ยังไม่ออกใบเสร็จ ไม่รวมแบบร่าง)` : undefined}
+          >
             {cur ? (creator
               ? `จากเอกสาร ${cur.sourceCount} ฉบับ · ไม่รวมเอกสารยกเลิก`
-              : `จากใบเสร็จ/ใบรับ และใบแจ้งหนี้ที่ยังไม่ออกใบเสร็จ ${cur.revenueDocs ?? cur.receipts} ฉบับ · ไม่รวมแบบร่างและเอกสารยกเลิก`) : ' '}
+              : `จากใบเสร็จและใบแจ้งหนี้ ${cur.revenueDocs ?? cur.receipts} ฉบับ · ค่าใช้จ่าย ${moneyWhole(cur.expense)}`) : ' '}
           </p>
-          {cur && !creator && (
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-[0.84375rem]">
-              {[['ยอดเรียกเก็บ', cur.billed], ['ค่าใช้จ่าย', cur.expense], ['หัก ณ ที่จ่าย', cur.withholding]].map(([k, v]) => (
-                <div key={k} className="min-w-0 rounded-xl bg-tile px-2.5 py-2">
-                  <dt className="truncate text-ink-soft">{k}</dt>
-                  <dd className="truncate font-mono font-medium text-ink" title={money(v)}>{moneyWhole(v)}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
           {period === 'year' && pd && pd.months.length > 0 && (
             <MonthStrip months={pd.months} onPick={(k) => { setPeriod('month'); setPeriodKey(k >= today.slice(0, 7) ? null : k); }} />
           )}
@@ -355,7 +348,7 @@ export default function OverviewPage() {
 
         {/* กราฟแท่งซ้อน */}
         {/* สามคอลัมน์: h-0 + min-h-full เหมือนการ์ดรายได้ กราฟไม่ดันแถวให้สูงเกินกล่องจัตุรัส (แท่งกราฟเตี้ยลงได้ถึง 120px) */}
-        <Panel className={cx('flex flex-col @min-[66rem]:col-span-2', creator && '@min-[78rem]:col-span-1 @min-[78rem]:h-0 @min-[78rem]:min-h-full')}>
+        <Panel className="flex flex-col @min-[66rem]:col-span-2 @min-[78rem]:col-span-1 @min-[78rem]:h-0 @min-[78rem]:min-h-full">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-[1.1875rem] font-medium">มูลค่าเอกสาร</h2>
             <ViewLink role={role} view="analytics" className="flex h-9 shrink-0 items-center gap-1 rounded-full bg-tile px-3.5 text-[0.875rem] font-medium text-ink transition-colors hover:bg-ink hover:text-white">
@@ -363,7 +356,7 @@ export default function OverviewPage() {
             </ViewLink>
           </div>
           <p className="mb-4 text-[0.9375rem] text-ink-soft">เฉพาะเอกสารที่อนุมัติ/เก็บถาวร 8 เดือนล่าสุด</p>
-          {trend.isLoading ? <Skeleton className="h-[240px] w-full" /> : t && <StackedBars months={t.months} income={t.income} vat={t.vat} wht={t.wht} barsMin={creator ? 'min-h-[190px] @min-[78rem]:min-h-[120px]' : undefined} />}
+          {trend.isLoading ? <Skeleton className="h-[240px] w-full" /> : t && <StackedBars months={t.months} income={t.income} vat={t.vat} wht={t.wht} barsMin="min-h-[190px] @min-[78rem]:min-h-[120px]" />}
         </Panel>
       </div>
       </div>
