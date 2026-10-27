@@ -271,7 +271,7 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
 
   const body = (
     <>
-      <div className="mb-4 flex flex-wrap items-end gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="relative w-full min-w-0 sm:w-auto sm:min-w-[220px] sm:flex-1">
           <span className="sr-only">ค้นหาเอกสาร</span>
           <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 size-[1.0625rem] -translate-y-1/2 text-ink-soft" />
@@ -282,26 +282,26 @@ export default function DocBrowser({ scope = 'all', role, user, onOpenDoc, viewK
           options={types.map((t) => ({ value: t, label: DOC_LABEL[t] || (docschema.FORMS[t] && docschema.FORMS[t].label) || t }))} />
         <DatePicker aria-label="ตั้งแต่วันที่" placeholder="ตั้งแต่วันที่" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="!h-11 !w-auto min-w-0 flex-1 basis-[7rem] !rounded-full !py-0 sm:flex-none sm:min-w-[10rem]" />
         <DatePicker aria-label="ถึงวันที่" placeholder="ถึงวันที่" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="!h-11 !w-auto min-w-0 flex-1 basis-[7rem] !rounded-full !py-0 sm:flex-none sm:min-w-[10rem]" />
-        {/* ส่งออก: ป้ายอยู่เหนือปุ่ม (แถวตัวกรองชิดด้านล่าง ปุ่มจึงตรงแนวกับช่องอื่น) */}
-        <div className="flex w-full flex-col gap-1 sm:ml-auto sm:w-auto">
-          <span className="text-center text-[0.8125rem] font-medium text-ink-soft" id="export-label">ส่งออกเอกสารทั้งหมด</span>
-          <div className="flex items-center justify-between gap-1 rounded-full bg-tile p-1 sm:justify-start" role="group" aria-labelledby="export-label">
-          <a className={EXPORT_BTN} href={`${API_URL}/api/export/csv?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น CSV">
-            <i className="size-2 rounded-full bg-[#1967D2]" />CSV
-          </a>
-          <a className={EXPORT_BTN} href={`${API_URL}/api/export/xls?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น Excel">
-            <i className="size-2 rounded-full bg-[#188038]" />Excel
-          </a>
-          <button type="button" className={EXPORT_BTN} onClick={exportZip} disabled={!items.length} title="ส่งออกเอกสารที่แสดงอยู่เป็น PDF/A-3 ในไฟล์ ZIP">
-            <Icon name="download" className="size-4 text-orange-deep" />ZIP
-          </button>
-          </div>
-        </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[0.90625rem] text-ink-soft">{list.isLoading ? 'กำลังโหลด' : `${items.length} รายการ`}</p>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <p className="pb-2.5 text-[0.90625rem] text-ink-soft">{list.isLoading ? 'กำลังโหลด' : `${items.length} รายการ`}</p>
+        <div className="flex w-full flex-wrap items-end gap-2 sm:w-auto sm:justify-end">
+          {/* ส่งออก: ป้ายอยู่กึ่งกลางเหนือปุ่ม วางแถวเดียวกับปุ่มมุมมอง (แถวชิดด้านล่าง ปุ่มทุกกลุ่มตรงแนว) */}
+          <div className="flex w-full flex-col gap-1 sm:ml-auto sm:w-auto">
+            <span className="text-center text-[0.8125rem] font-medium text-ink-soft" id="export-label">ส่งออกเอกสารทั้งหมด</span>
+            <div className="flex items-center justify-between gap-1 rounded-full bg-tile p-1 sm:justify-start" role="group" aria-labelledby="export-label">
+            <a className={EXPORT_BTN} href={`${API_URL}/api/export/csv?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น CSV">
+              <i className="size-2 rounded-full bg-[#1967D2]" />CSV
+            </a>
+            <a className={EXPORT_BTN} href={`${API_URL}/api/export/xls?${exportQs}`} download title="ส่งออกรายการตามตัวกรองเป็น Excel">
+              <i className="size-2 rounded-full bg-[#188038]" />Excel
+            </a>
+            <button type="button" className={EXPORT_BTN} onClick={exportZip} disabled={!items.length} title="ส่งออกเอกสารที่แสดงอยู่เป็น PDF/A-3 ในไฟล์ ZIP">
+              <Icon name="download" className="size-4 text-orange-deep" />ZIP
+            </button>
+            </div>
+          </div>
           <div role="radiogroup" aria-label="ขนาดการแสดงผล" className="flex rounded-full bg-tile p-1">
             {VIEW_SIZES.map((v) => (
               <button

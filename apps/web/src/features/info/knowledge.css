@@ -237,7 +237,14 @@ a.kc-article-cat:hover{opacity:.75;}
 
 /* ---------- หน้าบทความ ---------- */
 .kc-read{max-width:1120px;}
-.kc-read-grid{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:48px;align-items:start;}
+.kc-read-grid{display:grid;grid-template-columns:minmax(0,780px) 230px;justify-content:center;gap:48px;align-items:start;}
+/* จอกว้าง: คอลัมน์บทความอยู่กึ่งกลางหน้าพอดี แถบสารบัญย้ายไปอยู่ขอบขวา (ไม่ดันบทความไปทางซ้าย) */
+@media (min-width:1400px){
+  .kc-read{max-width:1400px;}
+  .kc-read-grid{grid-template-columns:minmax(0,1fr) minmax(0,780px) minmax(0,1fr);}
+  .kc-read-main{grid-column:2;}
+  .kc-rail{grid-column:3;width:230px;}
+}
 .kc-read-main{min-width:0;max-width:780px;}
 .kc-article{padding:40px 44px 44px;background:var(--c-FFFFFF);border:1px solid var(--kc-hair);border-radius:28px;box-shadow:0 1px 2px rgba(24,24,27,.03),0 24px 48px -40px rgba(80,40,10,.25);}
 .kc-article-head{padding-bottom:26px;margin-bottom:26px;border-bottom:1px solid var(--kc-hair);}
