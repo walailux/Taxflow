@@ -364,7 +364,7 @@ export default function CreatePage() {
   const types = useMemo(() => docschema.rolesFor(role), [role]);
   const etaxOk = !!user.vatRegistered && user.etaxStatus === 'approved';
   const etaxLocked = (t) => docschema.isEtaxType(t) && !etaxOk;
-  const kycOk = user.verifyStatus === 'verified';
+  const kycOk = user.verifyStatus === 'verified' || role === 'admin';
   const [etaxNotice, setEtaxNotice] = useState(null); // ประเภท e-Tax ที่กดแต่ยังไม่มีสิทธิ์ (เปิดกล่องอธิบาย)
   const [etaxAck, setEtaxAck] = useState(false); // ผู้ใช้ยืนยันก่อนออกเอกสาร e-Tax ในขั้นตรวจทาน
   // ขั้นที่ 2 แสดงเฉพาะประเภทที่เหมาะกับจุดประสงค์ที่เลือก
@@ -626,10 +626,14 @@ export default function CreatePage() {
   );
 
   // เอกสารทุกประเภทต้องยืนยันตัวตนก่อน (ยกเว้นบันทึกข้อตกลงย้อนหลัง) · e-Tax ต้องได้สิทธิ์เพิ่มอีกขั้น (กล่อง etaxNotice)
-  const kycWarn = !kycOk && purpose !== 'record' && (
+  const kycText = {
+    pending: 'เอกสารยืนยันตัวตนของคุณอยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ เมื่ออนุมัติแล้วจะสร้างเอกสารได้ทันที',
+    rejected: `การยืนยันตัวตนไม่ผ่าน${user.verifyNote ? `: ${user.verifyNote}` : ''} กรุณาแก้ไขเอกสารแล้วส่งตรวจอีกครั้ง`,
+  }[user.verifyStatus] || 'บัญชีนี้ยังไม่ได้ส่งเอกสารยืนยันตัวตน ส่งเอกสารที่หน้าโปรไฟล์แล้วรอผู้ดูแลระบบอนุมัติก่อน';
+  // แก้ไขเอกสารเดิม: แจ้งเตือนอย่างเดียว (เซิร์ฟเวอร์ตรวจสิทธิ์ซ้ำตอนบันทึก/ออกเลขที่)
+  const kycWarn = !kycOk && (
     <Alert kind="dev">
-      {user.verifyStatus === 'pending' ? 'เอกสารยืนยันตัวตนของคุณอยู่ระหว่างรอผู้ดูแลระบบตรวจสอบ' : 'บัญชีนี้ยังไม่ผ่านการยืนยันตัวตน (KYC)'}
-      {' '}กรอกแบบฟอร์มได้ แต่จะออกเอกสารได้หลังผู้ดูแลระบบอนุมัติแล้วเท่านั้น{' '}
+      {kycText}{' '}
       <Link to="/app/profile?tab=kyc" className="font-medium underline">ไปที่หน้ายืนยันตัวตน</Link>
     </Alert>
   );
@@ -656,6 +660,26 @@ export default function CreatePage() {
       onCancel={() => setEtaxNotice(null)}
     />
   );
+
+  // บัญชีที่ยังไม่ผ่านการยืนยันตัวตนจากแอดมิน สร้างเอกสารไม่ได้ทุกประเภท (รวมบันทึกข้อตกลงย้อนหลัง) แสดงทางไปยืนยันตัวตนแทน
+  if (!kycOk && !editId) {
+    return (
+      <>
+        <PageHeader title="สร้างเอกสาร" subtitle="ต้องยืนยันตัวตนก่อนจึงจะสร้างเอกสารได้" />
+        <Card bodyClassName="!py-10 sm:!py-12">
+          <div className="mx-auto flex max-w-[34rem] flex-col items-center text-center">
+            <span className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-orange-pale text-orange"><Icon name="shield" className="size-8" /></span>
+            <h2 className="text-[1.25rem] font-medium">รอยืนยันตัวตนก่อนสร้างเอกสาร</h2>
+            <p className="mt-2 text-[1rem] leading-relaxed text-ink-soft">{kycText}</p>
+            <p className="mt-2 text-[0.9375rem] leading-relaxed text-ink-soft">
+              ใบกำกับภาษีอิเล็กทรอนิกส์และใบรับอิเล็กทรอนิกส์ ต้องขอสิทธิ์ e-Tax แยกอีกขั้นหลังยืนยันตัวตนผ่านแล้ว
+            </p>
+            <Link to="/app/profile?tab=kyc" className="tf-btn tf-btn-dark mt-6">ไปที่หน้ายืนยันตัวตน</Link>
+          </div>
+        </Card>
+      </>
+    );
+  }
 
   if (!docs.data || (editId && !editing)) {
     return <><PageHeader title={editId ? 'แก้ไขเอกสาร' : 'สร้างเอกสาร'} /><Skeleton className="h-64 w-full rounded-[24px]" /></>;

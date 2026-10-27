@@ -26,6 +26,16 @@ test('เอกสารทั่วไป: ยังไม่ผ่าน KYC �
   assert.match(gate.error, /ยืนยันตัวตน/);
 });
 
+test('ยังไม่ผ่าน KYC: "บันทึกข้อตกลงย้อนหลัง" (purpose=record) ก็สร้างไม่ได้ ทุกบัญชีใหม่ต้องรอแอดมินยืนยันตัวตน', () => {
+  for (const st of ['unverified', 'pending', 'rejected', undefined]) {
+    for (const type of ['QUOTATION', 'WHT', 'CONTRACT_INF']) {
+      const gate = profile.canIssue({ ...base(), verifyStatus: st }, type, { purpose: 'record' });
+      assert.strictEqual(gate.ok, false, `${type} สถานะ ${st}`);
+      assert.match(gate.error, /ยืนยันตัวตน/);
+    }
+  }
+});
+
 for (const type of ['ETAX_INVOICE', 'ETAX_RECEIPT', 'ETAX']) {
   test(`${type}: จด VAT แต่ยังไม่ได้สิทธิ์ e-Tax ออกไม่ได้`, () => {
     for (const st of ['none', 'pending', 'rejected', undefined]) {
